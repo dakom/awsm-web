@@ -205,35 +205,40 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
 
             #[cfg(feature = "debug_log")]
             log::info!("getting uniform cache info for uniform #{} ", i);
-            let (name, type_) = self
+            let (name, type_, size) = self
                 .gl
                 .awsm_get_active_uniform(&program_info.program, i)
-                .map(|info| (info.name(), info.type_()))?;
+                .map(|info| (info.name(), info.type_(), info.size()))?;
 
-            let entry = program_info.uniform_lookup.entry(name.to_string());
 
-            match entry {
-                Entry::Occupied(_) => {
-                    #[cfg(feature = "debug_log")]
-                    log::info!("skipping uniform cache for [{}] (already exists)", &name);
-                }
-                Entry::Vacant(entry) => {
-                    let loc = self
-                        .gl
-                        .awsm_get_uniform_location(&program_info.program, &name)?;
-                    entry.insert(loc);
-                    #[cfg(feature = "debug_log")]
-                    log::info!("caching uniform [{}]", &name);
-                    match type_ {
-                        //Just the sampler types from UniformDataType
-                        //matching on enums with casting seems to be a pain point
-                        //(or I missed something in Rust)
-                        0x8B5E | 0x8B60 | 0x8B5F | 0x8B62 | 0x8DC5 | 0x8DC1 | 0x8DC4 | 0x8DCA
-                        | 0x8DCB | 0x8DCC | 0x8DCF | 0x8DD2 | 0x8DD3 | 0x8DD4 | 0x8DD7 => {
-                            texture_samplers.push(name)
-                        }
-                        _ => {}
-                    };
+            for name in get_uniform_names(&name, size as usize) {
+                let entry = program_info.uniform_lookup.entry(name.to_string());
+
+
+                match entry {
+                    Entry::Occupied(_) => {
+                        #[cfg(feature = "debug_log")]
+                        log::info!("skipping uniform cache for [{}] (already exists)", &name);
+                    }
+                    Entry::Vacant(entry) => {
+
+                        let loc = self
+                            .gl
+                            .awsm_get_uniform_location(&program_info.program, &name)?;
+                        #[cfg(feature = "debug_log")]
+                        log::info!("caching uniform [{}] at location [{:?}] of size [{}]", &name, loc, size);
+                        entry.insert(loc);
+                        match type_ {
+                            //Just the sampler types from UniformDataType
+                            //matching on enums with casting seems to be a pain point
+                            //(or I missed something in Rust)
+                            0x8B5E | 0x8B60 | 0x8B5F | 0x8B62 | 0x8DC5 | 0x8DC1 | 0x8DC4 | 0x8DCA
+                            | 0x8DCB | 0x8DCC | 0x8DCF | 0x8DD2 | 0x8DD3 | 0x8DD4 | 0x8DD7 => {
+                                texture_samplers.push(name)
+                            }
+                            _ => {}
+                        };
+                    }
                 }
             }
         }
@@ -626,5 +631,60 @@ where
         }
 
         Err(err) => Some(err.to_string()),
+    }
+}
+
+// see: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getActiveUniform
+// the only type we really need to deal with is "Array of basic type"
+// since the others will generate each entry
+fn get_uniform_names(input:&str, size:usize) -> Vec<String> {
+    //get the base before [N] as well as the value of N
+    if let Some(base) = 
+        //if it ends with [N]
+        input.rfind('[').and_then(|start| {
+            input.rfind(']').and_then(|end| {
+                if end == input.len()-1 {
+                    Some((start, end))
+                } else {
+                    None
+                }
+            })
+        })
+        .and_then(|(start, end)| {
+            let base = &input[..start];
+            let suffix = &input[start+1..end];
+            //and N is a valid number
+            suffix.parse::<usize>().ok().map(|n| {
+                if n != 0 {
+                    panic!("uniform array string index should be 0!");
+                }
+                base
+            })
+    }) {
+        let mut list = vec![base.to_string()]; 
+        for i in 0..size {
+            list.push(format!("{}[{}]", base, i))
+        }
+        list
+    } else {
+        //otherwise just return the input as-is
+        vec![input.to_string()]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_uniform_names() {
+        assert_eq!(get_uniform_names("hello", 2), ["hello"]);
+        assert_eq!(get_uniform_names("hello[0]", 4), ["hello", "hello[0]", "hello[1]", "hello[2]", "hello[3]"]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_invalid_uniform_names() {
+        assert_eq!(get_uniform_names("hello[4]", 4), ["hello", "hello[0]", "hello[1]", "hello[2]", "hello[3]"]);
     }
 }
