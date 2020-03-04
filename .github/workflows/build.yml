@@ -88,6 +88,9 @@ jobs:
       run: cargo make build --profile production
       working-directory: ./demo
 
+    - name: copy index to 404 for gh_pages routing 
+      run: cp ./demo/dist/index.html ./demo/dist/404.html
+
     - name: deploy to gh_pages
       uses: maxheld83/ghpages@master
       env:
