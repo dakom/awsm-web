@@ -121,15 +121,9 @@ pub fn start(
                     .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
                     .unwrap();
 
-                let color_values = color.values();
-                let color_values = (
-                    color_values[0] as f32,
-                    color_values[1] as f32,
-                    color_values[2] as f32,
-                    color_values[3] as f32,
-                );
+                let color_values = color.to_vec_f32();
                 webgl_renderer
-                    .upload_uniform_fvals_4("u_color", color_values)
+                    .upload_uniform_fvec_2("u_color", &color_values)
                     .unwrap();
 
                 //draw!
