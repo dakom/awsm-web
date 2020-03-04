@@ -1,0 +1,42 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "esnext",
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "experimentalDecorators": true,
+        "diagnostics": true,
+        "outDir": "dist",
+        "allowJs": true,
+        "lib": [
+            "esnext",
+            "es6",
+            "es5",
+            "dom"
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "*": [
+                "node_modules/@types/*",
+                "*"
+              ],
+            "@components/*": ["./components/*"],
+            "@styles/*": ["./components/styles/*"],
+            "@utils/*": ["./utils/*"],
+            "@settings/*": ["./settings/*"],
+            "@events/*": ["./events/*"],
+        },
+    },
+    "include": [
+        "./**/*.ts",
+        "../_static/**/*.ts",
+        "./**/*.css",
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "build",
+        "coverage",
+    ]
+}

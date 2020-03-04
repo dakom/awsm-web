@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "Library Crate",
+			"path": "crate"
+		},
+		{
+			"name": "Demo - Rust",
+			"path": "demo/rust"
+		},
+		{
+			"name": "Demo - Typescript",
+			"path": "demo/typescript"
+		},
+		{
+			"name": "Demo - Static",
+			"path": "demo/_static"
+		}
+	],
+	"settings": {}
+}

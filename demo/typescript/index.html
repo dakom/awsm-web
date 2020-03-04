@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>my_app</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="index.css">
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+        <script type="module">
+            //this allows using --target web via bindgen, and avoiding the need to go through webpack
+            //the callback will get the full wasm module - and can then interpret it by the imported typescript
+            //it will be available to the webpack code since the webpack js is set to "defer"
+            import init,* as wasm from './wasm/demo/pkg/my_demo.js';
+            export function load_wasm(cb) {
+                init().then(() => cb(wasm));
+            }
+            window.load_wasm = load_wasm;
+         </script>
+    </body>
+</html>

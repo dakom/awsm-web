@@ -1,0 +1,50 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "esnext",
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "diagnostics": true,
+        "experimentalDecorators": true,
+        "outDir": "dist",
+        "allowJs": true,
+        "lib": [
+            "esnext",
+            "es6",
+            "es5",
+            "dom"
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "*": [
+                "node_modules/@types/*",
+                "*"
+              ],
+            "@components/*": ["typescript/components/*"],
+            "@styles/*": ["typescript/components/styles/*"],
+            "@utils/*": ["typescript/utils/*"],
+            "@settings/*": ["typescript/settings/*"],
+            "@events/*": ["typescript/events/*"],
+        },
+    },
+    "include": [
+        "./typescript/**/*.ts",
+        "./_static/**/*.ts",
+        "./typescript/**/*.css",
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "build",
+        "coverage",
+        /*  needed so webpack won't try to compile it...
+            but just seems to work fine even though it's excluded?!?
+
+            if jest ever stops working just make a separate tsconfig-tests.json
+            also note that the tsconfig.json inside of the typescript folder does NOT ignore
+            since that's only used for the IDE anyway
+         */
+        "typescript/tests" 
+    ]
+}
