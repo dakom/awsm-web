@@ -67,6 +67,7 @@ pub fn start_router(window: web_sys::Window, document: web_sys::Document) -> Res
         "input-pointer-lock" => input::pointer_lock::start(window, document, body),
 
         "webgl-simple" => webgl::simple::start(window, document, body, webgl_version),
+        "webgl-simple-vec" => webgl::simple_vec::start(window, document, body, webgl_version),
         "webgl-texture" => webgl::texture::start(window, document, body, webgl_version),
         "webgl-multi-texture" => webgl::multi_texture::start(window, document, body, webgl_version),
         "webgl-blending" => webgl::blending::start(window, document, body, webgl_version),

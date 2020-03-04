@@ -23,6 +23,7 @@ lazy_static! {
         m.insert("input-pointer-lock", Menu {label: "Pointer Lock", source: "input/pointer_lock.rs"});
         //WebGl
         m.insert("webgl-simple", Menu {label: "Simple", source: "webgl/simple/simple.rs"});
+        m.insert("webgl-simple-vec", Menu {label: "SimpleVec", source: "webgl/simple_vec/simple_vec.rs"});
         m.insert("webgl-texture", Menu {label: "Texture", source: "webgl/texture/texture.rs"});
         m.insert("webgl-multi-texture", Menu {label: "Multi-Texture", source: "webgl/multi_texture/multi_texture.rs"});
         m.insert("webgl-blending", Menu {label: "Blending", source: "webgl/blending/blending.rs"});
@@ -71,6 +72,7 @@ pub fn build_menu(document: &Document) -> Result<web_sys::Node, JsValue> {
 
     let webgl_menu_common = vec![
         "webgl-simple",
+        "webgl-simple-vec",
         "webgl-texture",
         "webgl-multi-texture",
         "webgl-blending",
