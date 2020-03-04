@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
