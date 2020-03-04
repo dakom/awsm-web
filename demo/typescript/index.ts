@@ -11,5 +11,5 @@ import "./components";
 
 //see index.html
 (window as any).load_wasm((wasm:any) => {
-    wasm.init_app();
+    wasm.run();
 });
