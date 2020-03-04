@@ -43,7 +43,7 @@ lazy_static! {
 pub fn build_menu(document: &Document) -> Result<web_sys::Node, JsValue> {
     let container: Node = document.create_element("div")?.into();
 
-    append_home_button(&container, &document)?;
+    //append_home_button(&container, &document)?;
 
     append_menu(
         &container,
