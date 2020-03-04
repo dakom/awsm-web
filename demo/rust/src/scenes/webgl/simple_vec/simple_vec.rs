@@ -1,6 +1,6 @@
 use crate::scenes::webgl::common::*;
 use crate::start_webgl;
-use awsm_web::webgl::{BeginMode, ClearBufferMask, Id};
+use awsm_web::webgl::{BeginMode, ClearBufferMask, Id, GlToggle, BlendFactor};
 use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -95,6 +95,9 @@ pub fn start(
                     .activate_program(program_id.unwrap())
                     .unwrap();
 
+                webgl_renderer.toggle(GlToggle::Blend, true);
+                webgl_renderer.set_blend_func(BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha);
+
                 //Build our matrices (must cast to f32)
                 let scaling_mat = Matrix4::new_nonuniform_scaling(&Vector3::new(
                     area.width as f32,
@@ -122,10 +125,14 @@ pub fn start(
                     .unwrap();
 
                 let color_values = color.to_vec_f32();
+                //see the shader... we want to separately set 0,1 and 4,5
                 webgl_renderer
                     .upload_uniform_fvec_2("u_color", &color_values)
                     .unwrap();
 
+                webgl_renderer
+                    .upload_uniform_fvec_2("u_color[2]", &&color_values[2..])
+                    .unwrap();
                 //draw!
                 webgl_renderer.clear(&[
                     ClearBufferMask::ColorBufferBit,

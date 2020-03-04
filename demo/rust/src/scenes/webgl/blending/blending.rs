@@ -171,8 +171,7 @@ pub fn start(
                         .unwrap();
                     webgl_renderer.set_depth_mask(false);
                     webgl_renderer.toggle(GlToggle::Blend, true);
-                    webgl_renderer
-                        .set_blend_func(BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha);
+                    webgl_renderer.set_blend_func(BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha);
 
                     //enable texture
                     webgl_renderer
