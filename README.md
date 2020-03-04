@@ -17,14 +17,4 @@ The goal is to keep it very low level and low-cost abstraction that is _almost_ 
 
 ## Features
 
-The reason for splitting this crate out is so that it can be used independantly (and so it doesn't carry the semver burden of rapidly changing downstream crates). 
-
-Features are therefore heavily gated keep dependencies minimal. The default is for no features to be enabled, but the `all` feature will turn them all on (except those that are only meant for debugging like `debug_log`)
-
-Except for some logging mechanisms 
-
-```
-[dependencies.awsm_web]
-features = ["loaders"]
-default-features = false 
-```
+Features are heavily gated keep dependencies minimal. The default is for no features to be enabled, but the `all` feature will turn them all on (except those that are only meant for debugging like `debug_log`)
