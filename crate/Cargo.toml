@@ -98,6 +98,9 @@ webgl = [
     'web-sys/WebGlTexture',
     'web-sys/WebGlVertexArrayObject',
     'web-sys/WebGlActiveInfo',
+    'web-sys/WebGlRenderbuffer',
+    'web-sys/WebglDrawBuffers',
+    'web-sys/WebGlFramebuffer',
 
     # webgl extensions
     'web-sys/OesVertexArrayObject', 

@@ -33,6 +33,7 @@ lazy_static! {
         m.insert("webgl-ubos", Menu {label: "Uniform Buffers", source: "webgl/ubos/ubos.rs"});
         m.insert("webgl-texture_3d", Menu {label: "Texture 3D", source: "webgl/texture_3d/texture_3d.rs"});
         m.insert("webgl-texture_cube", Menu {label: "Texture Cubemap", source: "webgl/texture_cube/texture_cube.rs"});
+        m.insert("webgl-draw-buffers", Menu {label: "Draw Buffers", source: "webgl/draw_buffers/draw_buffers.rs"});
         //Audio
         m.insert("audio-player", Menu {label: "Player", source: "audio/player.rs"});
 
@@ -80,6 +81,7 @@ pub fn build_menu(document: &Document) -> Result<web_sys::Node, JsValue> {
         "webgl-instancing",
         "webgl-vaos",
         "webgl-texture_cube",
+        "webgl-draw-buffers",
     ];
 
     let webgl_menu_1 = webgl_menu_common.clone();
@@ -106,6 +108,7 @@ pub fn build_menu(document: &Document) -> Result<web_sys::Node, JsValue> {
     Ok(container)
 }
 
+/*
 fn append_home_button(container: &Node, document: &Document) -> Result<(), JsValue> {
     let item: HtmlElement = document.create_element("div")?.dyn_into()?;
     item.set_class_name("button");
@@ -121,6 +124,7 @@ fn append_home_button(container: &Node, document: &Document) -> Result<(), JsVal
 
     Ok(())
 }
+*/
 fn append_menu(
     container: &Node,
     document: &Document,

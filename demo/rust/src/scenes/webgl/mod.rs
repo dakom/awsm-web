@@ -3,6 +3,7 @@ pub mod common;
 pub mod elements;
 pub mod instancing;
 pub mod multi_texture;
+pub mod draw_buffers;
 pub mod simple;
 pub mod simple_vec;
 pub mod texture;
