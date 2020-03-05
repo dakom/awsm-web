@@ -5,6 +5,9 @@ pkg
 **/*.rs.bk
 crate/Cargo.lock
 
+# vscode
+.vscode
+
 # Netlify
 .netlify
 
