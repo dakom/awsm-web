@@ -74,24 +74,16 @@ macro_rules! impl_renderer {
 
 impl_renderer! {
     WebGlRenderingContext{
-        pub fn register_extension_vertex_array(&mut self) -> Result<&OesVertexArrayObject, Error> {
-            self.register_extension("OES_vertex_array_object")
-                .map(|ext| ext.unchecked_ref::<OesVertexArrayObject>())
-        }
-        fn _get_extension_vertex_array(&self) -> Result<&OesVertexArrayObject, Error> {
-            self.get_extension("OES_vertex_array_object")
-                .map(|ext| ext.unchecked_ref::<OesVertexArrayObject>())
-        }
 
         fn _bind_vertex_array(&self, id:Option<Id>, vao:Option<&WebGlVertexArrayObject>) -> Result<(), Error> {
-            let ext = self._get_extension_vertex_array()?;
+            let ext = self.get_extension_vertex_array()?;
             ext.bind_vertex_array_oes(vao);
             self.current_vao_id.set(id);
             Ok(())
         }
 
         pub fn create_vertex_array(&mut self) -> Result<Id, Error> {
-            let ext = self._get_extension_vertex_array()?;
+            let ext = self.get_extension_vertex_array()?;
             let vao = ext.create_vertex_array_oes().ok_or(Error::from(NativeError::VertexArrayCreate))?;
             let id = self.vao_lookup.insert(vao);
             Ok(id)

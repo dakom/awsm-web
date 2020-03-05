@@ -2,10 +2,11 @@ use super::funcs::FuncSettings;
 use super::misc::MiscSettings;
 use super::toggles::ToggleFlags;
 use super::{ BufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon };
-use crate::errors::Error;
+use crate::errors::{Error, NativeError};
 use beach_map::{BeachMap, DefaultVersion};
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
+use std::any::Any;
 use web_sys::{HtmlCanvasElement, WebGlBuffer, WebGlVertexArrayObject};
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
@@ -55,7 +56,23 @@ pub struct WebGlRenderer<T: WebGlCommon> {
     pub(super) misc_settings: MiscSettings,
 }
 
-impl<T: WebGlCommon> WebGlRenderer<T> {
+impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
+
+    pub fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
+    pub fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    pub fn as_webgl1(&mut self) -> Result<&mut WebGl1Renderer, Error> {
+        self.as_any_mut().downcast_mut::<WebGl1Renderer>().ok_or(Error::from(NativeError::WebGlVersion1))
+    }
+    pub fn as_webgl2(&mut self) -> Result<&mut WebGl2Renderer, Error> {
+        self.as_any_mut().downcast_mut::<WebGl2Renderer>().ok_or(Error::from(NativeError::WebGlVersion2))
+    }
+
     pub fn new(gl: T) -> Result<Self, Error> {
         let canvas = gl.awsm_get_canvas()?;
 

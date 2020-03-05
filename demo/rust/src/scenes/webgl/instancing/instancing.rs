@@ -62,6 +62,13 @@ pub fn start(
 
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
 
+
+                if let Ok(webgl_renderer) = webgl_renderer.as_webgl1() {
+                    webgl_renderer
+                        .register_extension_instanced_arrays()
+                        .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
+                }
+
                 let program_id = webgl_renderer.compile_program(
                     include_str!("shaders/instancing-vertex.glsl"),
                     include_str!("shaders/instancing-fragment.glsl"),

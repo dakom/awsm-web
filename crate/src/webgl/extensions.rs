@@ -2,6 +2,8 @@ use super::{WebGlCommon, WebGlRenderer};
 use crate::errors::{Error, NativeError};
 use wasm_bindgen::JsCast;
 use web_sys::AngleInstancedArrays;
+use web_sys::OesVertexArrayObject;
+use web_sys::WebGlVertexArrayObject;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 pub trait PartialWebGlExtensions {
@@ -48,5 +50,13 @@ impl WebGlRenderer<WebGlRenderingContext> {
     pub fn get_extension_instanced_arrays(&self) -> Result<&AngleInstancedArrays, Error> {
         self.get_extension("ANGLE_instanced_arrays")
             .map(|ext| ext.unchecked_ref::<AngleInstancedArrays>())
+    }
+    pub fn register_extension_vertex_array(&mut self) -> Result<&OesVertexArrayObject, Error> {
+        self.register_extension("OES_vertex_array_object")
+            .map(|ext| ext.unchecked_ref::<OesVertexArrayObject>())
+    }
+    pub fn get_extension_vertex_array(&self) -> Result<&OesVertexArrayObject, Error> {
+        self.get_extension("OES_vertex_array_object")
+            .map(|ext| ext.unchecked_ref::<OesVertexArrayObject>())
     }
 }

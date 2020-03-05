@@ -73,17 +73,7 @@ where
     let mut webgl_renderer: WebGl1Renderer =
         awsm_web::webgl::WebGlRenderer::new(gl).map_err(|err| JsValue::from_str(&err.to_string()))?;
 
-    webgl_renderer
-        .register_extension_instanced_arrays()
-        .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
 
-    webgl_renderer
-        .register_extension_vertex_array()
-        .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
-
-    webgl_renderer
-        .register_extension_vertex_array()
-        .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
 
     let webgl_renderer = Rc::new(RefCell::new(webgl_renderer));
 

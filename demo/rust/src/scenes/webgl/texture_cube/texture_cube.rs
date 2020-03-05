@@ -57,7 +57,11 @@ pub fn start(
 
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
 
-                if let WebGlVersion::One = version {}
+                if let Ok(webgl_renderer) = webgl_renderer.as_webgl1() {
+                    webgl_renderer
+                        .register_extension_vertex_array()
+                        .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
+                }
 
                 let program_id = webgl_renderer.compile_program(
                     include_str!("shaders/texture_cube-vertex.glsl"),

@@ -20,6 +20,7 @@ use super::viewport::PartialWebGlViewport;
 use crate::errors::{Error, NativeError};
 use serde::Serialize;
 
+
 pub trait PartialWebGlVersion {
     fn awsm_get_version(&self) -> WebGlVersion;
 }
@@ -156,7 +157,7 @@ pub fn get_webgl_context_1(
 ) -> Result<WebGlRenderingContext, Error> {
 
     #[cfg(feature = "debug_log")]
-    log::info!("Webgl version 1");
+    log::info!("Trying to get Webgl version 1 context");
 
     let context = match opts {
         Some(opts) => canvas.get_context_with_context_options("webgl", &opts.to_js_value()),
@@ -172,12 +173,13 @@ pub fn get_webgl_context_1(
         })
         .map_err(|_| Error::Native(NativeError::WebGlContext))
 }
+
 pub fn get_webgl_context_2(
     canvas: &HtmlCanvasElement,
     opts: Option<&WebGlContextOptions>,
 ) -> Result<WebGl2RenderingContext, Error> {
     #[cfg(feature = "debug_log")]
-    log::info!("Webgl version 2");
+    log::info!("Trying to get Webgl version 2 context");
 
     let context = match opts {
         Some(opts) => canvas.get_context_with_context_options("webgl2", &opts.to_js_value()),
