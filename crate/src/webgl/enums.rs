@@ -404,6 +404,62 @@ pub enum ProgramQuery {
     TransformFeedbackVaryings = 0x8C83,
     ActiveUniformBlocks = 0x8A36,
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum RenderBufferFormat {
+    Rgba4 = 0x8056,
+    Rgb4a1 = 0x8057,
+    Rgb565 = 0x8D62,
+    DepthComponent16 = 0x81A5,
+    StencilIndex8 = 0x8D48,
+    DepthStencil = 0x84F9,
+
+    //WebGl2 only
+    R8 = 0x8229,
+    R8ui = 0x8232,
+    R8i= 0x8231,
+    R16ui= 0x8234,
+    R16i= 0x8233,
+    R32ui= 0x8236,
+    R32i= 0x8235,
+    Rg8= 0x822B,
+    Rg8ui= 0x8238,
+    Rg8i= 0x8237,
+    Rg16ui= 0x823A,
+    Rg16i= 0x8239,
+    Rg32ui= 0x823C,
+    Rg32i= 0x823B,
+    Rgb8=0x8051,
+    Rgba8= 0x8058,
+    Rgb10_a2= 0x8059,
+    Rgba8ui= 0x8D7C,
+    Rba8i= 0x8D8F,
+    Rgb10_a2ui = 0x906F,
+    Rgba16ui= 0x8D76,
+    Rgba16i= 0x8D89,
+    Rgba32i= 0x8D82,
+    Rgba32ui= 0x8D70,
+    DepthComponent24= 0x81A6,
+    DepthComponent32f= 0x8CAC,
+    Depth24Stencil8= 0x88F0,
+    Depth32fStencil8= 0x8CAD,
+    //WEBGL_color_buffer_float extension
+    Rgba32f = 0x8814,
+    Rgb32f = 0x8815,
+    //if *also* Webgl2
+    R16f = 0x822D,
+    Rg16f = 0x822F,
+    Rgba16f = 0x881A,
+    R32f = 0x822E,
+    Rg32f = 0x8230,
+    R11fG11fB10f = 0x8C3A,
+    //sRGB Extension OR Webgl2
+    Srgb8Alpha8 =0x8C43,
+
+}
+
+
 /*
  * NOTE - all the below are copy/pasted from the WebIDL
  * If they're implemented above, they are DELETED below!!
@@ -614,15 +670,7 @@ ONE_MINUS_DST_ALPHA            = 0x0305;
     const GLenum HIGH_INT                       = 0x8DF5;
 
     * Framebuffer Object. *
-    const GLenum FRAMEBUFFER                    = 0x8D40;
-    const GLenum RENDERBUFFER                   = 0x8D41;
 
-    const GLenum RGBA4                          = 0x8056;
-    const GLenum RGB5_A1                        = 0x8057;
-    const GLenum RGB565                         = 0x8D62;
-    const GLenum DEPTH_COMPONENT16              = 0x81A5;
-    const GLenum STENCIL_INDEX8                 = 0x8D48;
-    const GLenum DEPTH_STENCIL                  = 0x84F9;
 
     const GLenum RENDERBUFFER_WIDTH             = 0x8D42;
     const GLenum RENDERBUFFER_HEIGHT            = 0x8D43;

@@ -17,6 +17,8 @@ use super::textures::PartialWebGlTextures;
 use super::toggles::PartialWebGlToggle;
 use super::uniforms::PartialWebGlUniforms;
 use super::viewport::PartialWebGlViewport;
+use super::framebuffers::PartialWebGlFrameBuffer;
+use super::renderbuffers::{PartialWebGlRenderBuffer, PartialWebGl2RenderBuffer};
 use crate::errors::{Error, NativeError};
 use serde::Serialize;
 
@@ -71,12 +73,18 @@ pub trait WebGlCommon:
     + PartialWebGlToggle
     + PartialWebGlUniforms
     + PartialWebGlViewport
+    + PartialWebGlFrameBuffer
+    + PartialWebGlRenderBuffer
 {
 }
+
+pub trait WebGl2Extra: PartialWebGl2RenderBuffer {}
 
 impl WebGlCommon for WebGlRenderingContext {}
 
 impl WebGlCommon for WebGl2RenderingContext {}
+
+impl WebGl2Extra for WebGl2RenderingContext {}
 
 /* Creators */
 pub struct WebGlContextOptions {

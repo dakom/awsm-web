@@ -1,13 +1,13 @@
 use super::funcs::FuncSettings;
 use super::misc::MiscSettings;
 use super::toggles::ToggleFlags;
-use super::{ BufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon };
+use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon };
 use crate::errors::{Error, NativeError};
 use beach_map::{BeachMap, DefaultVersion};
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 use std::any::Any;
-use web_sys::{HtmlCanvasElement, WebGlBuffer, WebGlVertexArrayObject};
+use web_sys::{HtmlCanvasElement, WebGlBuffer, WebGlVertexArrayObject, WebGlRenderbuffer, WebGlFramebuffer};
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 pub type WebGl1Renderer = WebGlRenderer<WebGlRenderingContext>;
@@ -33,6 +33,13 @@ pub struct WebGlRenderer<T: WebGlCommon> {
 
     pub(super) current_program_id: Option<Id>,
     pub(super) program_lookup: BeachMap<DefaultVersion, ProgramInfo>,
+
+    pub(super) current_framebuffer_id: Cell<Option<Id>>,
+    pub(super) current_framebuffer_target: Cell<Option<FrameBufferTarget>>,
+    pub(super) framebuffer_lookup: BeachMap<DefaultVersion, WebGlFramebuffer>,
+
+    pub(super) current_renderbuffer_id: Cell<Option<Id>>,
+    pub(super) renderbuffer_lookup: BeachMap<DefaultVersion, WebGlRenderbuffer>,
 
     pub(super) current_buffer_id: Cell<Option<Id>>,
     pub(super) current_buffer_target: Cell<Option<BufferTarget>>,
@@ -97,6 +104,13 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
 
             current_program_id: None,
             program_lookup: BeachMap::default(),
+
+            current_framebuffer_id: Cell::new(None),
+            current_framebuffer_target: Cell::new(None),
+            framebuffer_lookup: BeachMap::default(),
+            
+            current_renderbuffer_id: Cell::new(None),
+            renderbuffer_lookup: BeachMap::default(),
 
             current_buffer_id: Cell::new(None),
             current_buffer_target: Cell::new(None),

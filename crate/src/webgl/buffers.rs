@@ -45,6 +45,7 @@ pub trait PartialWebGlBuffer {
     fn awsm_bind_buffer(&self, target: BufferTarget, buffer: &WebGlBuffer);
     fn awsm_release_buffer(&self, target: BufferTarget);
     fn awsm_create_buffer(&self) -> Result<WebGlBuffer, Error>;
+    fn awsm_delete_buffer(&self, buffer:&WebGlBuffer);
 }
 
 macro_rules! impl_context {
@@ -72,6 +73,10 @@ macro_rules! impl_context {
 
             fn awsm_create_buffer(&self) -> Result<WebGlBuffer, Error> {
                 self.create_buffer().ok_or(Error::from(NativeError::NoCreateBuffer))
+            }
+
+            fn awsm_delete_buffer(&self, buffer: &WebGlBuffer) {
+                self.delete_buffer(Some(buffer));
             }
 
             $($defs)*
@@ -287,6 +292,26 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         Ok(id)
     }
 
+    pub fn delete_buffer(&self, buffer_id: Id) -> Result<(), Error> {
+        if Some(buffer_id) == self.current_buffer_id.get() {
+            if let Some(target) = self.current_buffer_target.get() {
+                self.gl.awsm_release_buffer(target);
+            }
+            self.current_buffer_id.set(None);
+            self.current_buffer_target.set(None);
+            self.current_buffer_index.set(None);
+        }
+
+        let buffer = self
+            .buffer_lookup
+            .get(buffer_id)
+            .ok_or(Error::from(NativeError::MissingBuffer))?;
+
+        self.gl.awsm_delete_buffer(&buffer);
+
+        Ok(())
+    }
+
     //only pub within the module - used elsewhere like attributes
     pub(super) fn _bind_buffer_nocheck(
         &self,
@@ -300,7 +325,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         let buffer = self
             .buffer_lookup
             .get(buffer_id)
-            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+            .ok_or(Error::from(NativeError::MissingBuffer))?;
         self.gl.awsm_bind_buffer(target, &buffer);
 
         Ok(())
