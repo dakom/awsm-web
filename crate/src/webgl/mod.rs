@@ -17,6 +17,7 @@ mod uniform_buffers;
 mod uniforms;
 mod vertex_arrays;
 mod viewport;
+mod framebuffers;
 /*
  * (RE)EXPORTS
  */
@@ -31,3 +32,4 @@ pub use self::textures::*;
 pub use self::uniform_buffers::*;
 pub use self::uniforms::*;
 pub use self::vertex_arrays::*;
+pub use self::framebuffers::*;

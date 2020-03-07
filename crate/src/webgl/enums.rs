@@ -26,6 +26,17 @@ pub enum BufferTarget {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
+pub enum FrameBufferTarget {
+    FrameBuffer = 0x8D40,
+    //webgl 2 only
+    DrawFrameBuffer = 0x8CA9,
+    ReadFrameBuffer = 0x8CA8,
+}
+
+
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
 pub enum BufferUsage {
     StreamDraw = 0x88E0,
     StaticDraw = 0x88E4,

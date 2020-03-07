@@ -101,6 +101,7 @@ webgl = [
     'web-sys/WebGlRenderbuffer',
     'web-sys/WebglDrawBuffers',
     'web-sys/WebGlFramebuffer',
+    'web-sys/WebGlRenderbuffer',
 
     # webgl extensions
     'web-sys/OesVertexArrayObject', 
