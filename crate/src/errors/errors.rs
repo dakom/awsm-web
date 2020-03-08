@@ -55,6 +55,7 @@ pub enum NativeError {
     TextureMissingCubeFace,
     NoTextureTarget,
     Internal,
+    FrameBuffer(Option<String>),
 }
 
 impl Error {
@@ -157,6 +158,7 @@ impl NativeError {
             NativeError::TextureCubeFaceNotCube => "texture cube face is set but not cube target",
             NativeError::TextureMissingCubeFace => "texture cube face missing for cube target",
             NativeError::Internal => "internal error",
+            NativeError::FrameBuffer(_optional_desc) => "framebuffer error",
         }
     }
     pub fn to_string(self: &Self) -> String {
@@ -184,6 +186,10 @@ impl NativeError {
             NativeError::MissingTextureSampler(optional_name) => match optional_name {
                 None => self.default_str().to_string(),
                 Some(name) => format!("couldn't get texture sampler named {}", name.as_str()),
+            },
+            NativeError::FrameBuffer(optional_desc) => match optional_desc{
+                None => self.default_str().to_string(),
+                Some(desc) => format!("framebuffer error: {}", desc.as_str()),
             },
             _ => self.default_str().to_string(),
         }

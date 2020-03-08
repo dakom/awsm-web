@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 pub enum WebGlVersion {
     One,
     Two,
@@ -33,7 +35,49 @@ pub enum FrameBufferTarget {
     ReadFrameBuffer = 0x8CA8,
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum FrameBufferStatus {
+    Complete = 0x8CD5,
+    IncompleteAttachment = 0x8CD6,
+    IncompleteMissingAttachment = 0x8CD7,
+    IncompleteDimensions = 0x8CD9,
+    Unsupported = 0x8CDD,
 
+    //only webgl2
+    IncompleteMultisample = 0x8D56,
+    Samples = 0x8CAB,
+
+    //only OVR_multiview2
+    IncompleteViewTargetsOvr = 0x9633,
+}
+
+
+impl TryFrom<u32> for FrameBufferStatus {
+    type Error = &'static str;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        if value == (FrameBufferStatus::Complete as u32) {
+            Ok(FrameBufferStatus::Complete)
+        } else if value == (FrameBufferStatus::IncompleteAttachment as u32) {
+            Ok(FrameBufferStatus::IncompleteAttachment)
+        } else if value == (FrameBufferStatus::IncompleteMissingAttachment as u32) {
+            Ok(FrameBufferStatus::IncompleteMissingAttachment)
+        } else if value == (FrameBufferStatus::IncompleteDimensions as u32) {
+            Ok(FrameBufferStatus::IncompleteDimensions)
+        } else if value == (FrameBufferStatus::Unsupported as u32) {
+            Ok(FrameBufferStatus::Unsupported)
+        } else if value == (FrameBufferStatus::IncompleteMultisample as u32) {
+            Ok(FrameBufferStatus::IncompleteMultisample)
+        } else if value == (FrameBufferStatus::Samples as u32) {
+            Ok(FrameBufferStatus::Samples)
+        } else if value == (FrameBufferStatus::IncompleteViewTargetsOvr as u32) {
+            Ok(FrameBufferStatus::IncompleteViewTargetsOvr)
+        } else {
+            Err("bad value for FrameBufferStatus")
+        }
+    }
+}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]

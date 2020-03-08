@@ -1,8 +1,9 @@
-use super::{BufferTarget, BufferUsage, Id, WebGlCommon, WebGlRenderer, FrameBufferTarget};
+use super::{BufferTarget, BufferUsage, Id, WebGlCommon, WebGlRenderer, FrameBufferTarget, FrameBufferStatus};
 use crate::errors::{Error, NativeError};
 use std::marker::PhantomData;
 use web_sys::WebGlBuffer;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext, WebGlFramebuffer};
+use std::convert::TryInto;
 
 pub trait PartialWebGlFrameBuffer {
     fn awsm_bind_framebuffer(&self, target: FrameBufferTarget, buffer: &WebGlFramebuffer);
@@ -36,8 +37,13 @@ macro_rules! impl_context {
             }
 
             fn awsm_check_framebuffer_status(&self, target:FrameBufferTarget) -> Result<(), Error> {
-                //TODO!
-                self.check_framebuffer(target as u32) === 
+                let status:FrameBufferStatus = self.check_framebuffer_status(target as u32).try_into()?;
+
+                match status {
+                    FrameBufferStatus::Complete => Ok(()),
+                    //TODO - could supply specific FrameBuffer error strings
+                    _ => Err(NativeError::FrameBuffer(None).into())
+                }
             }
             $($defs)*
         })+
