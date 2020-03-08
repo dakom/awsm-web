@@ -156,9 +156,6 @@ macro_rules! impl_context {
                 self.uniform4i(Some(loc), x, y, z, w)
             }
 
-             /* TODO - followup with https://github.com/rustwasm/wasm-bindgen/pull/1539
-             * When the i32 slices don't need mut anymore - get rid of making the mut clone
-             */
             fn awsm_uniform1iv_with_i32_array(&self, loc: &WebGlUniformLocation, data: &[i32]) {
                 self.uniform1iv_with_i32_array(Some(loc), data)
             }
@@ -215,24 +212,17 @@ impl PartialWebGl2Uniforms for WebGl2RenderingContext {
         self.uniform4ui(Some(loc), x, y, z, w)
     }
 
-    /* TODO - followup with https://github.com/rustwasm/wasm-bindgen/pull/1639
-     * When the u32 slices don't need mut anymore - get rid of making the mut clone
-     */
     fn awsm_uniform1uiv_with_u32_array(&self, loc: &WebGlUniformLocation, data: &[u32]) {
-        let mut values = data.to_owned();
-        self.uniform1uiv_with_u32_array(Some(loc), &mut values)
+        self.uniform1uiv_with_u32_array(Some(loc), data)
     }
     fn awsm_uniform2uiv_with_u32_array(&self, loc: &WebGlUniformLocation, data: &[u32]) {
-        let mut values = data.to_owned();
-        self.uniform2uiv_with_u32_array(Some(loc), &mut values)
+        self.uniform2uiv_with_u32_array(Some(loc), data)
     }
     fn awsm_uniform3uiv_with_u32_array(&self, loc: &WebGlUniformLocation, data: &[u32]) {
-        let mut values = data.to_owned();
-        self.uniform3uiv_with_u32_array(Some(loc), &mut values)
+        self.uniform3uiv_with_u32_array(Some(loc), data)
     }
     fn awsm_uniform4uiv_with_u32_array(&self, loc: &WebGlUniformLocation, data: &[u32]) {
-        let mut values = data.to_owned();
-        self.uniform4uiv_with_u32_array(Some(loc), &mut values)
+        self.uniform4uiv_with_u32_array(Some(loc), data)
     }
 }
 /*
