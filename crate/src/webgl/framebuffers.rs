@@ -10,6 +10,7 @@ pub trait PartialWebGlFrameBuffer {
     fn awsm_is_framebuffer(&self, buffer: &WebGlFramebuffer) -> bool;
     fn awsm_create_framebuffer(&self) -> Result<WebGlFramebuffer, Error>;
     fn awsm_release_framebuffer(&self, target: FrameBufferTarget);
+    fn awsm_check_framebuffer_status(&self, target:FrameBufferTarget) -> Result<(), Error>;
 }
 
 macro_rules! impl_context {
@@ -34,6 +35,10 @@ macro_rules! impl_context {
                 self.bind_framebuffer(target as u32, None);
             }
 
+            fn awsm_check_framebuffer_status(&self, target:FrameBufferTarget) -> Result<(), Error> {
+                //TODO!
+                self.check_framebuffer(target as u32) === 
+            }
             $($defs)*
         })+
     };
