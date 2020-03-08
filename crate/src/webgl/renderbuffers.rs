@@ -12,6 +12,7 @@ pub trait PartialWebGlRenderBuffer {
     fn awsm_renderbuffer_storage(&self, format: RenderBufferFormat, width: u32, height: u32);
     fn awsm_release_renderbuffer(&self);
 }
+
 pub trait PartialWebGl2RenderBuffer {
     fn awsm_renderbuffer_storage_multisample(&self, samples: u32, format: RenderBufferFormat, width:u32, height: u32);
 }
@@ -121,5 +122,15 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         }
     }
 
-    //TODO: storage, multi-storage
+    fn renderbuffer_storage(&self, format: RenderBufferFormat, width: u32, height: u32) {
+        self.gl.awsm_renderbuffer_storage(format, width, height);
+
+    }
+}
+
+
+impl WebGlRenderer<WebGl2RenderingContext> {
+    fn renderbuffer_storage_multisample(&self, samples: u32, format: RenderBufferFormat, width:u32, height: u32) {
+        self.gl.awsm_renderbuffer_storage_multisample(samples, format, width, height);
+    }
 }
