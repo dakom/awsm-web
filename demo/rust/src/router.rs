@@ -71,6 +71,8 @@ pub fn start_router(window: web_sys::Window, document: web_sys::Document) -> Res
         "webgl-texture" => webgl::texture::start(window, document, body, webgl_version),
         "webgl-multi-texture" => webgl::multi_texture::start(window, document, body, webgl_version),
         "webgl-draw-buffers" => webgl::draw_buffers::start(window, document, body, webgl_version),
+        "webgl-frame-buffers" => webgl::frame_buffers::start(window, document, body, webgl_version),
+        "webgl-render-buffers-multisample" => webgl::render_buffers_multisample::start(window, document, body, webgl_version),
         "webgl-blending" => webgl::blending::start(window, document, body, webgl_version),
         "webgl-elements" => webgl::elements::start(window, document, body, webgl_version),
         "webgl-instancing" => webgl::instancing::start(window, document, body, webgl_version),

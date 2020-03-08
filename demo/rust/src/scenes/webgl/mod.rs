@@ -4,6 +4,8 @@ pub mod elements;
 pub mod instancing;
 pub mod multi_texture;
 pub mod draw_buffers;
+pub mod frame_buffers;
+pub mod render_buffers_multisample;
 pub mod simple;
 pub mod simple_vec;
 pub mod texture;

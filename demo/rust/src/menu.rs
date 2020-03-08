@@ -34,6 +34,8 @@ lazy_static! {
         m.insert("webgl-texture_3d", Menu {label: "Texture 3D", source: "webgl/texture_3d/texture_3d.rs"});
         m.insert("webgl-texture_cube", Menu {label: "Texture Cubemap", source: "webgl/texture_cube/texture_cube.rs"});
         m.insert("webgl-draw-buffers", Menu {label: "Draw Buffers", source: "webgl/draw_buffers/draw_buffers.rs"});
+        m.insert("webgl-frame-buffers", Menu {label: "Frame Buffers", source: "webgl/frame_buffers/frame_buffers.rs"});
+        m.insert("webgl-render-buffers-multisample", Menu {label: "Render Buffers (multisample)", source: "webgl/render_buffers_multisample/render_buffers_multisample.rs"});
         //Audio
         m.insert("audio-player", Menu {label: "Player", source: "audio/player.rs"});
 
@@ -82,11 +84,12 @@ pub fn build_menu(document: &Document) -> Result<web_sys::Node, JsValue> {
         "webgl-vaos",
         "webgl-texture_cube",
         "webgl-draw-buffers",
+        "webgl-frame-buffers",
     ];
 
     let webgl_menu_1 = webgl_menu_common.clone();
     let mut webgl_menu_2 = webgl_menu_common.clone();
-    webgl_menu_2.extend(vec!["webgl-ubos", "webgl-texture_3d"]);
+    webgl_menu_2.extend(vec!["webgl-ubos", "webgl-texture_3d", "webgl-render-buffers-multisample"]);
 
     append_menu(
         &container,
