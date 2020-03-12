@@ -17,13 +17,13 @@ pub trait PartialWebGl2RenderBuffer {
     fn awsm_renderbuffer_storage_multisample(&self, samples: u32, format: RenderBufferFormat, width:u32, height: u32);
 }
 //there is only one target supported by webgl
-const TARGET:u32 = 0x8D41;
+pub(super) const RENDERBUFFER_TARGET:u32 = 0x8D41;
 
 macro_rules! impl_context {
     ($($type:ty { $($defs:tt)* })+) => {
         $(impl PartialWebGlRenderBuffer for $type {
             fn awsm_bind_renderbuffer(&self, buffer:&WebGlRenderbuffer) {
-                self.bind_renderbuffer(TARGET, Some(buffer));
+                self.bind_renderbuffer(RENDERBUFFER_TARGET, Some(buffer));
             }
 
             fn awsm_delete_renderbuffer(&self, buffer:&WebGlRenderbuffer) {
@@ -38,11 +38,11 @@ macro_rules! impl_context {
                 self.create_renderbuffer().ok_or(Error::from(NativeError::NoCreateRenderBuffer))
             }
             fn awsm_renderbuffer_storage(&self, format: RenderBufferFormat, width: u32, height: u32) {
-                self.renderbuffer_storage(TARGET, format as u32, width as i32, height as i32);
+                self.renderbuffer_storage(RENDERBUFFER_TARGET, format as u32, width as i32, height as i32);
             }
 
             fn awsm_release_renderbuffer(&self) {
-                self.bind_renderbuffer(TARGET, None);
+                self.bind_renderbuffer(RENDERBUFFER_TARGET, None);
             }
             $($defs)*
         })+
@@ -58,7 +58,7 @@ impl_context! {
 
 impl PartialWebGl2RenderBuffer for WebGl2RenderingContext {
         fn awsm_renderbuffer_storage_multisample(&self, samples: u32, format: RenderBufferFormat, width:u32, height: u32) {
-        self.renderbuffer_storage_multisample(TARGET, samples as i32, format as u32, width as i32, height as i32);
+        self.renderbuffer_storage_multisample(RENDERBUFFER_TARGET, samples as i32, format as u32, width as i32, height as i32);
     } 
 }
 
@@ -69,6 +69,13 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         let id = self.renderbuffer_lookup.insert(renderbuffer);
 
         Ok(id)
+    }
+
+    pub fn get_renderbuffer(&self, renderbuffer_id: Id) -> Result<&WebGlRenderbuffer, Error> {
+        self
+            .renderbuffer_lookup
+            .get(renderbuffer_id)
+            .ok_or(Error::from(NativeError::MissingRenderBuffer))
     }
 
     pub fn delete_renderbuffer(&self, renderbuffer_id: Id) -> Result<(), Error> {
@@ -122,15 +129,18 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         }
     }
 
-    fn renderbuffer_storage(&self, format: RenderBufferFormat, width: u32, height: u32) {
+    pub fn assign_renderbuffer_storage(&self, renderbuffer_id: Id, format: RenderBufferFormat, width: u32, height: u32) -> Result<(), Error> {
+        self.bind_renderbuffer(renderbuffer_id)?;
         self.gl.awsm_renderbuffer_storage(format, width, height);
-
+        Ok(())
     }
 }
 
 
 impl WebGlRenderer<WebGl2RenderingContext> {
-    fn renderbuffer_storage_multisample(&self, samples: u32, format: RenderBufferFormat, width:u32, height: u32) {
+    fn assign_renderbuffer_storage_multisample(&self, renderbuffer_id: Id, samples: u32, format: RenderBufferFormat, width:u32, height: u32) -> Result<(), Error> {
+        self.bind_renderbuffer(renderbuffer_id)?;
         self.gl.awsm_renderbuffer_storage_multisample(samples, format, width, height);
+        Ok(())
     }
 }

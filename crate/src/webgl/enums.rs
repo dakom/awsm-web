@@ -52,6 +52,45 @@ pub enum FrameBufferStatus {
     IncompleteViewTargetsOvr = 0x9633,
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum FrameBufferAttachment {
+    Color0 = 0x8CE0,
+    Depth = 0x8D00,
+    Stencil = 0x8D20,
+
+    //only webgl2 or WEBGL_depth_texture extension
+    DepthStencil = 0x821A,
+
+    //only webgl2 or WEBGL_draw_buffers extension
+    Color1 = 0x8CE1,
+    Color2 = 0x8CE2,
+    Color3 = 0x8CE3,
+    Color4 = 0x8CE4,
+    Color5 = 0x8CE5,
+    Color6 = 0x8CE6,
+    Color7 = 0x8CE7,
+    Color8 = 0x8CE8,
+    Color9 = 0x8CE9,
+    Color10 = 0x8CEA,
+    Color11 = 0x8CEB,
+    Color12 = 0x8CEC,
+    Color13 = 0x8CED,
+    Color14 = 0x8CEE,
+    Color15 = 0x8CEF,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum FrameBufferTextureTarget {
+    Texture2d = 0x0DE1,
+    CubeFacePositiveX = 0x8515,
+    CubeFaceNegativeX = 0x8516,
+    CubeFacePositiveY = 0x8517,
+    CubeFaceNegativeY = 0x8518,
+    CubeFacePositiveZ = 0x8519,
+    CubeFaceNegativeZ = 0x851A,
+}
 
 impl TryFrom<u32> for FrameBufferStatus {
     type Error = &'static str;
@@ -171,6 +210,7 @@ pub enum TextureCubeFace {
     PositiveZ = 0x8519,
     NegativeZ = 0x851A,
 }
+
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]

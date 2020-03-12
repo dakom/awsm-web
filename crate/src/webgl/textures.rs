@@ -11,6 +11,7 @@ use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 pub enum WebGlTextureSource<'a> {
     ArrayBufferView(&'a js_sys::Object, u32, u32, u32), //width, height, depth
+    EmptyBufferView(u32, u32, u32), //width, height, depth
     ImageBitmap(&'a ImageBitmap),
     ImageData(&'a ImageData),
     ImageElement(&'a HtmlImageElement),
@@ -293,6 +294,42 @@ impl_context! {
                         }
                     }
                 },
+                WebGlTextureSource::EmptyBufferView(width, height, _depth) => {
+                    match bind_target {
+                        TextureTarget::Texture2d => {
+                            self.tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_array_buffer_view(
+                                bind_u32,
+                                mip_level,
+                                internal_format,
+                                *width as i32,
+                                *height as i32,
+                                0,
+                                data_format,
+                                data_type,
+                                None, 
+                                ).map_err(|err| err.into())
+                        },
+                        TextureTarget::Texture3d => {
+                            Err(Error::from(NativeError::WebGl1Texture3d))
+                        },
+                        TextureTarget::Array2d => {
+                            Err(Error::from(NativeError::WebGl1TextureArray2d))
+                        },
+                        TextureTarget::CubeMap => {
+                            self.tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_array_buffer_view(
+                                cube_face_u32,
+                                mip_level,
+                                internal_format,
+                                *width as i32,
+                                *height as i32,
+                                0,
+                                data_format,
+                                data_type,
+                                None, 
+                                ).map_err(|err| err.into())
+                        }
+                    }
+                },
                 WebGlTextureSource::ImageBitmap(bmp) => {
                     match bind_target {
                         TextureTarget::Texture2d => {
@@ -507,6 +544,53 @@ impl_context! {
                         }
                     }
                 },
+                WebGlTextureSource::EmptyBufferView(width, height, depth) => {
+                    match bind_target {
+                        TextureTarget::Texture2d => {
+                            self.tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_array_buffer_view(
+                                bind_u32,
+                                mip_level,
+                                internal_format,
+                                *width as i32,
+                                *height as i32,
+                                0,
+                                data_format,
+                                data_type,
+                                None, 
+                                ).map_err(|err| err.into())
+                        },
+                        TextureTarget::Texture3d => {
+                            self.tex_image_3d_with_opt_array_buffer_view(
+                                bind_u32,
+                                mip_level,
+                                internal_format,
+                                *width as i32,
+                                *height as i32,
+                                *depth as i32,
+                                0,
+                                data_format,
+                                data_type,
+                                None, 
+                                ).map_err(|err| err.into())
+                        },
+                        TextureTarget::Array2d => {
+                            Err("TODO".into())
+                        },
+                        TextureTarget::CubeMap => {
+                            self.tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_array_buffer_view(
+                                cube_face_u32,
+                                mip_level,
+                                internal_format,
+                                *width as i32,
+                                *height as i32,
+                                0,
+                                data_format,
+                                data_type,
+                                None, 
+                                ).map_err(|err| err.into())
+                        }
+                    }
+                },
                 WebGlTextureSource::ImageBitmap(bmp) => {
                     match bind_target {
                         TextureTarget::Texture2d => {
@@ -673,6 +757,9 @@ pub fn get_texture_size(src: &WebGlTextureSource) -> (u32, u32, u32) {
     match src {
         WebGlTextureSource::ArrayBufferView(_buffer, width, height, depth) => {
             (*width, *height, *depth)
+        },
+        WebGlTextureSource::EmptyBufferView(width, height, depth) => {
+            (*width, *height, *depth)
         }
         WebGlTextureSource::ImageBitmap(bmp) => (bmp.width(), bmp.height(), 0),
         WebGlTextureSource::ImageData(data) => (data.width(), data.height(), 0),
@@ -717,6 +804,14 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         });
 
         Ok(id)
+    }
+
+    pub fn get_texture(&self, texture_id:Id) -> Result<&WebGlTexture, Error> {
+        self
+            .texture_lookup
+            .get(texture_id)
+            .ok_or(Error::from(NativeError::MissingTexture))
+            .map(|info| &info.texture)
     }
 
     pub fn assign_simple_texture(

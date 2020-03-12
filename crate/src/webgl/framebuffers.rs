@@ -1,8 +1,8 @@
-use super::{BufferTarget, BufferUsage, Id, WebGlCommon, WebGlRenderer, FrameBufferTarget, FrameBufferStatus};
+use super::{RENDERBUFFER_TARGET, BufferTarget, BufferUsage, Id, WebGlCommon, WebGlRenderer, FrameBufferTarget, FrameBufferStatus, FrameBufferAttachment, FrameBufferTextureTarget};
 use crate::errors::{Error, NativeError};
 use std::marker::PhantomData;
 use web_sys::WebGlBuffer;
-use web_sys::{WebGl2RenderingContext, WebGlRenderingContext, WebGlFramebuffer};
+use web_sys::{WebGl2RenderingContext, WebGlRenderingContext, WebGlFramebuffer, WebGlTexture, WebGlRenderbuffer};
 use std::convert::TryInto;
 
 pub trait PartialWebGlFrameBuffer {
@@ -12,6 +12,8 @@ pub trait PartialWebGlFrameBuffer {
     fn awsm_create_framebuffer(&self) -> Result<WebGlFramebuffer, Error>;
     fn awsm_release_framebuffer(&self, target: FrameBufferTarget);
     fn awsm_check_framebuffer_status(&self, target:FrameBufferTarget) -> Result<(), Error>;
+    fn awsm_framebuffer_texture_2d(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture_target: FrameBufferTextureTarget, texture: &WebGlTexture);
+    fn awsm_framebuffer_renderbuffer(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, renderbuffer: &WebGlRenderbuffer);
 }
 
 macro_rules! impl_context {
@@ -41,10 +43,35 @@ macro_rules! impl_context {
 
                 match status {
                     FrameBufferStatus::Complete => Ok(()),
-                    //TODO - could supply specific FrameBuffer error strings
-                    _ => Err(NativeError::FrameBuffer(None).into())
+                    FrameBufferStatus::IncompleteAttachment => Err(NativeError::FrameBuffer(Some("incomplete attachment".to_string())).into()),
+                    FrameBufferStatus::IncompleteMissingAttachment => Err(NativeError::FrameBuffer(Some("incomplete missing attachment".to_string())).into()),
+                    FrameBufferStatus::IncompleteDimensions => Err(NativeError::FrameBuffer(Some("incomplete dimensions".to_string())).into()),
+                    FrameBufferStatus::Unsupported => Err(NativeError::FrameBuffer(Some("unsupported".to_string())).into()),
+                    FrameBufferStatus::IncompleteMultisample => Err(NativeError::FrameBuffer(Some("incomplete multisample".to_string())).into()),
+                    FrameBufferStatus::Samples => Err(NativeError::FrameBuffer(Some("samples".to_string())).into()),
+                    FrameBufferStatus::IncompleteViewTargetsOvr => Err(NativeError::FrameBuffer(Some("incomplete view targets ovr".to_string())).into()),
                 }
             }
+
+            fn awsm_framebuffer_texture_2d(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture_target: FrameBufferTextureTarget, texture: &WebGlTexture) {
+                self.framebuffer_texture_2d(
+                    target as u32,
+                    attachment as u32,
+                    texture_target as u32,
+                    Some(texture),
+                    0 
+                );
+            }
+
+            fn awsm_framebuffer_renderbuffer(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, renderbuffer: &WebGlRenderbuffer) {
+                self.framebuffer_renderbuffer(
+                    target as u32,
+                    attachment as u32,
+                    RENDERBUFFER_TARGET,
+                    Some(renderbuffer),
+                );
+            }
+
             $($defs)*
         })+
     };
@@ -125,5 +152,23 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         } else {
             Ok(())
         }
+    }
+    
+    pub fn assign_framebuffer_texture_2d(&self, framebuffer_id: Id, texture_id: Id, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture_target: FrameBufferTextureTarget) -> Result<(), Error> {
+        let texture = self.get_texture(texture_id)?;
+        self.bind_framebuffer(framebuffer_id, target)?;
+        self.gl.awsm_framebuffer_texture_2d(target, attachment, texture_target, texture);
+        Ok(())
+    }
+
+    pub fn assign_framebuffer_renderbuffer(&self, framebuffer_id: Id, renderbuffer_id: Id, target: FrameBufferTarget, attachment: FrameBufferAttachment) -> Result<(), Error> {
+        self.bind_framebuffer(framebuffer_id, target)?;
+        let renderbuffer = self.get_renderbuffer(renderbuffer_id)?;
+        self.gl.awsm_framebuffer_renderbuffer(target, attachment, renderbuffer);
+        Ok(())
+    }
+    
+    pub fn check_framebuffer_status(&self, target:FrameBufferTarget) -> Result<(), Error> {
+        self.gl.awsm_check_framebuffer_status(target)
     }
 }
