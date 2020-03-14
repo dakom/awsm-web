@@ -75,6 +75,7 @@ pub trait WebGlCommon:
     + PartialWebGlViewport
     + PartialWebGlFrameBuffer
     + PartialWebGlRenderBuffer
+    + PartialWebGlReadPixels
 {
 }
 

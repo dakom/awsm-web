@@ -19,6 +19,7 @@ mod vertex_arrays;
 mod viewport;
 mod framebuffers;
 mod renderbuffers;
+mod read;
 /*
  * (RE)EXPORTS
  */
@@ -35,3 +36,4 @@ pub use self::uniforms::*;
 pub use self::vertex_arrays::*;
 pub use self::framebuffers::*;
 pub use self::renderbuffers::*;
+pub use self::read::*;

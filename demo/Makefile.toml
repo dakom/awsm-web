@@ -53,6 +53,11 @@ command = "cargo"
 args = ["make", "build", "--profile", "development"]
 cwd = "rust"
 
+[tasks.build-development-rust-nowarnings]
+command = "cargo"
+args = ["make", "build", "--profile", "development-nowarnings"]
+cwd = "rust"
+
 [tasks.build-development-webpack]
 script = ["npx webpack --progress --color --config webpack.dev.js"]
 
@@ -65,6 +70,10 @@ command = "cargo"
 args = ["make", "watch"]
 cwd = "rust"
 
+[tasks.watch-rust-nowarnings]
+command = "cargo"
+args = ["make", "watch-nowarnings"]
+cwd = "rust"
 ##See: https://github.com/sagiegurari/cargo-make/issues/355
 # [tasks.serve-webpack]
 # script = ["npx webpack-dev-server --config webpack.dev.js"]

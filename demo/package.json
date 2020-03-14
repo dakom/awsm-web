@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "cargo make build-development-rust && npm-run-all -p _start:rust _start:webpack",
+    "start:nowarnings": "cargo make build-development-rust-nowarnings && npm-run-all -p _start:rust-nowarnings _start:webpack",
     "_start:rust": "makers watch-rust",
+    "_start:rust-nowarnings": "makers watch-rust-nowarnings",
     "_start:webpack": "webpack-dev-server --config webpack.dev.js"
   },
   "repository": {

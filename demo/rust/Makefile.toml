@@ -14,8 +14,10 @@ run_task = [
 [tasks.watch]
 command = "watchexec"
 args = ["-w", "./src", "-w", "../../crate", "makers", "build-development"]
-# run_task = "build-development"
-# watch = true 
+
+[tasks.watch-nowarnings]
+command = "watchexec"
+args = ["-w", "./src", "-w", "../../crate", "makers", "build-development-nowarnings"]
 
 [tasks.test-unit]
 command = "cargo"
@@ -40,10 +42,22 @@ run_task = [{name = [
     "bindgen-development"
 ]}]
 
+[tasks.build-development-nowarnings]
+run_task = [{name = [
+    "compile-development-nowarnings", 
+    "bindgen-development"
+]}]
+
 [tasks.compile-development]
 command = "cargo"
 args = ["build","--features","dev","--target","wasm32-unknown-unknown"]
 toolchain = "nightly"
+
+[tasks.compile-development-nowarnings]
+command = "cargo"
+args = ["build","--features","dev","--target","wasm32-unknown-unknown"]
+toolchain = "nightly"
+env = { RUSTFLAGS = "-A warnings"}
 
 [tasks.bindgen-development]
 command = "wasm-bindgen"

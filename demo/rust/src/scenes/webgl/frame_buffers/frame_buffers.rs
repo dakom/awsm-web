@@ -12,7 +12,9 @@ use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::{Document, HtmlElement, Window, WebGlRenderingContext, WebGl2RenderingContext};
+use web_sys::{Document, HtmlElement, Window, MouseEvent, WebGlRenderingContext, WebGl2RenderingContext};
+use wasm_bindgen::JsCast;
+use gloo_events::EventListener;
 
 struct State {
     //mutable for each tick
@@ -45,6 +47,8 @@ pub fn start(
 ) -> Result<(), JsValue> {
     let state = Rc::new(RefCell::new(State::new()));
 
+    let document_clone = document.clone();
+    let body_clone = body.clone();
     start_webgl!(
         version,
         window,
@@ -52,18 +56,44 @@ pub fn start(
         body,
         {
             let state = Rc::clone(&state);
+
+
             move |webgl_renderer, on_ready| {
-                let _webgl_renderer_clone = Rc::clone(&webgl_renderer);
 
-                let mut webgl_renderer = webgl_renderer.borrow_mut();
+                //setup renderer buffers 
+                {
+                    let mut webgl_renderer = webgl_renderer.borrow_mut();
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/frame-buffers-vertex.glsl"),
-                    include_str!("shaders/frame-buffers-fragment.glsl"),
-                )?;
+                    let program_id = webgl_renderer.compile_program(
+                        include_str!("shaders/frame-buffers-vertex.glsl"),
+                        include_str!("shaders/frame-buffers-fragment.glsl"),
+                    )?;
 
-                state.borrow_mut().program_id = Some(program_id);
-                let _buffer_id = create_and_assign_unit_quad_buffer(&mut webgl_renderer)?;
+                    state.borrow_mut().program_id = Some(program_id);
+                    let _buffer_id = create_and_assign_unit_quad_buffer(&mut webgl_renderer)?;
+                }
+
+                //start click listener
+                let click_handler = {
+                    let webgl_renderer = Rc::clone(&webgl_renderer); 
+                    let state = Rc::clone(&state); 
+                    move |event: &web_sys::Event| {
+                        let webgl_renderer = Rc::clone(&webgl_renderer); 
+                        let state = Rc::clone(&state); 
+                        let event:&MouseEvent = event.dyn_ref().unwrap_throw();
+                        update_click_state(webgl_renderer, state, event.client_x() as f64, event.client_y() as f64);
+                    }
+                };
+
+                EventListener::new(&webgl_renderer.borrow().canvas, "click", click_handler).forget();
+
+                //decoration
+                let item: HtmlElement = document_clone.create_element("div")?.dyn_into()?;
+                item.set_class_name("button demo-button nohover");
+                item.set_text_content(Some("select a square"));
+                body_clone.append_child(&item)?;
+
+                //ready
                 on_ready();
                 Ok(())
             }
@@ -136,6 +166,12 @@ pub fn start(
             }
         }
     )
+}
+
+fn update_click_state<T: WebGlCommon> (renderer:Rc<RefCell<WebGlRenderer<T>>>, state:Rc<RefCell<State>>, client_x: f64, client_y: f64) {
+    if let Some(picker) = &state.borrow().picker {
+        picker.get_color(&renderer.borrow(), client_x, client_y);
+    }
 }
 
 pub fn draw_positions<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, camera_mat: &Matrix4<f32>, scaling_mat: &Matrix4<f32>, positions: &Vec<Point2<f64>>, indexed_color: bool) {
@@ -254,6 +290,10 @@ impl FrameBufferPicker {
     pub fn release<T: WebGlCommon> (&self, renderer:&mut WebGlRenderer<T>) {
         renderer.release_framebuffer(FrameBufferTarget::FrameBuffer)
         //note - if the framebuffer *didn't* equal window size, restore viewport to canvas size here
+    }
+
+    pub fn get_color<T: WebGlCommon> (&self, renderer:&WebGlRenderer<T>, client_x: f64, client_y: f64) {
+        log::info!("canvas clicked... {},{}", client_x, client_y);
     }
 
     //TODO

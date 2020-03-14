@@ -11,11 +11,12 @@ pub struct AttributeOptions {
     pub normalized: bool,
     pub stride: u8, //according to spec, can't be larger than 255
     // the WebIDL spec says this is actually a GLintptr or a long long
-    // Rust provides functions for either u32 or f64 - and most likely
+    // Rust provides functions for either i32 or f64 - and most likely
     // the f64 flavor is to allow the full Number range of JS, i.e. 52 bits
     // However - allowing float values here is probably a more likely source
     // of bugs than allowing > 52 bit values, especially since we're not concerned
     // with safety due to the wasm sandbox
+    // negative values (e.g. i32) don't even make sense since that's an error (gl.INVALID_VALUE)
     // So we're allowing the u64 type for larger values and catching accidental floats
     // It's cast to f64 to uploading (which I guess will chop the last 12 bits)
     pub offset: u64,
