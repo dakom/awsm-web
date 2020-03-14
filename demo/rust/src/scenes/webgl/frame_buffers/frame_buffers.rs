@@ -7,6 +7,8 @@ use awsm_web::webgl::{BeginMode, ClearBufferMask, Id, WebGlCommon, WebGlRenderer
     FrameBufferTarget,
     FrameBufferAttachment,
     FrameBufferTextureTarget,
+    ReadPixelFormat,
+    ReadPixelDataType,
 };
 use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;
@@ -170,7 +172,24 @@ pub fn start(
 
 fn update_click_state<T: WebGlCommon> (renderer:Rc<RefCell<WebGlRenderer<T>>>, state:Rc<RefCell<State>>, client_x: f64, client_y: f64) {
     if let Some(picker) = &state.borrow().picker {
-        picker.get_color(&renderer.borrow(), client_x, client_y);
+        let color = picker.get_color(&mut renderer.borrow_mut(), client_x, client_y).unwrap();
+
+        let result = {
+            if color.r == 1.0 {
+                "left"
+            } else if color.g == 1.0 {
+                "middle"
+            } else if color.b == 1.0 {
+                "right"
+            } else {
+                "none"
+            }
+        };
+
+        let window = web_sys::window().unwrap();
+
+        window.alert_with_message(&format!("{} selected!", result)).unwrap();
+
     }
 }
 
@@ -292,21 +311,17 @@ impl FrameBufferPicker {
         //note - if the framebuffer *didn't* equal window size, restore viewport to canvas size here
     }
 
-    pub fn get_color<T: WebGlCommon> (&self, renderer:&WebGlRenderer<T>, client_x: f64, client_y: f64) {
-        log::info!("canvas clicked... {},{}", client_x, client_y);
+    pub fn get_color<T: WebGlCommon> (&self, renderer:&mut WebGlRenderer<T>, client_x: f64, client_y: f64) -> Result<Color, awsm_web::errors::Error> {
+        let mut data:[u8;4] = [0;4];
+
+        self.bind(renderer);
+        renderer.read_pixels_u8(client_x as u32, client_y as u32, 1, 1, ReadPixelFormat::Rgba, ReadPixelDataType::UnsignedByte, &mut data)?;
+        self.release(renderer);
+
+        let color = Color::new(data[0] as f64 / 255.0, data[1] as f64 / 255.0, data[2] as f64 / 255.0, data[3] as f64 / 255.0);
+        //log::info!("{} {} {} {}", color.r, color.g, color.b, color.a);
+        Ok(color)
     }
-
-    //TODO
-    /*
-        const readPixel = ({ x, y }: { x: number, y: number }): Uint8Array => {
-                const readout = new Uint8Array(4);
-                bind();
-                gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, readout);
-                unbind();
-
-                return readout;
-            }
-    */
 
     //Drop would delete texture_id, renderbuffer_id, and framebuffer_id
 }

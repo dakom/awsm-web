@@ -19,6 +19,7 @@ use super::uniforms::PartialWebGlUniforms;
 use super::viewport::PartialWebGlViewport;
 use super::framebuffers::PartialWebGlFrameBuffer;
 use super::renderbuffers::{PartialWebGlRenderBuffer, PartialWebGl2RenderBuffer};
+use super::read::{PartialWebGlReadPixels, PartialWebGl2ReadPixels};
 use crate::errors::{Error, NativeError};
 use serde::Serialize;
 
@@ -79,7 +80,7 @@ pub trait WebGlCommon:
 {
 }
 
-pub trait WebGl2Extra: PartialWebGl2RenderBuffer {}
+pub trait WebGl2Extra: PartialWebGl2RenderBuffer + PartialWebGl2ReadPixels {}
 
 impl WebGlCommon for WebGlRenderingContext {}
 

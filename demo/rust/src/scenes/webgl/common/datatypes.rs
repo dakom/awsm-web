@@ -57,5 +57,10 @@ impl Color {
         Self { r, g, b, a }
     }
 }
+impl Default for Color {
+    fn default() -> Self {
+        Self::new(0.0, 0.0, 0.0, 0.0)
+    }
+}
 
 impl SliceValues for Color {}
