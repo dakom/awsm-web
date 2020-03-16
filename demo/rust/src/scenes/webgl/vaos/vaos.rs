@@ -1,7 +1,7 @@
 use crate::scenes::webgl::common::*;
 use crate::start_webgl;
 use awsm_web::webgl::{
-    AttributeOptions, BeginMode, ClearBufferMask, DataType, GlToggle, Id, VertexArray,
+    AttributeOptions, BeginMode, BufferMask, DataType, GlToggle, Id, VertexArray,
 };
 use nalgebra::{Isometry3, Matrix4, Perspective3, Point3, Vector3};
 use std::cell::RefCell;
@@ -162,8 +162,8 @@ pub fn start(
 
                 //draw!
                 webgl_renderer.clear(&[
-                    ClearBufferMask::ColorBufferBit,
-                    ClearBufferMask::DepthBufferBit,
+                    BufferMask::ColorBufferBit,
+                    BufferMask::DepthBufferBit,
                 ]);
                 webgl_renderer.draw_elements(
                     BeginMode::Triangles,

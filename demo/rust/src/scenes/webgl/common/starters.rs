@@ -1,5 +1,5 @@
 use awsm_web::webgl::{
-    get_webgl_context_1, get_webgl_context_2, ClearBufferMask, WebGl1Renderer, WebGl2Renderer,
+    get_webgl_context_1, get_webgl_context_2, BufferMask, WebGl1Renderer, WebGl2Renderer,
     WebGlContextOptions,
 };
 
@@ -70,7 +70,7 @@ where
         }),
     )?;
 
-    let mut webgl_renderer: WebGl1Renderer =
+    let webgl_renderer: WebGl1Renderer =
         awsm_web::webgl::WebGlRenderer::new(gl).map_err(|err| JsValue::from_str(&err.to_string()))?;
 
 
@@ -94,8 +94,8 @@ where
 
         webgl_renderer.set_clear_color(0.3, 0.3, 0.3, 1.0);
         webgl_renderer.clear(&[
-            ClearBufferMask::ColorBufferBit,
-            ClearBufferMask::DepthBufferBit,
+            BufferMask::ColorBufferBit,
+            BufferMask::DepthBufferBit,
         ]);
     }
 
@@ -167,8 +167,8 @@ where
 
         webgl_renderer.set_clear_color(0.3, 0.3, 0.3, 1.0);
         webgl_renderer.clear(&[
-            ClearBufferMask::ColorBufferBit,
-            ClearBufferMask::DepthBufferBit,
+            BufferMask::ColorBufferBit,
+            BufferMask::DepthBufferBit,
         ]);
     }
 

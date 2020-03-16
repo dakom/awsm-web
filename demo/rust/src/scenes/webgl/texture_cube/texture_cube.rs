@@ -4,7 +4,7 @@ use crate::start_webgl;
 use awsm_web::errors::Error;
 use awsm_web::loaders::fetch;
 use awsm_web::webgl::{
-    AttributeOptions, BeginMode, ClearBufferMask, DataType, Id, SimpleTextureOptions,
+    AttributeOptions, BeginMode, BufferMask, DataType, Id, SimpleTextureOptions,
     TextureCubeFace, TextureTarget, VertexArray, WebGlTextureSource,
 };
 use futures::future::{try_join_all};
@@ -139,7 +139,7 @@ pub fn start(
 
                 //we don't handle errors here because they are exceptions
                 //hope you're running in an environment where uncaught rejects/exceptions are reported!
-                future_to_promise(future);
+                let _ = future_to_promise(future);
 
                 Ok(())
             }
@@ -208,8 +208,8 @@ pub fn start(
 
                 //draw!
                 webgl_renderer.clear(&[
-                    ClearBufferMask::ColorBufferBit,
-                    ClearBufferMask::DepthBufferBit,
+                    BufferMask::ColorBufferBit,
+                    BufferMask::DepthBufferBit,
                 ]);
 
                 webgl_renderer.draw_elements(

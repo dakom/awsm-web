@@ -4,7 +4,7 @@ use awsm_web::data::TypedData;
 use awsm_web::loaders::fetch;
 use awsm_web::webgl::PartialWebGlTextures;
 use awsm_web::webgl::{
-    BeginMode, ClearBufferMask, DataType, Id, PixelFormat, SimpleTextureOptions, TextureMagFilter,
+    BeginMode, BufferMask, DataType, Id, PixelFormat, SimpleTextureOptions, TextureMagFilter,
     TextureMinFilter, TextureOptions, TextureTarget, TextureWrapMode, TextureWrapTarget,
     WebGlTextureSource,
 };
@@ -165,7 +165,7 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 //we don't handle errors here because they are exceptions
                 //hope you're running in an environment where uncaught rejects/exceptions are reported!
-                future_to_promise(future);
+                let _ = future_to_promise(future);
 
                 Ok(())
             }
@@ -240,8 +240,8 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 //draw!
                 webgl_renderer.clear(&[
-                    ClearBufferMask::ColorBufferBit,
-                    ClearBufferMask::DepthBufferBit,
+                    BufferMask::ColorBufferBit,
+                    BufferMask::DepthBufferBit,
                 ]);
                 webgl_renderer.draw_arrays(BeginMode::TriangleStrip, 0, 4);
             }

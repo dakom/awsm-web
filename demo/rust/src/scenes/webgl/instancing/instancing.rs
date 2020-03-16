@@ -3,7 +3,7 @@ use crate::scenes::webgl::common::*;
 use crate::start_webgl;
 use awsm_web::loaders::fetch;
 use awsm_web::webgl::{
-    AttributeOptions, BeginMode, BufferData, BufferTarget, BufferUsage, ClearBufferMask, DataType,
+    AttributeOptions, BeginMode, BufferData, BufferTarget, BufferUsage, BufferMask, DataType,
     Id, PixelFormat, SimpleTextureOptions, TextureTarget, WebGlTextureSource,
 };
 use log::info;
@@ -124,7 +124,7 @@ pub fn start(
 
                 //we don't handle errors here because they are exceptions
                 //hope you're running in an environment where uncaught rejects/exceptions are reported!
-                future_to_promise(future);
+                let _ = future_to_promise(future);
 
                 Ok(())
             }
@@ -160,8 +160,8 @@ pub fn start(
 
                 //draw! (gotta clear first due to the extension needing mutability)
                 webgl_renderer.clear(&[
-                    ClearBufferMask::ColorBufferBit,
-                    ClearBufferMask::DepthBufferBit,
+                    BufferMask::ColorBufferBit,
+                    BufferMask::DepthBufferBit,
                 ]);
 
                 webgl_renderer

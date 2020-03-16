@@ -1,7 +1,7 @@
 use crate::scenes::webgl::common::*;
 use awsm_web::errors::Error;
 use awsm_web::webgl::{
-    AttributeOptions, BeginMode, BufferData, BufferTarget, BufferUsage, ClearBufferMask, DataType,
+    AttributeOptions, BeginMode, BufferData, BufferTarget, BufferUsage, BufferMask, DataType,
     GlToggle, Id, VertexArray, WebGl2Renderer,
 };
 use log::info;
@@ -155,8 +155,8 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 //draw!
                 webgl_renderer.clear(&[
-                    ClearBufferMask::ColorBufferBit,
-                    ClearBufferMask::DepthBufferBit,
+                    BufferMask::ColorBufferBit,
+                    BufferMask::DepthBufferBit,
                 ]);
                 webgl_renderer.draw_elements(
                     BeginMode::Triangles,

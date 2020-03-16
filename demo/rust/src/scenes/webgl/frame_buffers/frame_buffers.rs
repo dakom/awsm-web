@@ -1,6 +1,6 @@
 use crate::scenes::webgl::common::*;
 use crate::start_webgl;
-use awsm_web::webgl::{BeginMode, ClearBufferMask, Id, WebGlCommon, WebGlRenderer,
+use awsm_web::webgl::{BeginMode, BufferMask, Id, WebGlCommon, WebGlRenderer,
     PixelFormat, SimpleTextureOptions, TextureTarget,
     WebGlTextureSource,
     RenderBufferFormat,
@@ -14,7 +14,7 @@ use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::{Document, HtmlElement, Window, MouseEvent, WebGlRenderingContext, WebGl2RenderingContext};
+use web_sys::{Document, HtmlElement, Window, MouseEvent};
 use wasm_bindgen::JsCast;
 use gloo_events::EventListener;
 
@@ -155,13 +155,13 @@ pub fn start(
                 let picker = picker.as_ref().unwrap();
 
                 picker.bind(webgl_renderer).unwrap();
-                webgl_renderer.clear(&[ ClearBufferMask::ColorBufferBit, ClearBufferMask::DepthBufferBit, ]);
+                webgl_renderer.clear(&[ BufferMask::ColorBufferBit, BufferMask::DepthBufferBit, ]);
                 positions.as_ref().map(|positions| {
                     draw_positions(webgl_renderer, &camera_mat, &scaling_mat, positions.as_ref(), true);
                 });
 
                 picker.release(webgl_renderer);
-                webgl_renderer.clear(&[ ClearBufferMask::ColorBufferBit, ClearBufferMask::DepthBufferBit, ]);
+                webgl_renderer.clear(&[ BufferMask::ColorBufferBit, BufferMask::DepthBufferBit, ]);
                 positions.as_ref().map(|positions| {
                     draw_positions(webgl_renderer, &camera_mat, &scaling_mat, positions.as_ref(), false);
                 });
@@ -258,8 +258,8 @@ impl State {
 }
 
 struct FrameBufferPicker {
-    texture_id: Id,
-    renderbuffer_id: Id,
+    _texture_id: Id,
+    _renderbuffer_id: Id,
     framebuffer_id: Id,
 }
 
@@ -296,8 +296,8 @@ impl FrameBufferPicker {
         renderer.release_framebuffer(FrameBufferTarget::FrameBuffer);
 
         Ok(Self{
-            texture_id,
-            renderbuffer_id,
+            _texture_id: texture_id,
+            _renderbuffer_id: renderbuffer_id,
             framebuffer_id
         })
     }
@@ -314,7 +314,7 @@ impl FrameBufferPicker {
     pub fn get_color<T: WebGlCommon> (&self, renderer:&mut WebGlRenderer<T>, client_x: f64, client_y: f64) -> Result<Color, awsm_web::errors::Error> {
         let mut data:[u8;4] = [0;4];
 
-        self.bind(renderer);
+        self.bind(renderer)?;
         renderer.read_pixels_u8(client_x as u32, client_y as u32, 1, 1, ReadPixelFormat::Rgba, ReadPixelDataType::UnsignedByte, &mut data)?;
         self.release(renderer);
 

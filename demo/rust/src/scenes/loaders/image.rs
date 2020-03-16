@@ -30,7 +30,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
 
             //we don't handle errors here because they are exceptions
             //hope you're running in an environment where uncaught rejects/exceptions are reported!
-            future_to_promise(future);
+            let _ = future_to_promise(future);
 
             root_copy.remove_child(&button).unwrap();
         }
