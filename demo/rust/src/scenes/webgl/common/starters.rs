@@ -18,10 +18,6 @@ use web_sys::{
 //Seems like a nice generic solution and works great for demos
 //However, the implementation below is ridiculous, hehe...
 
-pub enum WebGlVersion {
-    One,
-    Two,
-}
 
 #[macro_export]
 macro_rules! start_webgl {

@@ -5,6 +5,7 @@ use awsm_web::loaders::fetch;
 use awsm_web::webgl::{
     BeginMode, BufferMask, Id, PixelFormat, SimpleTextureOptions, TextureTarget,
     WebGlTextureSource,
+    WebGlVersion
 };
 use log::info;
 use nalgebra::{Matrix4, Point2, Vector3};

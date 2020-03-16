@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum WebGlVersion {
     One,
     Two,

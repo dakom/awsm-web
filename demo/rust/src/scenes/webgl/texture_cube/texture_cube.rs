@@ -6,6 +6,7 @@ use awsm_web::loaders::fetch;
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferMask, DataType, Id, SimpleTextureOptions,
     TextureCubeFace, TextureTarget, VertexArray, WebGlTextureSource,
+    WebGlVersion
 };
 use futures::future::{try_join_all};
 use nalgebra::{Isometry3, Matrix4, Perspective3, Point3, Vector3};

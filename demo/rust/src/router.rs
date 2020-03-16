@@ -4,6 +4,7 @@ use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Document, Element, HtmlAnchorElement, HtmlElement};
+use awsm_web::webgl::WebGlVersion;
 // Called by our JS entry point to run the example.
 pub fn start_router(window: web_sys::Window, document: web_sys::Document) -> Result<(), JsValue> {
     let body = document.body().expect("should have body");
@@ -33,9 +34,9 @@ pub fn start_router(window: web_sys::Window, document: web_sys::Document) -> Res
     let webgl_version = if pathname.contains("webgl-") {
         let query_value = get_query_value(&window, "webgl").and_then(|s| {
             if s == "1" {
-                Some(webgl::common::WebGlVersion::One)
+                Some(WebGlVersion::One)
             } else if s == "2" {
-                Some(webgl::common::WebGlVersion::Two)
+                Some(WebGlVersion::Two)
             } else {
                 None
             }
@@ -47,7 +48,7 @@ pub fn start_router(window: web_sys::Window, document: web_sys::Document) -> Res
         }
     } else {
         //not passed along, but just in case..
-        Ok(webgl::common::WebGlVersion::Two)
+        Ok(WebGlVersion::Two)
     }?;
 
     match pathname {

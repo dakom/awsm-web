@@ -9,6 +9,7 @@ use awsm_web::webgl::{BeginMode, BufferMask, Id, WebGlCommon, WebGlRenderer,
     FrameBufferTextureTarget,
     ReadPixelFormat,
     ReadPixelDataType,
+    WebGlVersion
 };
 use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;

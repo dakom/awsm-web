@@ -1,7 +1,7 @@
 use super::funcs::FuncSettings;
 use super::misc::MiscSettings;
 use super::toggles::ToggleFlags;
-use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon };
+use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon, WebGlVersion };
 use crate::errors::{Error, NativeError};
 use beach_map::{BeachMap, DefaultVersion};
 use rustc_hash::FxHashMap;
@@ -27,6 +27,9 @@ pub type WebGl2Renderer = WebGlRenderer<WebGl2RenderingContext>;
 pub struct WebGlRenderer<T: WebGlCommon> {
     pub gl: T,
     pub canvas: HtmlCanvasElement,
+
+    pub version: WebGlVersion,
+
     //really just local to the module
     pub(super) last_width: u32,
     pub(super) last_height: u32,
@@ -96,9 +99,11 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
         //seems to be 0 for all - but just in case... it's... set by browser? _shrug_
         let blend_color: Vec<f32> = gl.awsm_get_parameter_vf32(GlQuery::BlendColor)?;
 
+        let version = gl.awsm_get_version();
         Ok(Self {
             gl,
             canvas,
+            version,
             last_width: 0,
             last_height: 0,
 

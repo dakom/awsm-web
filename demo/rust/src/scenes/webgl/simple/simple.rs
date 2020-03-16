@@ -1,6 +1,6 @@
 use crate::scenes::webgl::common::*;
 use crate::start_webgl;
-use awsm_web::webgl::{BeginMode, BufferMask, Id};
+use awsm_web::webgl::{BeginMode, BufferMask, Id, WebGlVersion};
 use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;
 use std::rc::Rc;
