@@ -54,7 +54,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
 }
 
 impl WebGlRenderer<WebGlRenderingContext> {
-    pub fn draw_buffer(&self, target_buffers: &[DrawBuffer]) -> Result<(), Error> {
+    pub fn draw_buffers(&self, target_buffers: &[DrawBuffer]) -> Result<(), Error> {
         let ext = self.get_extension_draw_buffers()?;
         let target_buffers:&[u32] = unsafe { std::mem::transmute(target_buffers) };
 
@@ -65,7 +65,7 @@ impl WebGlRenderer<WebGlRenderingContext> {
 }
 
 impl WebGlRenderer<WebGl2RenderingContext> {
-    pub fn draw_buffer(&self, target_buffers: &[DrawBuffer]) -> Result<(), Error> {
+    pub fn draw_buffers(&self, target_buffers: &[DrawBuffer]) -> Result<(), Error> {
         let target_buffers:&[u32] = unsafe { std::mem::transmute(target_buffers) };
 
         self.gl.draw_buffers(&TypedData::new(target_buffers).into());
