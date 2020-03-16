@@ -106,7 +106,9 @@ webgl = [
     # webgl extensions
     'web-sys/OesVertexArrayObject', 
     'web-sys/AngleInstancedArrays',
+    'web-sys/WebglDrawBuffers',
 
+    # dependencies
     "serde",
     "serde-wasm-bindgen",
     "beach_map",

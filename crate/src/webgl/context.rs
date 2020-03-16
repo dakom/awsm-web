@@ -17,7 +17,7 @@ use super::textures::PartialWebGlTextures;
 use super::toggles::PartialWebGlToggle;
 use super::uniforms::PartialWebGlUniforms;
 use super::viewport::PartialWebGlViewport;
-use super::framebuffers::PartialWebGlFrameBuffer;
+use super::framebuffers::{PartialWebGlFrameBuffer, PartialWebGl2FrameBuffer};
 use super::renderbuffers::{PartialWebGlRenderBuffer, PartialWebGl2RenderBuffer};
 use super::read::{PartialWebGlReadPixels, PartialWebGl2ReadPixels};
 use crate::errors::{Error, NativeError};
@@ -80,7 +80,7 @@ pub trait WebGlCommon:
 {
 }
 
-pub trait WebGl2Extra: PartialWebGl2RenderBuffer + PartialWebGl2ReadPixels {}
+pub trait WebGl2Extra: PartialWebGl2RenderBuffer + PartialWebGl2ReadPixels + PartialWebGl2FrameBuffer {}
 
 impl WebGlCommon for WebGlRenderingContext {}
 

@@ -555,6 +555,31 @@ pub enum ReadBuffer {
     Color14 = 0x8CEE,
     Color15 = 0x8CEF,
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum DrawBuffer {
+    None = 0,
+    Back = 0x0405,
+
+    Color0 = 0x8CE0,
+    Color1 = 0x8CE1,
+    Color2 = 0x8CE2,
+    Color3 = 0x8CE3,
+    Color4 = 0x8CE4,
+    Color5 = 0x8CE5,
+    Color6 = 0x8CE6,
+    Color7 = 0x8CE7,
+    Color8 = 0x8CE8,
+    Color9 = 0x8CE9,
+    Color10 = 0x8CEA,
+    Color11 = 0x8CEB,
+    Color12 = 0x8CEC,
+    Color13 = 0x8CED,
+    Color14 = 0x8CEE,
+    Color15 = 0x8CEF,
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
 pub enum FrameBufferTextureTarget {
