@@ -1,8 +1,8 @@
-use super::{BeginMode, ClearBufferMask, DataType, WebGlCommon, WebGlRenderer};
+use super::{BeginMode, BufferMask, DataType, WebGlCommon, WebGlRenderer};
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 pub trait PartialWebGlDrawing {
-    fn awsm_clear(&self, bits: &[ClearBufferMask]);
+    fn awsm_clear(&self, bits: &[BufferMask]);
     fn awsm_draw_arrays(&self, mode: BeginMode, first: u32, count: u32);
     fn awsm_draw_elements(&self, mode: BeginMode, count: u32, data_type: DataType, offset: u32);
 }
@@ -11,7 +11,7 @@ macro_rules! impl_context {
     ($($type:ty { $($defs:tt)* })+) => {
         $(impl PartialWebGlDrawing for $type {
 
-            fn awsm_clear(&self, bits: &[ClearBufferMask]) {
+            fn awsm_clear(&self, bits: &[BufferMask]) {
                 let mut combined = 0u32;
                 for bit in bits {
                     combined = combined | *bit as u32;
@@ -38,7 +38,7 @@ impl_context! {
 }
 
 impl<T: WebGlCommon> WebGlRenderer<T> {
-    pub fn clear(&self, bits: &[ClearBufferMask]) {
+    pub fn clear(&self, bits: &[BufferMask]) {
         self.gl.awsm_clear(&bits);
     }
 

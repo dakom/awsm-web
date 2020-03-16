@@ -57,7 +57,7 @@ toolchain = "nightly"
 command = "cargo"
 args = ["build","--features","dev","--target","wasm32-unknown-unknown"]
 toolchain = "nightly"
-env = { RUSTFLAGS = "-A warnings"}
+env = { "RUSTFLAGS" = "-Awarnings"}
 
 [tasks.bindgen-development]
 command = "wasm-bindgen"

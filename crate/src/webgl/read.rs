@@ -1,16 +1,7 @@
-use super::{Id, WebGlCommon, WebGlRenderer, ReadPixelFormat, ReadPixelDataType};
+use super::{WebGlCommon, WebGlRenderer, ReadPixelFormat, ReadPixelDataType};
 use crate::data::TypedData;
-use crate::errors::{Error, NativeError};
-use std::marker::PhantomData;
-use web_sys::WebGlBuffer;
-use web_sys::{WebGl2RenderingContext, WebGlRenderingContext, WebGlFramebuffer, WebGlTexture, WebGlRenderbuffer};
-use std::convert::TryInto;
-
-//TODO
-//next up - create the enums!
-//btw might need to make different versions for the supported TypedData: [u8], [u16], [f32]
-//See: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/readPixels
-//And: https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.WebGl2RenderingContext.html#method.read_pixels_with_opt_u8_array
+use crate::errors::Error;
+use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 pub trait PartialWebGlReadPixels {
     fn awsm_read_pixels_u8(&self, x: u32, y: u32, width: u32, height: u32, format: ReadPixelFormat, data_type: ReadPixelDataType, data: &mut [u8]) -> Result<(), Error>;

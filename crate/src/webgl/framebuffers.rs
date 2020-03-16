@@ -1,7 +1,6 @@
-use super::{RENDERBUFFER_TARGET, BufferTarget, BufferUsage, Id, WebGlCommon, WebGlRenderer, FrameBufferTarget, FrameBufferStatus, FrameBufferAttachment, FrameBufferTextureTarget};
+use super::{RENDERBUFFER_TARGET, Id, WebGlCommon, WebGlRenderer, ReadBuffer, FrameBufferTarget, FrameBufferStatus, FrameBufferAttachment, FrameBufferTextureTarget, BufferMask, BlitFilter};
 use crate::errors::{Error, NativeError};
-use std::marker::PhantomData;
-use web_sys::WebGlBuffer;
+use crate::data::{TypedData};
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext, WebGlFramebuffer, WebGlTexture, WebGlRenderbuffer};
 use std::convert::TryInto;
 
@@ -14,6 +13,13 @@ pub trait PartialWebGlFrameBuffer {
     fn awsm_check_framebuffer_status(&self, target:FrameBufferTarget) -> Result<(), Error>;
     fn awsm_framebuffer_texture_2d(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture_target: FrameBufferTextureTarget, texture: &WebGlTexture);
     fn awsm_framebuffer_renderbuffer(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, renderbuffer: &WebGlRenderbuffer);
+}
+pub trait PartialWebGl2FrameBuffer {
+    fn awsm_blit_framebuffer(&self, src_x0: u32, src_y0: u32, src_x1: u32, src_y1: u32, dst_x0: u32, dst_y0: u32, dst_x1: u32, dst_y1: u32, mask: BufferMask, filter: BlitFilter);
+    fn awsm_framebuffer_texture_layer(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture: &WebGlTexture, mipmap_level: u32, layer:u32);
+    fn awsm_invalidate_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment]) -> Result<(), Error>;
+    fn awsm_invalidate_sub_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment], x: u32, y: u32, width: usize, height: usize) -> Result<(), Error>;
+    fn awsm_read_buffer(&self, src: ReadBuffer);
 }
 
 macro_rules! impl_context {
@@ -59,7 +65,7 @@ macro_rules! impl_context {
                     attachment as u32,
                     texture_target as u32,
                     Some(texture),
-                    0 
+                    0 //according to spec, this is always 0
                 );
             }
 
@@ -75,6 +81,55 @@ macro_rules! impl_context {
             $($defs)*
         })+
     };
+}
+
+impl PartialWebGl2FrameBuffer for WebGl2RenderingContext {
+    fn awsm_blit_framebuffer(&self, src_x0: u32, src_y0: u32, src_x1: u32, src_y1: u32, dst_x0: u32, dst_y0: u32, dst_x1: u32, dst_y1: u32, mask: BufferMask, filter: BlitFilter) {
+        self.blit_framebuffer(
+            src_x0 as i32,
+            src_y0 as i32,
+            src_x1 as i32,
+            src_y1 as i32,
+            dst_x0 as i32,
+            dst_y0 as i32,
+            dst_x1 as i32,
+            dst_y1 as i32,
+            mask as u32,
+            filter as u32
+        )
+    }
+    fn awsm_framebuffer_texture_layer(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture: &WebGlTexture, mipmap_level: u32, layer:u32) {
+        self.framebuffer_texture_layer(
+            target as u32,
+            attachment as u32,
+            Some(texture),
+            mipmap_level as i32,
+            layer as i32
+        )
+    }
+    fn awsm_invalidate_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment]) -> Result<(), Error> {
+        let attachments:&[u32] = unsafe { std::mem::transmute(attachments) };
+
+        self.invalidate_framebuffer(
+            target as u32, 
+            &TypedData::new(attachments).into()
+        ).map_err(|err| err.into())
+    }
+    fn awsm_invalidate_sub_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment], x: u32, y: u32, width: usize, height: usize) -> Result<(), Error> {
+        let attachments:&[u32] = unsafe { std::mem::transmute(attachments) };
+        
+        self.invalidate_sub_framebuffer(
+            target as u32,
+            &TypedData::new(attachments).into(),
+            x as i32,
+            y as i32,
+            width as i32,
+            height as i32,
+        ).map_err(|err| err.into())
+    }
+    fn awsm_read_buffer(&self, src: ReadBuffer) {
+        self.read_buffer(src as u32)
+    }
 }
 
 impl_context! {
@@ -170,5 +225,24 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
     
     pub fn check_framebuffer_status(&self, target:FrameBufferTarget) -> Result<(), Error> {
         self.gl.awsm_check_framebuffer_status(target)
+    }
+}
+
+
+impl WebGlRenderer<WebGl2RenderingContext> {
+    pub fn blit_framebuffer(&self, src_x0: u32, src_y0: u32, src_x1: u32, src_y1: u32, dst_x0: u32, dst_y0: u32, dst_x1: u32, dst_y1: u32, mask: BufferMask, filter: BlitFilter) {
+        self.gl.awsm_blit_framebuffer(src_x0, src_y0, src_x1, src_y1, dst_x0, dst_y0, dst_x1, dst_y1, mask, filter)
+    }
+    pub fn framebuffer_texture_layer(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture: &WebGlTexture, mipmap_level: u32, layer:u32) {
+        self.gl.awsm_framebuffer_texture_layer(target, attachment, texture, mipmap_level, layer)
+    }
+    pub fn invalidate_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment]) -> Result<(), Error> {
+        self.gl.awsm_invalidate_framebuffer(target, attachments)
+    }
+    pub fn invalidate_sub_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment], x: u32, y: u32, width: usize, height: usize) -> Result<(), Error> {
+        self.gl.awsm_invalidate_sub_framebuffer(target, attachments, x, y, width, height)
+    }
+    pub fn read_buffer(&self, src: ReadBuffer) {
+        self.gl.awsm_read_buffer(src)
     }
 }

@@ -1,7 +1,5 @@
-use super::{BufferTarget, BufferUsage, Id, WebGlCommon, WebGlRenderer, RenderBufferFormat};
+use super::{Id, WebGlCommon, WebGlRenderer, RenderBufferFormat};
 use crate::errors::{Error, NativeError};
-use std::marker::PhantomData;
-use web_sys::WebGlBuffer;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext, WebGlRenderbuffer};
 
 pub trait PartialWebGlRenderBuffer {
@@ -138,7 +136,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
 
 
 impl WebGlRenderer<WebGl2RenderingContext> {
-    fn assign_renderbuffer_storage_multisample(&self, renderbuffer_id: Id, samples: u32, format: RenderBufferFormat, width:u32, height: u32) -> Result<(), Error> {
+    pub fn assign_renderbuffer_storage_multisample(&self, renderbuffer_id: Id, samples: u32, format: RenderBufferFormat, width:u32, height: u32) -> Result<(), Error> {
         self.bind_renderbuffer(renderbuffer_id)?;
         self.gl.awsm_renderbuffer_storage_multisample(samples, format, width, height);
         Ok(())

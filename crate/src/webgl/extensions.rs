@@ -3,7 +3,6 @@ use crate::errors::{Error, NativeError};
 use wasm_bindgen::JsCast;
 use web_sys::AngleInstancedArrays;
 use web_sys::OesVertexArrayObject;
-use web_sys::WebGlVertexArrayObject;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 pub trait PartialWebGlExtensions {

@@ -27,98 +27,6 @@ pub enum BufferTarget {
     UniformBuffer = 0x8A11,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-#[repr(u32)]
-pub enum FrameBufferTarget {
-    FrameBuffer = 0x8D40,
-    //webgl 2 only
-    DrawFrameBuffer = 0x8CA9,
-    ReadFrameBuffer = 0x8CA8,
-}
-
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-#[repr(u32)]
-pub enum FrameBufferAttachment {
-    Color0 = 0x8CE0,
-    Depth = 0x8D00,
-    Stencil = 0x8D20,
-
-    //only webgl2 or WEBGL_depth_texture extension
-    DepthStencil = 0x821A,
-
-    //only webgl2 or WEBGL_draw_buffers extension
-    Color1 = 0x8CE1,
-    Color2 = 0x8CE2,
-    Color3 = 0x8CE3,
-    Color4 = 0x8CE4,
-    Color5 = 0x8CE5,
-    Color6 = 0x8CE6,
-    Color7 = 0x8CE7,
-    Color8 = 0x8CE8,
-    Color9 = 0x8CE9,
-    Color10 = 0x8CEA,
-    Color11 = 0x8CEB,
-    Color12 = 0x8CEC,
-    Color13 = 0x8CED,
-    Color14 = 0x8CEE,
-    Color15 = 0x8CEF,
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-#[repr(u32)]
-pub enum FrameBufferTextureTarget {
-    Texture2d = 0x0DE1,
-    CubeFacePositiveX = 0x8515,
-    CubeFaceNegativeX = 0x8516,
-    CubeFacePositiveY = 0x8517,
-    CubeFaceNegativeY = 0x8518,
-    CubeFacePositiveZ = 0x8519,
-    CubeFaceNegativeZ = 0x851A,
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-#[repr(u32)]
-pub enum FrameBufferStatus {
-    Complete = 0x8CD5,
-    IncompleteAttachment = 0x8CD6,
-    IncompleteMissingAttachment = 0x8CD7,
-    IncompleteDimensions = 0x8CD9,
-    Unsupported = 0x8CDD,
-
-    //only webgl2
-    IncompleteMultisample = 0x8D56,
-    Samples = 0x8CAB,
-
-    //only OVR_multiview2
-    IncompleteViewTargetsOvr = 0x9633,
-}
-
-impl TryFrom<u32> for FrameBufferStatus {
-    type Error = &'static str;
-
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        if value == (FrameBufferStatus::Complete as u32) {
-            Ok(FrameBufferStatus::Complete)
-        } else if value == (FrameBufferStatus::IncompleteAttachment as u32) {
-            Ok(FrameBufferStatus::IncompleteAttachment)
-        } else if value == (FrameBufferStatus::IncompleteMissingAttachment as u32) {
-            Ok(FrameBufferStatus::IncompleteMissingAttachment)
-        } else if value == (FrameBufferStatus::IncompleteDimensions as u32) {
-            Ok(FrameBufferStatus::IncompleteDimensions)
-        } else if value == (FrameBufferStatus::Unsupported as u32) {
-            Ok(FrameBufferStatus::Unsupported)
-        } else if value == (FrameBufferStatus::IncompleteMultisample as u32) {
-            Ok(FrameBufferStatus::IncompleteMultisample)
-        } else if value == (FrameBufferStatus::Samples as u32) {
-            Ok(FrameBufferStatus::Samples)
-        } else if value == (FrameBufferStatus::IncompleteViewTargetsOvr as u32) {
-            Ok(FrameBufferStatus::IncompleteViewTargetsOvr)
-        } else {
-            Err("bad value for FrameBufferStatus")
-        }
-    }
-}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
@@ -308,7 +216,7 @@ pub enum PixelFormat {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
-pub enum ClearBufferMask {
+pub enum BufferMask {
     DepthBufferBit = 0x00000100,
     StencilBufferBit = 0x00000400,
     ColorBufferBit = 0x00004000,
@@ -515,10 +423,10 @@ pub enum RenderBufferFormat {
     Rg32i= 0x823B,
     Rgb8=0x8051,
     Rgba8= 0x8058,
-    Rgb10_a2= 0x8059,
+    Rgb10a2= 0x8059,
     Rgba8ui= 0x8D7C,
     Rba8i= 0x8D8F,
-    Rgb10_a2ui = 0x906F,
+    Rgb10a2ui = 0x906F,
     Rgba16ui= 0x8D76,
     Rgba16i= 0x8D89,
     Rgba32i= 0x8D82,
@@ -562,9 +470,9 @@ pub enum ReadPixelFormat {
 #[repr(u32)]
 pub enum ReadPixelDataType {
     UnsignedByte = 0x1401,
-    UnsignedShort_5_6_5 = 0x8363,
-    UnsignedShort_4_4_4_4 = 0x8033,
-    UnsignedShort_5_5_5_1 = 0x8034,
+    UnsignedShort5_6_5 = 0x8363,
+    UnsignedShort4_4_4_4 = 0x8033,
+    UnsignedShort5_5_5_1 = 0x8034,
     Float = 0x1406,
 
     //WebGl2 only
@@ -574,7 +482,139 @@ pub enum ReadPixelDataType {
     UnsignedShort = 0x1403,
     Int = 0x1404,
     UnsignedInt = 0x1405,
-    UnsignedInt_2_10_10_10_Rev = 0x8368,
-    UnsignedInt_10f_11f_11f_Rev = 0x8C3B,
-    UnsignedInt_5_9_9_9_Rev = 0x8C3E
+    UnsignedInt2_10_10_10Rev = 0x8368,
+    UnsignedInt10f11f11fRev = 0x8C3B,
+    UnsignedInt5_9_9_9Rev = 0x8C3E
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum BlitFilter {
+    Nearest = 0x2600,
+    Linear = 0x2601,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum FrameBufferTarget {
+    FrameBuffer = 0x8D40,
+    //webgl 2 only
+    DrawFrameBuffer = 0x8CA9,
+    ReadFrameBuffer = 0x8CA8,
+}
+
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum FrameBufferAttachment {
+    Color0 = 0x8CE0,
+    Depth = 0x8D00,
+    Stencil = 0x8D20,
+
+    //only webgl2 or WEBGL_depth_texture extension
+    DepthStencil = 0x821A,
+
+    //only webgl2 or WEBGL_draw_buffers extension
+    Color1 = 0x8CE1,
+    Color2 = 0x8CE2,
+    Color3 = 0x8CE3,
+    Color4 = 0x8CE4,
+    Color5 = 0x8CE5,
+    Color6 = 0x8CE6,
+    Color7 = 0x8CE7,
+    Color8 = 0x8CE8,
+    Color9 = 0x8CE9,
+    Color10 = 0x8CEA,
+    Color11 = 0x8CEB,
+    Color12 = 0x8CEC,
+    Color13 = 0x8CED,
+    Color14 = 0x8CEE,
+    Color15 = 0x8CEF,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum ReadBuffer {
+    None = 0,
+    Back = 0x0405,
+
+    Color0 = 0x8CE0,
+    Color1 = 0x8CE1,
+    Color2 = 0x8CE2,
+    Color3 = 0x8CE3,
+    Color4 = 0x8CE4,
+    Color5 = 0x8CE5,
+    Color6 = 0x8CE6,
+    Color7 = 0x8CE7,
+    Color8 = 0x8CE8,
+    Color9 = 0x8CE9,
+    Color10 = 0x8CEA,
+    Color11 = 0x8CEB,
+    Color12 = 0x8CEC,
+    Color13 = 0x8CED,
+    Color14 = 0x8CEE,
+    Color15 = 0x8CEF,
+}
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum FrameBufferTextureTarget {
+    Texture2d = 0x0DE1,
+    CubeFacePositiveX = 0x8515,
+    CubeFaceNegativeX = 0x8516,
+    CubeFacePositiveY = 0x8517,
+    CubeFaceNegativeY = 0x8518,
+    CubeFacePositiveZ = 0x8519,
+    CubeFaceNegativeZ = 0x851A,
+}
+
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum CullFaceMode {
+    Front = 0x0404,
+    Back = 0x0405,
+    FrontAndBack = 0x0408
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum FrameBufferStatus {
+    Complete = 0x8CD5,
+    IncompleteAttachment = 0x8CD6,
+    IncompleteMissingAttachment = 0x8CD7,
+    IncompleteDimensions = 0x8CD9,
+    Unsupported = 0x8CDD,
+
+    //only webgl2
+    IncompleteMultisample = 0x8D56,
+    Samples = 0x8CAB,
+
+    //only OVR_multiview2
+    IncompleteViewTargetsOvr = 0x9633,
+}
+
+impl TryFrom<u32> for FrameBufferStatus {
+    type Error = &'static str;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        if value == (FrameBufferStatus::Complete as u32) {
+            Ok(FrameBufferStatus::Complete)
+        } else if value == (FrameBufferStatus::IncompleteAttachment as u32) {
+            Ok(FrameBufferStatus::IncompleteAttachment)
+        } else if value == (FrameBufferStatus::IncompleteMissingAttachment as u32) {
+            Ok(FrameBufferStatus::IncompleteMissingAttachment)
+        } else if value == (FrameBufferStatus::IncompleteDimensions as u32) {
+            Ok(FrameBufferStatus::IncompleteDimensions)
+        } else if value == (FrameBufferStatus::Unsupported as u32) {
+            Ok(FrameBufferStatus::Unsupported)
+        } else if value == (FrameBufferStatus::IncompleteMultisample as u32) {
+            Ok(FrameBufferStatus::IncompleteMultisample)
+        } else if value == (FrameBufferStatus::Samples as u32) {
+            Ok(FrameBufferStatus::Samples)
+        } else if value == (FrameBufferStatus::IncompleteViewTargetsOvr as u32) {
+            Ok(FrameBufferStatus::IncompleteViewTargetsOvr)
+        } else {
+            Err("bad value for FrameBufferStatus")
+        }
+    }
 }
