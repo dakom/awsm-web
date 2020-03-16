@@ -51,6 +51,7 @@ impl WebGlRenderer<WebGlRenderingContext> {
         self.get_extension("ANGLE_instanced_arrays")
             .map(|ext| ext.unchecked_ref::<AngleInstancedArrays>())
     }
+
     pub fn register_extension_vertex_array(&mut self) -> Result<&OesVertexArrayObject, Error> {
         self.register_extension("OES_vertex_array_object")
             .map(|ext| ext.unchecked_ref::<OesVertexArrayObject>())
@@ -60,6 +61,10 @@ impl WebGlRenderer<WebGlRenderingContext> {
             .map(|ext| ext.unchecked_ref::<OesVertexArrayObject>())
     }
 
+    pub fn register_extension_draw_buffers(&mut self) -> Result<&WebglDrawBuffers, Error> {
+        self.register_extension("WEBGL_draw_buffers")
+            .map(|ext| ext.unchecked_ref::<WebglDrawBuffers>())
+    }
     pub fn get_extension_draw_buffers(&self) -> Result<&WebglDrawBuffers, Error> {
         self.get_extension("WEBGL_draw_buffers")
             .map(|ext| ext.unchecked_ref::<WebglDrawBuffers>())

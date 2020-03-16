@@ -2,6 +2,7 @@ use super::{RENDERBUFFER_TARGET, Id, WebGlCommon, WebGlRenderer, ReadBuffer, Fra
 use crate::errors::{Error, NativeError};
 use crate::data::{TypedData};
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext, WebGlFramebuffer, WebGlTexture, WebGlRenderbuffer};
+use js_sys::Array;
 use std::convert::TryInto;
 
 pub trait PartialWebGlFrameBuffer {
@@ -110,17 +111,21 @@ impl PartialWebGl2FrameBuffer for WebGl2RenderingContext {
     fn awsm_invalidate_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment]) -> Result<(), Error> {
         let attachments:&[u32] = unsafe { std::mem::transmute(attachments) };
 
+        let js_array:Array = TypedData::new(attachments).into();
+
         self.invalidate_framebuffer(
             target as u32, 
-            &TypedData::new(attachments).into()
+            &js_array
         ).map_err(|err| err.into())
     }
     fn awsm_invalidate_sub_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment], x: u32, y: u32, width: usize, height: usize) -> Result<(), Error> {
         let attachments:&[u32] = unsafe { std::mem::transmute(attachments) };
         
+        let js_array:Array = TypedData::new(attachments).into();
+
         self.invalidate_sub_framebuffer(
             target as u32,
-            &TypedData::new(attachments).into(),
+            &js_array,
             x as i32,
             y as i32,
             width as i32,

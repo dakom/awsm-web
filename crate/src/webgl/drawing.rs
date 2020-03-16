@@ -2,6 +2,7 @@ use super::{BeginMode, BufferMask, DataType, WebGlCommon, WebGlRenderer, DrawBuf
 use crate::errors::Error;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 use crate::data::{TypedData};
+use js_sys::Array;
 
 pub trait PartialWebGlDrawing {
     fn awsm_clear(&self, bits: &[BufferMask]);
@@ -58,7 +59,9 @@ impl WebGlRenderer<WebGlRenderingContext> {
         let ext = self.get_extension_draw_buffers()?;
         let target_buffers:&[u32] = unsafe { std::mem::transmute(target_buffers) };
 
-        ext.draw_buffers_webgl(&TypedData::new(target_buffers).into());
+        let js_array:Array = TypedData::new(target_buffers).into();
+
+        ext.draw_buffers_webgl(&js_array);
 
         Ok(())
     }
@@ -68,7 +71,9 @@ impl WebGlRenderer<WebGl2RenderingContext> {
     pub fn draw_buffers(&self, target_buffers: &[DrawBuffer]) -> Result<(), Error> {
         let target_buffers:&[u32] = unsafe { std::mem::transmute(target_buffers) };
 
-        self.gl.draw_buffers(&TypedData::new(target_buffers).into());
+        let js_array:Array = TypedData::new(target_buffers).into();
+
+        self.gl.draw_buffers(&js_array);
 
         Ok(())
     }

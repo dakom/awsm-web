@@ -1,12 +1,13 @@
-precision highp float; 
+precision highp float;
 
 attribute vec2 a_vertex;
 
-uniform vec4 u_color_visible;
-uniform vec4 u_color_hidden;
+varying vec2 v_uv;
+
 uniform mat4 u_modelViewProjection;
 uniform mat4 u_size;
 
 void main() {
     gl_Position = u_modelViewProjection * (u_size * vec4(a_vertex,0,1));
+    v_uv = a_vertex;
 }

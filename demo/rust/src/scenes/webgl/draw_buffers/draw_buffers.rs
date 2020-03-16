@@ -9,7 +9,8 @@ use awsm_web::webgl::{BeginMode, BufferMask, Id, WebGlCommon, WebGlRenderer,
     FrameBufferTextureTarget,
     ReadPixelFormat,
     ReadPixelDataType,
-    WebGlVersion
+    WebGlVersion,
+    DrawBuffer
 };
 use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;
@@ -27,6 +28,7 @@ struct State {
     pub camera_width: f64,
     pub camera_height: f64,
     pub program_id: Option<Id>,
+    pub texture_program_id: Option<Id>,
 }
 
 impl State {
@@ -38,6 +40,7 @@ impl State {
             camera_width: 0.0,
             camera_height: 0.0,
             program_id: None,
+            texture_program_id: None,
         }
     }
 }
@@ -67,6 +70,12 @@ pub fn start(
                 {
                     let mut webgl_renderer = webgl_renderer.borrow_mut();
 
+                    if let Ok(webgl_renderer) = webgl_renderer.as_webgl1() {
+                        webgl_renderer
+                            .register_extension_draw_buffers()
+                            .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
+                    }
+
                     let program_id = {
                         if webgl_renderer.version == WebGlVersion::One {
                             webgl_renderer.compile_program(
@@ -82,6 +91,14 @@ pub fn start(
                     }?;
 
                     state.borrow_mut().program_id = Some(program_id);
+                    
+                    let texture_program_id = webgl_renderer.compile_program(
+                        include_str!("shaders/draw-buffers-texture-vertex.glsl"),
+                        include_str!("shaders/draw-buffers-texture-fragment.glsl"),
+                    )?;
+
+                    state.borrow_mut().texture_program_id = Some(texture_program_id);
+
                     let _buffer_id = create_and_assign_unit_quad_buffer(&mut webgl_renderer)?;
                 }
 
@@ -135,6 +152,7 @@ pub fn start(
                     camera_width,
                     camera_height,
                     program_id,
+                    texture_program_id,
                     ..
                 } = &mut *state;
 
@@ -146,6 +164,11 @@ pub fn start(
                 let scaling_mat = Matrix4::new_nonuniform_scaling(&Vector3::new(
                     area.width as f32,
                     area.height as f32,
+                    0.0,
+                ));
+                let full_scaling_mat = Matrix4::new_nonuniform_scaling(&Vector3::new(
+                    *camera_width as f32,
+                    *camera_height as f32,
                     0.0,
                 ));
                 let camera_mat = Matrix4::new_orthographic(
@@ -164,17 +187,22 @@ pub fn start(
 
                 let picker = picker.as_ref().unwrap();
 
-                picker.bind(webgl_renderer).unwrap();
+                //write to the textures
+                picker.bind(webgl_renderer, picker.write_framebuffer_id).unwrap();
                 webgl_renderer.clear(&[ BufferMask::ColorBufferBit, BufferMask::DepthBufferBit, ]);
                 positions.as_ref().map(|positions| {
-                    draw_positions(webgl_renderer, &camera_mat, &scaling_mat, positions.as_ref(), true);
+                    draw_positions(webgl_renderer, &camera_mat, &scaling_mat, positions.as_ref());
                 });
-
                 picker.release(webgl_renderer);
-                webgl_renderer.clear(&[ BufferMask::ColorBufferBit, BufferMask::DepthBufferBit, ]);
-                positions.as_ref().map(|positions| {
-                    draw_positions(webgl_renderer, &camera_mat, &scaling_mat, positions.as_ref(), false);
-                });
+
+                //show the visible texture on the screen
+                webgl_renderer
+                    .activate_program(texture_program_id.unwrap())
+                    .unwrap();
+               
+                //could easily show the other texture by changing the id 
+                //selection would be the same because that comes from hidden buffer (which is bound to the hidden texture)
+                blit(webgl_renderer, &camera_mat, &full_scaling_mat, picker.visible_texture_id);
             }
         }
     )
@@ -203,7 +231,7 @@ fn update_click_state<T: WebGlCommon> (renderer:Rc<RefCell<WebGlRenderer<T>>>, s
     }
 }
 
-pub fn draw_positions<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, camera_mat: &Matrix4<f32>, scaling_mat: &Matrix4<f32>, positions: &Vec<Point2<f64>>, indexed_color: bool) {
+pub fn draw_positions<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, camera_mat: &Matrix4<f32>, scaling_mat: &Matrix4<f32>, positions: &Vec<Point2<f64>>) {
 
     for (index, pos) in positions.iter().enumerate() {
         let model_mat =
@@ -222,25 +250,50 @@ pub fn draw_positions<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, camera_ma
             .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
             .unwrap();
        
-        let color = if indexed_color {
-            match index {
-                0 => Color::new(1.0, 0.0, 0.0, 1.0),
-                1 => Color::new(0.0, 1.0, 0.0, 1.0),
-                2 => Color::new(0.0, 0.0, 1.0, 1.0),
-                _ => Color::new(0.0, 0.0, 0.0, 1.0)
-            }
-        } else {
-            Color::new(1.0, 0.0, 0.0, 1.0)
+        let color_hidden = match index {
+            0 => Color::new(1.0, 0.0, 0.0, 1.0),
+            1 => Color::new(0.0, 1.0, 0.0, 1.0),
+            2 => Color::new(0.0, 0.0, 1.0, 1.0),
+            _ => Color::new(0.0, 0.0, 0.0, 1.0)
         };
 
-        let color_values = color.to_vec_f32();
+        let color_visible = Color::new(1.0, 0.0, 0.0, 1.0);
+
+        let color_values = color_hidden.to_vec_f32();
         renderer
-            .upload_uniform_fvec_4("u_color", &color_values)
+            .upload_uniform_fvec_4("u_color_hidden", &color_values)
+            .unwrap();
+
+        let color_values = color_visible.to_vec_f32();
+        renderer
+            .upload_uniform_fvec_4("u_color_visible", &color_values)
             .unwrap();
 
         //draw!
         renderer.draw_arrays(BeginMode::TriangleStrip, 0, 4);
     }
+}
+pub fn blit<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, camera_mat: &Matrix4<f32>, scaling_mat: &Matrix4<f32>, texture_id: Id) {
+
+        //Upload matrices to the GPU
+        let mvp_mat = camera_mat;
+
+        renderer
+            .upload_uniform_mat_4("u_size", &scaling_mat.as_slice())
+            .unwrap();
+
+        renderer
+            .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
+            .unwrap();
+       
+
+        //enable texture
+        renderer
+            .activate_texture_for_sampler(texture_id, "u_sampler")
+            .unwrap();
+
+        //draw!
+        renderer.draw_arrays(BeginMode::TriangleStrip, 0, 4);
 }
 impl State {
     pub fn update(&mut self, _time_stamp: f64) {
@@ -268,18 +321,32 @@ impl State {
 }
 
 struct FrameBufferPicker {
-    _texture_id: Id,
+    _hidden_texture_id: Id,
+    visible_texture_id: Id,
     _renderbuffer_id: Id,
-    framebuffer_id: Id,
+    write_framebuffer_id: Id,
+    read_framebuffer_id: Id,
 }
 
 //see: https://stackoverflow.com/questions/21841483/webgl-using-framebuffers-for-picking-multiple-objects
 impl FrameBufferPicker {
-    pub fn new<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, width: u32, height: u32) -> Result<Self, awsm_web::errors::Error> {
+    pub fn new<T: WebGlCommon + 'static> (renderer:&mut WebGlRenderer<T>, width: u32, height: u32) -> Result<Self, awsm_web::errors::Error> {
         //setup a texture to store colors
-        let texture_id = renderer.create_texture()?;
+        let hidden_texture_id = renderer.create_texture()?;
         renderer.assign_simple_texture(
-            texture_id,
+            hidden_texture_id,
+            TextureTarget::Texture2d,
+            &SimpleTextureOptions {
+                pixel_format: PixelFormat::Rgba,
+                ..SimpleTextureOptions::default()
+            },
+            &WebGlTextureSource::EmptyBufferView(width, height, 0),
+        )?;
+
+        //and another for drawing
+        let visible_texture_id = renderer.create_texture()?;
+        renderer.assign_simple_texture(
+            visible_texture_id,
             TextureTarget::Texture2d,
             &SimpleTextureOptions {
                 pixel_format: PixelFormat::Rgba,
@@ -293,27 +360,46 @@ impl FrameBufferPicker {
         let renderbuffer_id = renderer.create_renderbuffer()?;
         renderer.assign_renderbuffer_storage(renderbuffer_id, RenderBufferFormat::DepthComponent16, width, height)?;
 
-        //setup a framebuffer for offscreen rendering (using both texture and renderbuffer for depth)
-        let framebuffer_id = renderer.create_framebuffer()?;
-        renderer.assign_framebuffer_texture_2d(framebuffer_id, texture_id, FrameBufferTarget::FrameBuffer, FrameBufferAttachment::Color0, FrameBufferTextureTarget::Texture2d)?;
-        renderer.assign_framebuffer_renderbuffer(framebuffer_id, renderbuffer_id, FrameBufferTarget::FrameBuffer, FrameBufferAttachment::Depth)?;
+        //setup a framebuffer for offscreen rendering (using both textures and renderbuffer for depth)
+        let write_framebuffer_id = renderer.create_framebuffer()?;
+        renderer.assign_framebuffer_renderbuffer(write_framebuffer_id, renderbuffer_id, FrameBufferTarget::FrameBuffer, FrameBufferAttachment::Depth)?;
+        renderer.assign_framebuffer_texture_2d(write_framebuffer_id, hidden_texture_id, FrameBufferTarget::FrameBuffer, FrameBufferAttachment::Color0, FrameBufferTextureTarget::Texture2d)?;
+        renderer.assign_framebuffer_texture_2d(write_framebuffer_id, visible_texture_id, FrameBufferTarget::FrameBuffer, FrameBufferAttachment::Color1, FrameBufferTextureTarget::Texture2d)?;
 
         //make sure we're good
-        renderer.check_framebuffer_status(FrameBufferTarget::FrameBuffer).unwrap();
+        renderer.check_framebuffer_status(FrameBufferTarget::FrameBuffer)?;
+
+        //set the multi-draw targets
+        //since we don't know here if we're in webgl1 or 2 gotta do both
+        if let Ok(renderer) = renderer.as_webgl1() {
+            renderer.draw_buffers(&vec![DrawBuffer::Color0, DrawBuffer::Color1])?;
+        } else if let Ok(renderer) = renderer.as_webgl2() {
+            renderer.draw_buffers(&vec![DrawBuffer::Color0, DrawBuffer::Color1])?;
+        }
+
+        //read only needs depth and hidden texture
+        let read_framebuffer_id = renderer.create_framebuffer()?;
+        renderer.assign_framebuffer_renderbuffer(read_framebuffer_id, renderbuffer_id, FrameBufferTarget::FrameBuffer, FrameBufferAttachment::Depth)?;
+        renderer.assign_framebuffer_texture_2d(read_framebuffer_id, hidden_texture_id, FrameBufferTarget::FrameBuffer, FrameBufferAttachment::Color0, FrameBufferTextureTarget::Texture2d)?;
+        
+        //make sure we're still all good
+        renderer.check_framebuffer_status(FrameBufferTarget::FrameBuffer)?;
 
         //unbind everything (no need to bind the texture to null)
         renderer.release_renderbuffer();
         renderer.release_framebuffer(FrameBufferTarget::FrameBuffer);
 
         Ok(Self{
-            _texture_id: texture_id,
+            _hidden_texture_id: hidden_texture_id,
+            visible_texture_id,
             _renderbuffer_id: renderbuffer_id,
-            framebuffer_id
+            read_framebuffer_id,
+            write_framebuffer_id
         })
     }
 
-    pub fn bind<T: WebGlCommon> (&self, renderer:&mut WebGlRenderer<T>) -> Result<(), awsm_web::errors::Error> {
-        renderer.bind_framebuffer(self.framebuffer_id, FrameBufferTarget::FrameBuffer)
+    pub fn bind<T: WebGlCommon> (&self, renderer:&mut WebGlRenderer<T>, id: Id) -> Result<(), awsm_web::errors::Error> {
+        renderer.bind_framebuffer(id, FrameBufferTarget::FrameBuffer)
         //note - if the framebuffer *didn't* equal window size, set viewport to framebuffer size here
     }
     pub fn release<T: WebGlCommon> (&self, renderer:&mut WebGlRenderer<T>) {
@@ -324,7 +410,8 @@ impl FrameBufferPicker {
     pub fn get_color<T: WebGlCommon> (&self, renderer:&mut WebGlRenderer<T>, client_x: f64, client_y: f64) -> Result<Color, awsm_web::errors::Error> {
         let mut data:[u8;4] = [0;4];
 
-        self.bind(renderer)?;
+        //bind the read buffer which contains the hidden texture
+        self.bind(renderer, self.read_framebuffer_id)?;
         renderer.read_pixels_u8(client_x as u32, client_y as u32, 1, 1, ReadPixelFormat::Rgba, ReadPixelDataType::UnsignedByte, &mut data)?;
         self.release(renderer);
 

@@ -1,7 +1,12 @@
-precision mediump float;
+#extension GL_EXT_draw_buffers : require 
 
-uniform vec4 u_color; 
+precision highp float; 
+
+uniform vec4 u_color_visible; 
+uniform vec4 u_color_hidden; 
 
 void main() {
-    gl_FragColor = u_color; 
+
+    gl_FragData[0] = u_color_hidden; 
+    gl_FragData[1] = u_color_visible;
 }

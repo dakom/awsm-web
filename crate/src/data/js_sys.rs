@@ -1,6 +1,7 @@
 use js_sys::{
     ArrayBuffer, Float32Array, Float64Array, Int16Array, Int32Array, Int8Array, Object,
     Uint16Array, Uint32Array, Uint8Array,
+    Array
 };
 use std::marker::PhantomData;
 use wasm_bindgen::JsValue;
@@ -57,6 +58,92 @@ pub struct TypedData<T, U>(T, PhantomData<U>);
 impl<T: AsRef<[U]>, U> TypedData<T, U> {
     pub fn new(values: T) -> Self {
         Self(values, PhantomData)
+    }
+}
+
+//implementations for different data types as typed array
+impl<T: AsRef<[i8]>> From<TypedData<T, i8>> for js_sys::Int8Array {
+    fn from(data: TypedData<T, i8>) -> Self {
+        unsafe { js_sys::Int8Array::view(data.0.as_ref()) }
+    }
+}
+
+impl<T: AsRef<[u8]>> From<TypedData<T, u8>> for js_sys::Uint8Array {
+    fn from(data: TypedData<T, u8>) -> Self {
+        unsafe { js_sys::Uint8Array::view(data.0.as_ref()) }
+    }
+}
+impl<T: AsRef<[i16]>> From<TypedData<T, i16>> for js_sys::Int16Array {
+    fn from(data: TypedData<T, i16>) -> Self {
+        unsafe { js_sys::Int16Array::view(data.0.as_ref()) }
+    }
+}
+impl<T: AsRef<[u16]>> From<TypedData<T, u16>> for js_sys::Uint16Array {
+    fn from(data: TypedData<T, u16>) -> Self {
+        unsafe { js_sys::Uint16Array::view(data.0.as_ref()) }
+    }
+}
+impl<T: AsRef<[i32]>> From<TypedData<T, i32>> for js_sys::Int32Array {
+    fn from(data: TypedData<T, i32>) -> Self {
+        unsafe { js_sys::Int32Array::view(data.0.as_ref()) }
+    }
+}
+impl<T: AsRef<[u32]>> From<TypedData<T, u32>> for js_sys::Uint32Array {
+    fn from(data: TypedData<T, u32>) -> Self {
+        unsafe { js_sys::Uint32Array::view(data.0.as_ref()) }
+    }
+}
+impl<T: AsRef<[f32]>> From<TypedData<T, f32>> for js_sys::Float32Array {
+    fn from(data: TypedData<T, f32>) -> Self {
+        unsafe { js_sys::Float32Array::view(data.0.as_ref()) }
+    }
+}
+impl<T: AsRef<[f64]>> From<TypedData<T, f64>> for js_sys::Float64Array {
+    fn from(data: TypedData<T, f64>) -> Self {
+        unsafe { js_sys::Float64Array::view(data.0.as_ref()) }
+    }
+}
+
+//implementations for different data types as Array
+impl<T: AsRef<[i8]>> From<TypedData<T, i8>> for Array {
+    fn from(data: TypedData<T, i8>) -> Self {
+        unsafe { Array::from(&js_sys::Int8Array::view(data.0.as_ref())) }
+    }
+}
+
+impl<T: AsRef<[u8]>> From<TypedData<T, u8>> for Array {
+    fn from(data: TypedData<T, u8>) -> Self {
+        unsafe { Array::from(&js_sys::Uint8Array::view(data.0.as_ref())) }
+    }
+}
+impl<T: AsRef<[i16]>> From<TypedData<T, i16>> for Array {
+    fn from(data: TypedData<T, i16>) -> Self {
+        unsafe { Array::from(&js_sys::Int16Array::view(data.0.as_ref())) }
+    }
+}
+impl<T: AsRef<[u16]>> From<TypedData<T, u16>> for Array {
+    fn from(data: TypedData<T, u16>) -> Self {
+        unsafe { Array::from(&js_sys::Uint16Array::view(data.0.as_ref())) }
+    }
+}
+impl<T: AsRef<[i32]>> From<TypedData<T, i32>> for Array {
+    fn from(data: TypedData<T, i32>) -> Self {
+        unsafe { Array::from(&js_sys::Int32Array::view(data.0.as_ref())) }
+    }
+}
+impl<T: AsRef<[u32]>> From<TypedData<T, u32>> for Array {
+    fn from(data: TypedData<T, u32>) -> Self {
+        unsafe { Array::from(&js_sys::Uint32Array::view(data.0.as_ref())) }
+    }
+}
+impl<T: AsRef<[f32]>> From<TypedData<T, f32>> for Array {
+    fn from(data: TypedData<T, f32>) -> Self {
+        unsafe { Array::from(&js_sys::Float32Array::view(data.0.as_ref())) }
+    }
+}
+impl<T: AsRef<[f64]>> From<TypedData<T, f64>> for Array {
+    fn from(data: TypedData<T, f64>) -> Self {
+        unsafe { Array::from(&js_sys::Float64Array::view(data.0.as_ref())) }
     }
 }
 
