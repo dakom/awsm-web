@@ -1,3 +1,11 @@
+/*
+    I can't actually remember why we cache things in the shader compilation
+    as opposed to ad-hoc
+
+    Especially with arrays, it's a bit odd.
+
+    Should think about lazy caching upon request instead
+*/
 use super::id::Id;
 use super::{
     ProgramQuery, ShaderQuery, ShaderType, UniformBlockActiveQuery, UniformBlockQuery,
@@ -72,6 +80,8 @@ pub trait PartialWebGlShaders {
         program: &WebGlProgram,
         index: u32,
     ) -> Result<WebGlActiveInfo, Error>;
+
+    fn awsm_bind_attrib_location(&self, program: &WebGlProgram, index: u32, name: &str);
 }
 
 macro_rules! impl_context {
@@ -155,6 +165,10 @@ macro_rules! impl_context {
             fn awsm_get_active_attrib(&self, program: &WebGlProgram, index: u32) -> Result<WebGlActiveInfo, Error> {
                 self.get_active_attrib(program, index)
                     .ok_or(Error::from(NativeError::AttributeLocation(None)))
+            }
+    
+            fn awsm_bind_attrib_location(&self, program: &WebGlProgram, index: u32, name: &str) {
+                self.bind_attrib_location(program, index, name);
             }
 
             $($defs)*
@@ -313,7 +327,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
 
 impl WebGlRenderer<WebGlRenderingContext> {
     pub fn compile_program(&mut self, vertex: &str, fragment: &str) -> Result<Id, Error> {
-        let program = compile_program(&self.gl, &vertex, &fragment)?;
+        let program = compile_program(&self.gl, &vertex, &fragment, &self.hardcoded_attribute_locations)?;
 
         let program_info = ProgramInfo::new(program);
 
@@ -335,7 +349,7 @@ impl WebGlRenderer<WebGlRenderingContext> {
 
 impl WebGlRenderer<WebGl2RenderingContext> {
     pub fn compile_program(&mut self, vertex: &str, fragment: &str) -> Result<Id, Error> {
-        let program = compile_program(&self.gl, &vertex, &fragment)?;
+        let program = compile_program(&self.gl, &vertex, &fragment, &self.hardcoded_attribute_locations)?;
 
         let program_info = ProgramInfo::new(program);
 
@@ -533,6 +547,7 @@ pub fn compile_program<T: WebGlCommon>(
     gl: &T,
     vertex: &str,
     fragment: &str,
+    hardcoded_attribute_locations: &FxHashMap<String, u32>
 ) -> Result<WebGlProgram, Error> {
     let result = compile_program_steps(gl, CompileSteps::new())
         .and_then(|compile_steps: CompileSteps| {
@@ -541,6 +556,7 @@ pub fn compile_program<T: WebGlCommon>(
         .and_then(|compile_steps: CompileSteps| {
             compile_source(gl, compile_steps, vertex, ShaderType::Vertex)
         })
+        .and_then(|compile_steps: CompileSteps| hardcode_attributes(gl, compile_steps, hardcoded_attribute_locations))
         .and_then(|compile_steps: CompileSteps| link_program(gl, compile_steps));
 
     match result {
@@ -553,6 +569,18 @@ pub fn compile_program<T: WebGlCommon>(
             Err(Error::from(error_message))
         }
     }
+}
+
+fn hardcode_attributes<T: WebGlCommon>(
+    gl: &T,
+    compile_steps: CompileSteps,
+    hardcoded_attribute_locations: &FxHashMap<String, u32>
+) -> WithError<CompileSteps> {
+    let program = compile_steps.program.as_ref().unwrap();
+    for (name, loc) in hardcoded_attribute_locations {
+        gl.awsm_bind_attrib_location(program, *loc, name);
+    }
+    Ok(compile_steps)
 }
 
 fn compile_program_steps<T: WebGlCommon>(

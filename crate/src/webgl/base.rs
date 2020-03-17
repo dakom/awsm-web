@@ -30,6 +30,8 @@ pub struct WebGlRenderer<T: WebGlCommon> {
 
     pub version: WebGlVersion,
 
+    pub hardcoded_attribute_locations: FxHashMap<String, u32>,
+
     //really just local to the module
     pub(super) last_width: u32,
     pub(super) last_height: u32,
@@ -104,6 +106,8 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
             gl,
             canvas,
             version,
+            hardcoded_attribute_locations: FxHashMap::default(),
+
             last_width: 0,
             last_height: 0,
 

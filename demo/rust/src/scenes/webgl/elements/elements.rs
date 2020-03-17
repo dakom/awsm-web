@@ -51,10 +51,19 @@ pub fn start(
             move |webgl_renderer, on_ready| {
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
 
+                //also testing the global hardcoded attribute approach...
+
+                webgl_renderer.hardcoded_attribute_locations.insert("a_vertex".to_string(), 3);
+
                 let program_id = webgl_renderer.compile_program(
                     include_str!("shaders/elements-vertex.glsl"),
                     include_str!("shaders/elements-fragment.glsl"),
                 )?;
+
+                let loc = webgl_renderer.get_attribute_location_value("a_vertex").unwrap();
+                if loc != 3 {
+                    panic!("hardcoded attribute fail!");
+                }
 
                 state.borrow_mut().program_id = Some(program_id);
                 let buffer_ids = create_unit_box_buffers(&mut webgl_renderer)?;

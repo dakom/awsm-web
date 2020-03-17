@@ -28,7 +28,7 @@ checksum = "f8aac770f1885fd7e387acedd76065302551364496e46b3dd00860b2f8359b9d"
 
 [[package]]
 name = "awsm_web"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "beach_map",
  "futures",
@@ -153,9 +153,9 @@ dependencies = [
 
 [[package]]
 name = "futures-signals"
-version = "0.3.12"
+version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "830d46948012fc113b8e75315383e597dfbafe5eb9e75c165dbded01d02bf24f"
+checksum = "cc25a8a9a6d6ff91068ca03a3d0526dbee38708faaf850825a1647969dc1dead"
 dependencies = [
  "discard",
  "futures-channel",
@@ -227,9 +227,9 @@ dependencies = [
 
 [[package]]
 name = "gloo-timers"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b2d17dbd803c2fc86cb1b613adf63192046a7176f383a8302594654752c4c4a"
+checksum = "47204a46aaff920a1ea58b11d03dec6f704287d27561724a4631e450654a891f"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -348,9 +348,9 @@ dependencies = [
 
 [[package]]
 name = "nalgebra"
-version = "0.19.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0abb021006c01b126a936a8dd1351e0720d83995f4fc942d0d426c654f990745"
+checksum = "c6511777ed3da44b6a11e732a66a7d6274dfbbcd68ad968e64b778dcb829d94a"
 dependencies = [
  "alga",
  "approx",
