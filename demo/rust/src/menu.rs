@@ -19,6 +19,7 @@ lazy_static! {
         m.insert("loaders-image", Menu {label: "Image", source: "loaders/image.rs"});
         m.insert("loaders-image-data", Menu {label: "Image Data", source: "loaders/image_data.rs"});
         m.insert("loaders-text", Menu {label: "Text", source: "loaders/text.rs"});
+        m.insert("loaders-json", Menu {label: "Json", source: "loaders/json.rs"});
         //Input
         m.insert("input-pointer-lock", Menu {label: "Pointer Lock", source: "input/pointer_lock.rs"});
         //WebGl
@@ -61,7 +62,7 @@ pub fn build_menu(document: &Document) -> Result<web_sys::Node, JsValue> {
         &container,
         &document,
         "Loaders",
-        &vec!["loaders-image", "loaders-image-data", "loaders-text"],
+        &vec!["loaders-image", "loaders-image-data", "loaders-text", "loaders-json"],
         None,
     )?;
 

@@ -11,10 +11,13 @@ use futures::future::{self, TryFutureExt, FutureExt};
 use std::future::Future;
 use js_sys::{Array, ArrayBuffer, Promise};
 use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     Blob, BlobPropertyBag, Request, Response, Url,
 };
+#[cfg(feature = "serde")]
+use serde::de::DeserializeOwned;
 
 #[cfg(feature = "image")]
 use web_sys::{ HtmlImageElement };
@@ -271,6 +274,30 @@ pub fn audio_f64<T: AsRef<[f64]>>(
 ) -> impl Future<Output = Result<AudioBuffer, Error>> {
     let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
     audio_buffer(&array_buffer, &ctx)
+}
+
+//text
+#[cfg(feature = "serde")]
+pub fn json<T: DeserializeOwned>(url: &str) -> impl Future<Output = Result<T, Error>> {
+    let req = Request::new_with_str(url);
+    async {
+        let req = req?;
+        let res = json_req(req).await?;
+        Ok(res)
+    }
+}
+
+#[cfg(feature = "serde")]
+pub fn json_req<T: DeserializeOwned>(req: Request) -> impl Future<Output = Result<T, Error>> {
+    async move {
+        let resp: Response = request(&req).await?;
+
+        let promise = resp.json()?;
+
+        let data = JsFuture::from(promise).await?;
+
+        serde_wasm_bindgen::from_value(data).map_err(|err| JsValue::from(err).into())
+    }
 }
 
 //text
