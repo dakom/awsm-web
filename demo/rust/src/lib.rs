@@ -1,3 +1,6 @@
+// see https://github.com/rust-lang/rust/issues/70070
+#![cfg_attr(feature = "quiet", allow(warnings))]
+
 mod menu;
 mod router;
 mod scenes;

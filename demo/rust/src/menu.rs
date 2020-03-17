@@ -83,9 +83,11 @@ pub fn build_menu(document: &Document) -> Result<web_sys::Node, JsValue> {
         "webgl-instancing",
         "webgl-vaos",
         "webgl-texture_cube",
-        "webgl-draw-buffers",
         "webgl-frame-buffers",
+        "webgl-draw-buffers",
     ];
+
+    let unused = "hello";
 
     let webgl_menu_1 = webgl_menu_common.clone();
     let mut webgl_menu_2 = webgl_menu_common.clone();

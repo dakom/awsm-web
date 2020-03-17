@@ -55,9 +55,11 @@ toolchain = "nightly"
 
 [tasks.compile-development-nowarnings]
 command = "cargo"
-args = ["build","--features","dev","--target","wasm32-unknown-unknown"]
+args = ["build","--features","dev quiet","--target","wasm32-unknown-unknown"]
 toolchain = "nightly"
-env = { "RUSTFLAGS" = "-Awarnings"}
+# see https://github.com/rust-lang/rust/issues/70070
+# instead, using "quiet" feature and cfg attribute
+# env = { "RUSTFLAGS" = "--allow warnings"}
 
 [tasks.bindgen-development]
 command = "wasm-bindgen"

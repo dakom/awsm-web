@@ -56,4 +56,5 @@ web-sys = { version = "0.3.36", features = [
 [features]
 default = ["wee_alloc"]
 ts_test = []
+quiet = []
 dev = ["wee_alloc", "wasm-logger", "console_error_panic_hook"]
