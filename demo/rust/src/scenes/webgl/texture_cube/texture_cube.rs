@@ -128,7 +128,7 @@ pub fn start(
                         &vec![VertexArray {
                             attribute_name: "a_vertex",
                             buffer_id: geom_id,
-                            opts: &AttributeOptions::new(3, DataType::Float),
+                            opts: AttributeOptions::new(3, DataType::Float),
                         }],
                     )?;
                     state.borrow_mut().vao_id = Some(vao_id);

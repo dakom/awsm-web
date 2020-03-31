@@ -4,14 +4,14 @@ use web_sys::WebGlVertexArrayObject;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 #[derive(Debug)]
-pub struct VertexArray<'a> {
-    pub attribute_name: &'a str,
+pub struct VertexArray {
+    pub attribute_name: &'static str,
     pub buffer_id: Id,
-    pub opts: &'a AttributeOptions,
+    pub opts: AttributeOptions,
 }
 
-impl<'a> VertexArray<'a> {
-    pub fn new(attribute_name: &'a str, buffer_id: Id, opts: &'a AttributeOptions) -> Self {
+impl VertexArray {
+    pub fn new (attribute_name: &'static str, buffer_id: Id, opts: AttributeOptions) -> Self {
         Self {
             attribute_name,
             buffer_id,

@@ -78,12 +78,12 @@ pub fn start(
                         VertexArray {
                             attribute_name: "a_vertex",
                             buffer_id: geom_id,
-                            opts: &AttributeOptions::new(3, DataType::Float),
+                            opts: AttributeOptions::new(3, DataType::Float),
                         },
                         VertexArray {
                             attribute_name: "a_color",
                             buffer_id: colors_id,
-                            opts: &AttributeOptions::new(3, DataType::Float),
+                            opts: AttributeOptions::new(3, DataType::Float),
                         },
                     ],
                 )?;
