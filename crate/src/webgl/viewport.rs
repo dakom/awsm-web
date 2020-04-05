@@ -1,28 +1,29 @@
 use super::{WebGlCommon, WebGlRenderer};
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
+#[derive(Eq, PartialEq)]
 pub enum ResizeStrategy {
     Canvas,
     Viewport,
     All 
 }
 pub trait PartialWebGlViewport {
-    fn awsm_viewport(&self, x: i32, y: i32, width: i32, height: i32);
-    fn awsm_drawing_buffer_height(&self) -> i32;
-    fn awsm_drawing_buffer_width(&self) -> i32;
+    fn awsm_viewport(&self, x: u32, y: u32, width: u32, height: u32);
+    fn awsm_drawing_buffer_height(&self) -> u32;
+    fn awsm_drawing_buffer_width(&self) -> u32;
 }
 
 macro_rules! impl_context {
     ($($type:ty { $($defs:tt)* })+) => {
         $(impl PartialWebGlViewport for $type {
-            fn awsm_viewport(&self, x: i32, y: i32, width: i32, height: i32) {
-                self.viewport(x, y, width, height)
+            fn awsm_viewport(&self, x: u32, y: u32, width: u32, height: u32) {
+                self.viewport(x as i32, y as i32, width as i32, height as i32)
             }
-            fn awsm_drawing_buffer_height(&self) -> i32 {
-                self.drawing_buffer_height()
+            fn awsm_drawing_buffer_height(&self) -> u32 {
+                self.drawing_buffer_height() as u32
             }
-            fn awsm_drawing_buffer_width(&self) -> i32 {
-                self.drawing_buffer_width()
+            fn awsm_drawing_buffer_width(&self) -> u32 {
+                self.drawing_buffer_width() as u32
             }
             $($defs)*
         })+
