@@ -88,7 +88,7 @@ pub fn start(
 
                     let images: Vec<HtmlImageElement> = try_join_all(futures).await?;
 
-                    let (_width, _height) = webgl_renderer.current_size();
+                    let (_x, _y, _width, _height) = webgl_renderer.get_viewport();
 
                     images
                         .into_iter()

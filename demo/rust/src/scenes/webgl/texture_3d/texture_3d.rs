@@ -94,7 +94,7 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
                         height: img.natural_height().into(),
                     };
 
-                    let (width, height) = webgl_renderer.current_size();
+                    let (_x, _y, width, height) = webgl_renderer.get_viewport();
 
                     reposition(&mut state_obj, width, height);
 

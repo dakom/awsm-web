@@ -93,7 +93,7 @@ pub fn start(
                         state_obj.area.width, state_obj.area.height
                     );
 
-                    let (width, height) = webgl_renderer.current_size();
+                    let (_x, _y, width, height) = webgl_renderer.get_viewport();
 
                     reposition(&mut state_obj, width, height);
 

@@ -2,6 +2,7 @@ use super::funcs::FuncSettings;
 use super::misc::MiscSettings;
 use super::toggles::ToggleFlags;
 use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon, WebGlVersion };
+use super::viewport::ResizeStrategy;
 use crate::errors::{Error, NativeError};
 use beach_map::{BeachMap, DefaultVersion};
 use rustc_hash::FxHashMap;
@@ -33,9 +34,9 @@ pub struct WebGlRenderer<T: WebGlCommon> {
     pub hardcoded_attribute_locations: FxHashMap<String, u32>,
 
     //really just local to the module
-    pub(super) last_width: u32,
-    pub(super) last_height: u32,
-
+    pub(super) last_resize_strategy: Option<ResizeStrategy>, 
+    pub(super) viewport: Option<(u32, u32, u32, u32)>,
+    
     pub(super) current_program_id: Option<Id>,
     pub(super) program_lookup: BeachMap<DefaultVersion, ProgramInfo>,
 
@@ -108,8 +109,8 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
             version,
             hardcoded_attribute_locations: FxHashMap::default(),
 
-            last_width: 0,
-            last_height: 0,
+            last_resize_strategy: None,
+            viewport: None,
 
             current_program_id: None,
             program_lookup: BeachMap::default(),

@@ -1,5 +1,6 @@
 use awsm_web::webgl::{
     get_webgl_context_1, get_webgl_context_2, BufferMask, WebGl1Renderer, WebGl2Renderer,
+    ResizeStrategy,
     WebGlContextOptions,
 };
 
@@ -79,7 +80,7 @@ where
 
     let mut on_resize = move |_: &web_sys::Event| {
         let (width, height) = window::get_window_size(&window_clone).unwrap();
-        webgl_renderer_clone.borrow_mut().resize(width, height);
+        webgl_renderer_clone.borrow_mut().resize(ResizeStrategy::All(width, height));
         resize_cb(width, height);
     };
 
@@ -152,7 +153,7 @@ where
 
     let mut on_resize = move |_: &web_sys::Event| {
         let (width, height) = window::get_window_size(&window_clone).unwrap();
-        webgl_renderer_clone.borrow_mut().resize(width, height);
+        webgl_renderer_clone.borrow_mut().resize(ResizeStrategy::All(width, height));
         resize_cb(width, height);
     };
 

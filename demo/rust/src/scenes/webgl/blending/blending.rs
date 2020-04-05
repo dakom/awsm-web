@@ -104,7 +104,7 @@ pub fn start(
                     )?;
                     state_obj.top_texture_id = Some(texture_id);
 
-                    let (width, height) = webgl_renderer.current_size();
+                    let (_x, _y, width, height) = webgl_renderer.get_viewport();
 
                     reposition(&mut state_obj, width, height);
 
