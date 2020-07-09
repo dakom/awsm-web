@@ -1,4 +1,4 @@
-use awsm_web::tick::{MainLoop, MainLoopOptions, RafLoop};
+use awsm_web::tick::{MainLoop, MainLoopOptions, Raf};
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -32,7 +32,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
 
     //Closure needs to take ownership since it occurs past the JS boundry and is 'static
     //but we need to assign the value of cancel from outside the closure
-    let raf_loop: Rc<RefCell<Option<RafLoop>>> = Rc::new(RefCell::new(None));
+    let raf_loop: Rc<RefCell<Option<Raf>>> = Rc::new(RefCell::new(None));
 
     //callbacks
     let begin = move |time, delta| {
@@ -69,12 +69,12 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
         fps_div.set_text_content(Some(&my_str.as_str()));
     };
 
-    let _raf_loop = RafLoop::start({
+    let _raf_loop = Raf::new({
         let mut main_loop = MainLoop::new(MainLoopOptions::default(), begin, update, draw, end);
         move |ts| {
             main_loop.tick(ts);
         }
-    })?;
+    });
 
     *raf_loop.borrow_mut() = Some(_raf_loop);
 

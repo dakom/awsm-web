@@ -1,4 +1,4 @@
-use super::RafLoop;
+use super::Raf;
 use crate::errors::Error;
 ///Simple struct for time, deltatime, and elapsed time
 #[derive(Copy, Clone, Debug)]
@@ -12,7 +12,7 @@ pub struct Timestamp {
 }
 
 pub struct TimestampLoop {
-    pub raf_loop: RafLoop,
+    pub raf_loop: Raf,
 }
 
 impl TimestampLoop {
@@ -25,7 +25,7 @@ impl TimestampLoop {
         let mut last_time: Option<f64> = None;
         let mut first_time = 0f64;
 
-        let raf_loop = RafLoop::start(move |time| {
+        let raf_loop = Raf::new(move |time| {
             match last_time {
                 Some(last_time) => {
                     on_tick(Timestamp {
@@ -44,7 +44,7 @@ impl TimestampLoop {
                 }
             }
             last_time = Some(time);
-        })?;
+        });
 
         Ok(Self { raf_loop })
     }

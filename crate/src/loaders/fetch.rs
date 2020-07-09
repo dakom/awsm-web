@@ -276,7 +276,7 @@ pub fn audio_f64<T: AsRef<[f64]>>(
     audio_buffer(&array_buffer, &ctx)
 }
 
-//text
+//json
 #[cfg(feature = "serde")]
 pub fn json<T: DeserializeOwned>(url: &str) -> impl Future<Output = Result<T, Error>> {
     let req = Request::new_with_str(url);
