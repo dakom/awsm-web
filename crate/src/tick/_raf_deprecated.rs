@@ -22,7 +22,7 @@ impl Drop for RafLoop {
         if let Some(id) = self.raf_id.get() {
             match &self.raf_state {
                 RafState::Window(state) => {
-                    state.borrow().window.cancel_animation_frame(id).unwrap();
+                    state.borrow().window.cancel_animation_frame(id).unwrap_throw();
                 },
                 RafState::Worker(state) => {
                     state.borrow().worker.clear_timeout_with_handle(id);
@@ -78,7 +78,7 @@ impl RafLoop {
                         if id.is_some() {
                             {
                                 let state = raf_state.borrow_mut();
-                                raf_id.set(request_animation_frame(&state.window, f.borrow().as_ref().unwrap()));
+                                raf_id.set(request_animation_frame(&state.window, f.borrow().as_ref().unwrap_throw()));
                             }
                             on_tick(time);
                         } 
@@ -87,7 +87,7 @@ impl RafLoop {
 
                 //this is just used to create the first invocation
                 let state = raf_state.borrow_mut();
-                raf_id.set(request_animation_frame(&state.window, g.borrow().as_ref().unwrap()));
+                raf_id.set(request_animation_frame(&state.window, g.borrow().as_ref().unwrap_throw()));
                 Ok(Self { raf_state: RafState::Window(Rc::clone(&raf_state)), raf_id})
             },
             GlobalSelf::Worker(worker) => {
@@ -111,7 +111,7 @@ impl RafLoop {
                                 let now = get_now_for_worker(); 
                                 let timeout = 0.0f64.max(state.timestep - (now - state.last_timestamp));
                                 state.last_timestamp = now + timeout;
-                                raf_id.set(pseudo_animation_frame(&state.worker, timeout, f.borrow().as_ref().unwrap()));
+                                raf_id.set(pseudo_animation_frame(&state.worker, timeout, f.borrow().as_ref().unwrap_throw()));
                                 now + timeout
                             };
                             on_tick(time);
@@ -124,7 +124,7 @@ impl RafLoop {
                 let now = get_now_for_worker(); 
                 let timeout = 0.0f64.max(state.timestep - (now - state.last_timestamp));
                 state.last_timestamp = now + timeout;
-                raf_id.set(pseudo_animation_frame(&state.worker, timeout, g.borrow().as_ref().unwrap()));
+                raf_id.set(pseudo_animation_frame(&state.worker, timeout, g.borrow().as_ref().unwrap_throw()));
                 Ok(Self { raf_state: RafState::Worker(Rc::clone(&raf_state)), raf_id})
             }
         }

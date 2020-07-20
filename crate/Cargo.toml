@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -18,9 +18,17 @@ lto = true
 opt-level = 's'
 
 [features]
-all = ["data", "audio", "image", "video", "canvas", "input", "loaders", "tick", "window", "workers", "webgl"]
+all = ["data", "dom", "audio", "image", "video", "canvas", "input", "loaders", "tick", "window", "workers", "webgl"]
 default = []
 data = []
+dom= [
+    "web-sys/HtmlElement",
+    "web-sys/Element",
+    "web-sys/DocumentFragment",
+    "web-sys/HtmlCollection",
+    "web-sys/Document",
+]
+
 audio = [
     # audio
     "web-sys/AudioContext",

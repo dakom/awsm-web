@@ -419,7 +419,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
                 /*let bind_point = self.gl.get_active_uniform_block_parameter(&program, i, UniformBlockQuery::BindingPoint as u32)?
                         .as_f64().ok_or(Error::from(NativeError::Internal))
                         .map(|val| val as u32)
-                        .unwrap();
+                        .unwrap_throw();
                 */
 
                 let entry = program_info
@@ -520,7 +520,7 @@ impl CompileSteps {
         let free_shader = |s: Option<&WebGlShader>| {
             s.map(|shader: &WebGlShader| {
                 //if the shader exists, the program had to have been valid
-                gl.awsm_detach_shader(self.program.as_ref().unwrap(), shader);
+                gl.awsm_detach_shader(self.program.as_ref().unwrap_throw(), shader);
                 gl.awsm_delete_shader(shader);
             });
         };
@@ -562,7 +562,7 @@ pub fn compile_program<T: WebGlCommon>(
     match result {
         Ok(mut compile_steps) => {
             compile_steps.free_shaders(gl);
-            Ok(compile_steps.program.unwrap())
+            Ok(compile_steps.program.unwrap_throw())
         }
         Err((mut compile_steps, error_message)) => {
             compile_steps.free_all(gl);
@@ -576,7 +576,7 @@ fn hardcode_attributes<T: WebGlCommon>(
     compile_steps: CompileSteps,
     hardcoded_attribute_locations: &FxHashMap<String, u32>
 ) -> WithError<CompileSteps> {
-    let program = compile_steps.program.as_ref().unwrap();
+    let program = compile_steps.program.as_ref().unwrap_throw();
     for (name, loc) in hardcoded_attribute_locations {
         gl.awsm_bind_attrib_location(program, *loc, name);
     }
@@ -614,7 +614,7 @@ fn compile_source<T: WebGlCommon>(
             ) {
                 Some(error_message) => Err((compile_steps, Error::from(error_message))),
                 None => {
-                    gl.awsm_attach_shader(&compile_steps.program.as_ref().unwrap(), &shader);
+                    gl.awsm_attach_shader(&compile_steps.program.as_ref().unwrap_throw(), &shader);
                     if source_type == ShaderType::Vertex {
                         compile_steps.vertex = Some(shader);
                     } else {
@@ -629,7 +629,7 @@ fn compile_source<T: WebGlCommon>(
 }
 
 fn link_program<T: WebGlCommon>(gl: &T, compile_steps: CompileSteps) -> WithError<CompileSteps> {
-    let program = &compile_steps.program.as_ref().unwrap();
+    let program = &compile_steps.program.as_ref().unwrap_throw();
     gl.awsm_link_program(program);
 
     match do_with_check(

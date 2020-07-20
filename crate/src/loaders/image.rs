@@ -46,7 +46,7 @@ impl Future for Image {
                 let (sender_success, receiver_success): (Sender<()>, Receiver<()>) = channel();
                 let mut sender_success = Option::from(sender_success);
                 let closure_success = Closure::wrap(Box::new(move || {
-                    sender_success.take().unwrap().send(()).unwrap();
+                    sender_success.take().unwrap_throw().send(()).unwrap_throw();
                     waker.wake_by_ref();
                 }) as Box<dyn FnMut()>);
 
@@ -57,7 +57,7 @@ impl Future for Image {
                 let (sender_err, receiver_err): (Sender<JsValue>, Receiver<JsValue>) = channel();
                 let mut sender_err = Option::from(sender_err);
                 let closure_err = Closure::wrap(Box::new(move |err| {
-                    sender_err.take().unwrap().send(err).unwrap();
+                    sender_err.take().unwrap_throw().send(err).unwrap_throw();
                     waker.wake_by_ref();
                 }) as Box<dyn FnMut(JsValue)>);
 
@@ -105,7 +105,7 @@ impl Future for Image {
                 if let Some(result) = error_state {
                     Poll::Ready(Err(result.into()))
                 } else if let Some(_) = success_state {
-                    Poll::Ready(Ok(self.img.as_ref().unwrap().clone()))
+                    Poll::Ready(Ok(self.img.as_ref().unwrap_throw().clone()))
                 } else {
                     if !is_cancelled {
                         //ctx.waker().wake_by_ref();

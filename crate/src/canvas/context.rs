@@ -22,7 +22,7 @@ impl Default for Canvas2dContextOptions {
 
 impl Canvas2dContextOptions {
     pub fn to_js_value(&self) -> JsValue {
-        serde_wasm_bindgen::to_value(&self).unwrap()
+        serde_wasm_bindgen::to_value(&self).unwrap_throw()
     }
 }
 

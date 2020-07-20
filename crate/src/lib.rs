@@ -2,6 +2,8 @@
 pub mod errors;
 
 //each of these can be enabled/disabled as needed
+#[cfg(feature = "dom")]
+pub mod dom;
 #[cfg(feature = "audio")]
 pub mod audio;
 #[cfg(feature = "canvas")]

@@ -143,7 +143,7 @@ impl WebGlContextOptions {
             desynchronized: self.desynchronized,
         };
 
-        serde_wasm_bindgen::to_value(&sanitized).unwrap()
+        serde_wasm_bindgen::to_value(&sanitized).unwrap_throw()
     }
 }
 

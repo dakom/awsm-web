@@ -70,7 +70,7 @@ impl AudioPlayer {
 
 impl Drop for AudioPlayer {
     fn drop(&mut self) {
-        self.node.stop().unwrap();
+        self.node.stop().unwrap_throw();
         self.node.set_onended(None);
         self.cb.take();
     }
