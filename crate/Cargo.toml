@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -27,6 +27,8 @@ dom= [
     "web-sys/DocumentFragment",
     "web-sys/HtmlCollection",
     "web-sys/Document",
+    "web-sys/DomTokenList",
+    "web-sys/NodeList",
 ]
 
 audio = [

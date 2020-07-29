@@ -17,6 +17,7 @@ use rustc_hash::FxHashMap;
 use std::collections::hash_map::Entry;
 use web_sys::{WebGl2RenderingContext, WebGlActiveInfo, WebGlRenderingContext};
 use web_sys::{WebGlProgram, WebGlShader, WebGlUniformLocation};
+use wasm_bindgen::prelude::*;
 
 pub struct ProgramInfo {
     pub program: WebGlProgram,
