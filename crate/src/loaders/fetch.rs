@@ -1,17 +1,10 @@
-use crate::data::TypedData;
-use crate::data::*;
-use crate::errors::{Error, NativeError};
-use crate::window::get_window;
+use crate::errors::Error;
 //Don't know why awsm_web needs FutureExt but awsm_renderer doesn't...
-use futures::future::{self, TryFutureExt, FutureExt};
-use std::future::Future;
-use js_sys::{Array, ArrayBuffer, Promise};
+use js_sys::ArrayBuffer;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{
-    Blob, BlobPropertyBag, Request, Url, AbortController, AbortSignal,RequestInit,
-};
+use web_sys::{ Request, AbortController, AbortSignal,RequestInit, };
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, de::DeserializeOwned};
@@ -45,7 +38,7 @@ impl Drop for Abort {
 
 pub struct Response {
     response: web_sys::Response,
-    abort: Abort,
+    _abort: Abort,
 }
 
 impl Response {
@@ -118,7 +111,7 @@ pub async fn fetch_req(req: &Request, init:&mut RequestInit) -> Result<Response,
     if !response.ok() {
         Err(js_sys::Error::new("Fetch failed with bad HTTP code").into())
     } else {
-        Ok(Response { response, abort })
+        Ok(Response { response, _abort: abort })
     }
 }
 
@@ -146,7 +139,7 @@ pub async fn fetch_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &str, method:
 }
 
 #[cfg(feature = "serde_json")]
-pub async fn fetch_with_data<A: AsRef<str>, B: AsRef<str>>(url: &str, method:&str, include_credentials: bool, pairs: &[(A, B)], data:Option<impl Serialize>) -> Result<Response, Error> {
+pub async fn fetch_with_data(url: &str, method:&str, include_credentials: bool, data:Option<impl Serialize>) -> Result<Response, Error> {
     let mut req_init = web_sys::RequestInit::new();
     req_init.method(method);
     if include_credentials {
@@ -161,7 +154,7 @@ pub async fn fetch_with_data<A: AsRef<str>, B: AsRef<str>>(url: &str, method:&st
             let json_str = serde_json::to_string(&data).map_err(|err| JsValue::from_str(&err.to_string()))?;
             //req_init.mode(web_sys::RequestMode::Cors);
             req_init.body(Some(&JsValue::from_str(&json_str)));
-            let mut req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
+            let req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
             req.headers().set("Content-Type", "application/json")?;
 
             req
@@ -188,7 +181,7 @@ pub async fn fetch_with_headers_and_data<A: AsRef<str>, B: AsRef<str>>(url: &str
             let json_str = serde_json::to_string(&data).map_err(|err| JsValue::from_str(&err.to_string()))?;
             //req_init.mode(web_sys::RequestMode::Cors);
             req_init.body(Some(&JsValue::from_str(&json_str)));
-            let mut req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
+            let req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
             req.headers().set("Content-Type", "application/json")?;
 
             req

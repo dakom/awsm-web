@@ -1,17 +1,10 @@
 use crate::data::TypedData;
-use crate::data::*;
-use crate::errors::{Error, NativeError};
-use crate::window::get_window;
+use crate::errors::Error;
 //Don't know why awsm_web needs FutureExt but awsm_renderer doesn't...
 use futures::future::{self, TryFutureExt, FutureExt};
 use std::future::Future;
-use js_sys::{Array, ArrayBuffer, Promise};
-use wasm_bindgen::JsCast;
-use wasm_bindgen::prelude::*;
+use js_sys::ArrayBuffer;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{
-    Blob, BlobPropertyBag, Request, Url, AbortController, AbortSignal,RequestInit,
-};
 
 use web_sys::{ AudioBuffer, AudioContext };
 

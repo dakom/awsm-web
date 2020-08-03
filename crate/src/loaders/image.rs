@@ -4,17 +4,13 @@ use std::future::Future;
 use std::pin::Pin;
 use crate::window::get_window;
 use crate::data::TypedData;
-use crate::data::*;
-use crate::errors::{Error, NativeError};
+use crate::errors::Error;
 //Don't know why awsm_web needs FutureExt but awsm_renderer doesn't...
-use futures::future::{self, TryFutureExt, FutureExt};
-use js_sys::{Array, ArrayBuffer, Promise};
+use futures::future::{self, TryFutureExt};
+use js_sys::Array;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::JsFuture;
-use web_sys::{
-    Blob, BlobPropertyBag, Request, Url, AbortController, AbortSignal,RequestInit,HtmlImageElement
-};
+use web_sys::{ Blob, BlobPropertyBag, Url, HtmlImageElement };
 
 pub struct Image {
     pub url: String,

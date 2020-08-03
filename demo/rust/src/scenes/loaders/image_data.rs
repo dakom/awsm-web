@@ -1,12 +1,11 @@
 use crate::router::get_static_href;
-use awsm_web::loaders::{fetch::fetch_url, image};
+use awsm_web::loaders::fetch::fetch_url;
 use gloo_events::EventListener;
 use log::info;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 use web_sys::{Document, Element, HtmlElement, Window};
-use awsm_web::data::ArrayBufferExt;
 
 pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(), JsValue> {
     let root: Element = document.create_element("div")?.into();

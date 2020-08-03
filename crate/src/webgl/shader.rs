@@ -11,7 +11,6 @@ use super::{
     ProgramQuery, ShaderQuery, ShaderType, UniformBlockActiveQuery, UniformBlockQuery,
     WebGlCommon, WebGlRenderer,
 };
-use js_sys::{Array, ArrayBuffer};
 use crate::errors::{Error, NativeError};
 use rustc_hash::FxHashMap;
 use std::collections::hash_map::Entry;

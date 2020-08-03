@@ -1,8 +1,4 @@
-use js_sys::{
-    ArrayBuffer, Float32Array, Float64Array, Int16Array, Int32Array, Int8Array, Object,
-    Uint16Array, Uint32Array, Uint8Array,
-    Array
-};
+use js_sys::{ArrayBuffer, Object,Array };
 use std::marker::PhantomData;
 use wasm_bindgen::JsValue;
 
@@ -51,34 +47,6 @@ impl ArrayBufferExt for ArrayBuffer {
     }
 }
 
-/*
-impl ToVecExt for Array {
-    fn to_vec_f32(&self) -> Vec<f32> {
-        js_sys::Float32Array::view(self.as_ref()).to_vec()
-    }
-    fn to_vec_f64(&self) -> Vec<f64> {
-        js_sys::Float64Array::view(self.as_ref()).to_vec()
-    }
-    fn to_vec_u8(&self) -> Vec<u8> {
-        js_sys::Uint8Array::view(self.as_ref()).to_vec()
-    }
-    fn to_vec_u16(&self) -> Vec<u16> {
-        js_sys::Uint16Array::view(self.as_ref()).to_vec()
-    }
-    fn to_vec_u32(&self) -> Vec<u32> {
-        js_sys::Uint32Array::view(self.as_ref()).to_vec()
-    }
-    fn to_vec_i8(&self) -> Vec<i8> {
-        js_sys::Int8Array::view(self.as_ref()).to_vec()
-    }
-    fn to_vec_i16(&self) -> Vec<i16> {
-        js_sys::Int16Array::view(self.as_ref()).to_vec()
-    }
-    fn to_vec_i32(&self) -> Vec<i32> {
-        js_sys::Int32Array::view(self.as_ref()).to_vec()
-    }
-}
-*/
 ///newtype wrapper for typed arrays
 ///
 ///The main idea is to make the wildly unsafe view() easier
