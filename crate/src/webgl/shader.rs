@@ -11,7 +11,7 @@ use super::{
     ProgramQuery, ShaderQuery, ShaderType, UniformBlockActiveQuery, UniformBlockQuery,
     WebGlCommon, WebGlRenderer,
 };
-use crate::data::{clone_to_vec_u32};
+use js_sys::{Array, ArrayBuffer};
 use crate::errors::{Error, NativeError};
 use rustc_hash::FxHashMap;
 use std::collections::hash_map::Entry;
@@ -455,8 +455,10 @@ impl WebGlRenderer<WebGl2RenderingContext> {
                         i,
                         UniformBlockQuery::ActiveUniformIndices as u32,
                     )
-                    .map(|vals| vals.into())
-                    .map(|vals| clone_to_vec_u32(&vals))?;
+                    .map(|vals| {
+                        let vals:js_sys::Uint32Array = vals.into();
+                        vals.to_vec()
+                    })?;
 
                 uniforms_in_blocks.extend(&active_uniforms);
 
@@ -468,12 +470,13 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
                 let offsets: Vec<u32> = unsafe {
                     let values = js_sys::Uint32Array::view(&active_uniforms);
-                    let active_uniform_offsets = self.gl.get_active_uniforms(
+                    let values = self.gl.get_active_uniforms(
                         &program,
                         &values,
                         UniformBlockActiveQuery::Offset as u32,
                     );
-                    clone_to_vec_u32(&active_uniform_offsets.into())
+                    let values:js_sys::Uint32Array= values.into();
+                    values.to_vec()
                 };
 
                 #[cfg(feature = "debug_log")]

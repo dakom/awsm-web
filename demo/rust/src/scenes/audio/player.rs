@@ -1,6 +1,6 @@
 use crate::router::get_static_href;
 use awsm_web::audio::{AudioPlayer};
-use awsm_web::loaders::fetch;
+use awsm_web::loaders::fetch::fetch_url;
 use gloo_events::EventListener;
 use log::info;
 use std::cell::RefCell;
@@ -36,8 +36,8 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
 
     let ctx: AudioContext = AudioContext::new()?;
     let future = async move {
-        let bg_loop_buffer = fetch::audio(&get_static_href("loop.mp3"), &ctx).await?;
-        let one_shot_buffer = fetch::audio(&get_static_href("oneshot.mp3"), &ctx).await?;
+        let bg_loop_buffer = fetch_url(&get_static_href("loop.mp3")).await?.audio(&ctx).await?;
+        let one_shot_buffer = fetch_url(&get_static_href("oneshot.mp3")).await?.audio(&ctx).await?;
 
         container.remove_child(&loading)?;
 

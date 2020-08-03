@@ -1,7 +1,7 @@
 use crate::router::get_static_href;
 use crate::scenes::webgl::common::*;
 use crate::start_webgl;
-use awsm_web::loaders::fetch;
+use awsm_web::loaders::image;
 use awsm_web::webgl::{
     BeginMode, BufferMask, Id, PixelFormat, SimpleTextureOptions, TextureTarget,
     WebGlTextureSource,
@@ -75,7 +75,7 @@ pub fn start(
                     let mut webgl_renderer = webgl_renderer.borrow_mut();
                     let href = get_static_href("smiley.svg");
                     info!("loading image! {}", href);
-                    let img = fetch::image(&href).await?;
+                    let img = image::load(href).await?;
 
                     let mut state_obj = state.borrow_mut();
                     state_obj.area = Area {

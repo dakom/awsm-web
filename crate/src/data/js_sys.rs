@@ -6,54 +6,83 @@ use js_sys::{
 use std::marker::PhantomData;
 use wasm_bindgen::JsValue;
 
-pub fn clone_to_vec_f32(src: &Float32Array) -> Vec<f32> {
-    let mut dest: Vec<f32> = vec![0.0; src.length() as usize];
-    src.copy_to(&mut dest);
-    dest
+pub trait ArrayBufferExt {
+    fn to_vec_f32(&self) -> Vec<f32>;
+
+    fn to_vec_f64(&self) -> Vec<f64>;
+
+    fn to_vec_u8(&self) -> Vec<u8>;
+    
+    fn to_vec_u16(&self) -> Vec<u16>;
+
+    fn to_vec_u32(&self) -> Vec<u32>;
+
+    fn to_vec_i8(&self) -> Vec<i8>;
+
+    fn to_vec_i16(&self) -> Vec<i16>;
+
+    fn to_vec_i32(&self) -> Vec<i32>;
 }
 
-pub fn clone_to_vec_f64(src: &Float64Array) -> Vec<f64> {
-    let mut dest: Vec<f64> = vec![0.0; src.length() as usize];
-    src.copy_to(&mut dest);
-    dest
+impl ArrayBufferExt for ArrayBuffer {
+    fn to_vec_f32(&self) -> Vec<f32> {
+        js_sys::Float32Array::new(&self).to_vec()
+    }
+    fn to_vec_f64(&self) -> Vec<f64> {
+        js_sys::Float64Array::new(&self).to_vec()
+    }
+    fn to_vec_u8(&self) -> Vec<u8> {
+        js_sys::Uint8Array::new(&self).to_vec()
+    }
+    fn to_vec_u16(&self) -> Vec<u16> {
+        js_sys::Uint16Array::new(&self).to_vec()
+    }
+    fn to_vec_u32(&self) -> Vec<u32> {
+        js_sys::Uint32Array::new(&self).to_vec()
+    }
+    fn to_vec_i8(&self) -> Vec<i8> {
+        js_sys::Int8Array::new(&self).to_vec()
+    }
+    fn to_vec_i16(&self) -> Vec<i16> {
+        js_sys::Int16Array::new(&self).to_vec()
+    }
+    fn to_vec_i32(&self) -> Vec<i32> {
+        js_sys::Int32Array::new(&self).to_vec()
+    }
 }
 
-pub fn clone_to_vec_u8(src: &Uint8Array) -> Vec<u8> {
-    let mut dest: Vec<u8> = vec![0; src.length() as usize];
-    src.copy_to(&mut dest);
-    dest
+/*
+impl ToVecExt for Array {
+    fn to_vec_f32(&self) -> Vec<f32> {
+        js_sys::Float32Array::view(self.as_ref()).to_vec()
+    }
+    fn to_vec_f64(&self) -> Vec<f64> {
+        js_sys::Float64Array::view(self.as_ref()).to_vec()
+    }
+    fn to_vec_u8(&self) -> Vec<u8> {
+        js_sys::Uint8Array::view(self.as_ref()).to_vec()
+    }
+    fn to_vec_u16(&self) -> Vec<u16> {
+        js_sys::Uint16Array::view(self.as_ref()).to_vec()
+    }
+    fn to_vec_u32(&self) -> Vec<u32> {
+        js_sys::Uint32Array::view(self.as_ref()).to_vec()
+    }
+    fn to_vec_i8(&self) -> Vec<i8> {
+        js_sys::Int8Array::view(self.as_ref()).to_vec()
+    }
+    fn to_vec_i16(&self) -> Vec<i16> {
+        js_sys::Int16Array::view(self.as_ref()).to_vec()
+    }
+    fn to_vec_i32(&self) -> Vec<i32> {
+        js_sys::Int32Array::view(self.as_ref()).to_vec()
+    }
 }
-pub fn clone_to_vec_u16(src: &Uint16Array) -> Vec<u16> {
-    let mut dest: Vec<u16> = vec![0; src.length() as usize];
-    src.copy_to(&mut dest);
-    dest
-}
-
-pub fn clone_to_vec_u32(src: &Uint32Array) -> Vec<u32> {
-    let mut dest: Vec<u32> = vec![0; src.length() as usize];
-    src.copy_to(&mut dest);
-    dest
-}
-
-pub fn clone_to_vec_i8(src: &Int8Array) -> Vec<i8> {
-    let mut dest: Vec<i8> = vec![0; src.length() as usize];
-    src.copy_to(&mut dest);
-    dest
-}
-
-pub fn clone_to_vec_i16(src: &Int16Array) -> Vec<i16> {
-    let mut dest: Vec<i16> = vec![0; src.length() as usize];
-    src.copy_to(&mut dest);
-    dest
-}
-
-pub fn clone_to_vec_i32(src: &Int32Array) -> Vec<i32> {
-    let mut dest: Vec<i32> = vec![0; src.length() as usize];
-    src.copy_to(&mut dest);
-    dest
-}
-
-//newtype wrapper
+*/
+///newtype wrapper for typed arrays
+///
+///The main idea is to make the wildly unsafe view() easier
+///So use with caution! See the various TypedArray docs on js_sys for details
 pub struct TypedData<T, U>(T, PhantomData<U>);
 impl<T: AsRef<[U]>, U> TypedData<T, U> {
     pub fn new(values: T) -> Self {
@@ -61,7 +90,6 @@ impl<T: AsRef<[U]>, U> TypedData<T, U> {
     }
 }
 
-//implementations for different data types as typed array
 impl<T: AsRef<[i8]>> From<TypedData<T, i8>> for js_sys::Int8Array {
     fn from(data: TypedData<T, i8>) -> Self {
         unsafe { js_sys::Int8Array::view(data.0.as_ref()) }

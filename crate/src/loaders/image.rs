@@ -1,12 +1,20 @@
-use crate::errors::Error;
-use crate::window::get_window;
 use futures::channel::oneshot::{channel, Receiver, Sender};
 use std::task::{Context, Poll};
 use std::future::Future;
 use std::pin::Pin;
-use wasm_bindgen::prelude::*;
+use crate::window::get_window;
+use crate::data::TypedData;
+use crate::data::*;
+use crate::errors::{Error, NativeError};
+//Don't know why awsm_web needs FutureExt but awsm_renderer doesn't...
+use futures::future::{self, TryFutureExt, FutureExt};
+use js_sys::{Array, ArrayBuffer, Promise};
 use wasm_bindgen::JsCast;
-use web_sys::*;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::JsFuture;
+use web_sys::{
+    Blob, BlobPropertyBag, Request, Url, AbortController, AbortSignal,RequestInit,HtmlImageElement
+};
 
 pub struct Image {
     pub url: String,
@@ -118,12 +126,7 @@ impl Future for Image {
 }
 
 impl Image {
-    pub fn new(url: &str) -> Self {
-        //can't seem to avoid this
-        //but realistically, loading images is a slow and memory intensive operation
-        //and urls are going to be on the smaller side too... so, no biggie
-        let url = url.to_owned();
-
+    pub fn new(url: String) -> Self {
         Self {
             url,
             img: None,
@@ -142,4 +145,169 @@ pub fn same_origin(url: &str) -> Result<bool, JsValue> {
     } else {
         Ok(true)
     }
+}
+
+
+pub fn load(url: String) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    Image::new(url)
+}
+
+pub fn load_blob(blob: &Blob) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    match Url::create_object_url_with_blob(&blob) {
+        Ok(url) => future::ok(url),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|url| load(url))
+}
+pub fn load_js_value(
+    data: &JsValue,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(data).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
+}
+
+pub fn load_u8<T: AsRef<[u8]>>(
+    data: T,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
+}
+
+pub fn load_u16<T: AsRef<[u16]>>(
+    data: T,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
+}
+
+pub fn load_u32<T: AsRef<[u32]>>(
+    data: T,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
+}
+
+pub fn load_i8<T: AsRef<[i8]>>(
+    data: T,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
+}
+
+pub fn load_i16<T: AsRef<[i16]>>(
+    data: T,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
+}
+
+pub fn load_i32<T: AsRef<[i32]>>(
+    data: T,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
+}
+
+pub fn load_f32<T: AsRef<[f32]>>(
+    data: T,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
+}
+
+pub fn load_f64<T: AsRef<[f64]>>(
+    data: T,
+    mime_type: &str,
+) -> impl Future<Output = Result<HtmlImageElement, Error>> {
+    let mut blob_opts = BlobPropertyBag::new();
+    blob_opts.type_(mime_type);
+
+    match Blob::new_with_buffer_source_sequence_and_options(
+        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
+        &blob_opts,
+    ) {
+        Ok(blob) => future::ok(blob),
+        Err(err) => future::err(err.into()),
+    }
+    .and_then(|blob| load_blob(&blob))
 }

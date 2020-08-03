@@ -26,6 +26,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde-wasm-bindgen",
+ "serde_json",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",

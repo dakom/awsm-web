@@ -1,5 +1,5 @@
 use crate::router::get_static_href;
-use awsm_web::loaders::{fetch};
+use awsm_web::loaders::fetch::fetch_url;
 use gloo_events::EventListener;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -22,7 +22,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
         move |_e: &web_sys::Event| {
             let future = async move {
                 let href = get_static_href("people.json");
-                let people: People = fetch::json(&href).await?;
+                let people: People = fetch_url(&href).await?.json().await?;
 
                 show_people(&people, &document, &root)
             };

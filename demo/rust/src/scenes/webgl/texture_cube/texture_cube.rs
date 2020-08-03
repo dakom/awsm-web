@@ -2,7 +2,7 @@ use crate::router::get_static_href;
 use crate::scenes::webgl::common::*;
 use crate::start_webgl;
 use awsm_web::errors::Error;
-use awsm_web::loaders::fetch;
+use awsm_web::loaders::image;
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferMask, DataType, Id, SimpleTextureOptions,
     TextureCubeFace, TextureTarget, VertexArray, WebGlTextureSource,
@@ -78,12 +78,12 @@ pub fn start(
                     let mut webgl_renderer = webgl_renderer_clone.borrow_mut();
 
                     let futures = vec![
-                        fetch::image(&get_static_href("environment/env_x_pos.jpg")),
-                        fetch::image(&get_static_href("environment/env_x_neg.jpg")),
-                        fetch::image(&get_static_href("environment/env_y_pos.jpg")),
-                        fetch::image(&get_static_href("environment/env_y_neg.jpg")),
-                        fetch::image(&get_static_href("environment/env_z_pos.jpg")),
-                        fetch::image(&get_static_href("environment/env_z_neg.jpg")),
+                        image::load(get_static_href("environment/env_x_pos.jpg")),
+                        image::load(get_static_href("environment/env_x_neg.jpg")),
+                        image::load(get_static_href("environment/env_y_pos.jpg")),
+                        image::load(get_static_href("environment/env_y_neg.jpg")),
+                        image::load(get_static_href("environment/env_z_pos.jpg")),
+                        image::load(get_static_href("environment/env_z_neg.jpg")),
                     ];
 
                     let images: Vec<HtmlImageElement> = try_join_all(futures).await?;

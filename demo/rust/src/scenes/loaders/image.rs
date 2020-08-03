@@ -1,5 +1,5 @@
 use crate::router::get_static_href;
-use awsm_web::loaders::fetch;
+use awsm_web::loaders::image;
 use gloo_events::EventListener;
 use log::info;
 use wasm_bindgen::prelude::*;
@@ -23,7 +23,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
             let future = async move {
                 let href = get_static_href("smiley.svg");
                 info!("loading image! {}", href);
-                let img = fetch::image(&href).await?;
+                let img = image::load(href).await?;
                 info!("loaded!!! {}", img.src());
                 root.append_child(&img).map(|_| JsValue::null())
             };

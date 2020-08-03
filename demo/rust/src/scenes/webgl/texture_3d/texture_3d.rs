@@ -1,7 +1,7 @@
 use crate::router::get_static_href;
 use crate::scenes::webgl::common::*;
 use awsm_web::data::TypedData;
-use awsm_web::loaders::fetch;
+use awsm_web::loaders::{fetch::fetch_url, image};
 use awsm_web::webgl::PartialWebGlTextures;
 use awsm_web::webgl::{
     BeginMode, BufferMask, DataType, Id, PixelFormat, SimpleTextureOptions, TextureMagFilter,
@@ -82,9 +82,9 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                     let href = get_static_href("photo.jpg");
                     info!("loading image! {}", href);
-                    let img = fetch::image(&href).await?;
+                    let img = image::load(href).await?;
                     let href = get_static_href("LUT.cube");
-                    let txt: String = fetch::text(&href).await?;
+                    let txt: String = fetch_url(&href).await?.text().await?;
                     let lut =
                         CubeLut::<f32>::from_str(&txt).map_err(|_| "couldn't parse cube file")?;
 

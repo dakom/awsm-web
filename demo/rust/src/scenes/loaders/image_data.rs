@@ -1,11 +1,12 @@
 use crate::router::get_static_href;
-use awsm_web::loaders::fetch;
+use awsm_web::loaders::{fetch::fetch_url, image};
 use gloo_events::EventListener;
 use log::info;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 use web_sys::{Document, Element, HtmlElement, Window};
+use awsm_web::data::ArrayBufferExt;
 
 pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(), JsValue> {
     let root: Element = document.create_element("div")?.into();
@@ -23,8 +24,12 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
             let future = async move {
                 let href = get_static_href("photo.jpg");
                 info!("loading image! {}", href);
-                let data = fetch::vec_u8(&href).await?;
-                let img = fetch::image_u8(&data, "image/jpg").await?;
+                let img = fetch_url(&href).await?.image("image/jpg").await?;
+
+                //this also works for raw vec loading
+                //not used in demo since it's slower
+                //requires a clone() to get a Vec from the ArrayBuffer
+                //let img = image::load_u8(&fetch_url(&href).await?.array_buffer().await?.to_vec_u8(), "image/jpg").await?;
                 info!("loaded!!! {}", img.src());
                 root.append_child(&img).map(|_| JsValue::null())
             };

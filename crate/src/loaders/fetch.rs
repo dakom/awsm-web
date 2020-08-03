@@ -1,7 +1,3 @@
-
-#[cfg(feature = "image")]
-use super::image::Image;
-
 use crate::data::TypedData;
 use crate::data::*;
 use crate::errors::{Error, NativeError};
@@ -14,406 +10,197 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
-    Blob, BlobPropertyBag, Request, Response, Url,
+    Blob, BlobPropertyBag, Request, Url, AbortController, AbortSignal,RequestInit,
 };
-#[cfg(feature = "serde")]
-use serde::de::DeserializeOwned;
-
-#[cfg(feature = "image")]
-use web_sys::{ HtmlImageElement };
-
-#[cfg(feature = "audio")]
-use web_sys::{ AudioBuffer, AudioContext };
-
-#[cfg(feature = "image")]
-pub fn image(url: &str) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    Image::new(url)
-}
-
-#[cfg(feature = "image")]
-pub fn image_blob(blob: &Blob) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    match Url::create_object_url_with_blob(&blob) {
-        Ok(url) => future::ok(url),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|url| image(&url))
-}
-
-#[cfg(feature = "image")]
-pub fn image_u8<T: AsRef<[u8]>>(
-    data: T,
-    mime_type: &str,
-) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    let mut blob_opts = BlobPropertyBag::new();
-    blob_opts.type_(mime_type);
-
-    match Blob::new_with_buffer_source_sequence_and_options(
-        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
-        &blob_opts,
-    ) {
-        Ok(blob) => future::ok(blob),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|blob| image_blob(&blob))
-}
-
-#[cfg(feature = "image")]
-pub fn image_u16<T: AsRef<[u16]>>(
-    data: T,
-    mime_type: &str,
-) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    let mut blob_opts = BlobPropertyBag::new();
-    blob_opts.type_(mime_type);
-
-    match Blob::new_with_buffer_source_sequence_and_options(
-        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
-        &blob_opts,
-    ) {
-        Ok(blob) => future::ok(blob),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|blob| image_blob(&blob))
-}
-
-#[cfg(feature = "image")]
-pub fn image_u32<T: AsRef<[u32]>>(
-    data: T,
-    mime_type: &str,
-) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    let mut blob_opts = BlobPropertyBag::new();
-    blob_opts.type_(mime_type);
-
-    match Blob::new_with_buffer_source_sequence_and_options(
-        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
-        &blob_opts,
-    ) {
-        Ok(blob) => future::ok(blob),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|blob| image_blob(&blob))
-}
-
-#[cfg(feature = "image")]
-pub fn image_i8<T: AsRef<[i8]>>(
-    data: T,
-    mime_type: &str,
-) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    let mut blob_opts = BlobPropertyBag::new();
-    blob_opts.type_(mime_type);
-
-    match Blob::new_with_buffer_source_sequence_and_options(
-        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
-        &blob_opts,
-    ) {
-        Ok(blob) => future::ok(blob),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|blob| image_blob(&blob))
-}
-
-#[cfg(feature = "image")]
-pub fn image_i16<T: AsRef<[i16]>>(
-    data: T,
-    mime_type: &str,
-) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    let mut blob_opts = BlobPropertyBag::new();
-    blob_opts.type_(mime_type);
-
-    match Blob::new_with_buffer_source_sequence_and_options(
-        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
-        &blob_opts,
-    ) {
-        Ok(blob) => future::ok(blob),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|blob| image_blob(&blob))
-}
-
-#[cfg(feature = "image")]
-pub fn image_i32<T: AsRef<[i32]>>(
-    data: T,
-    mime_type: &str,
-) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    let mut blob_opts = BlobPropertyBag::new();
-    blob_opts.type_(mime_type);
-
-    match Blob::new_with_buffer_source_sequence_and_options(
-        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
-        &blob_opts,
-    ) {
-        Ok(blob) => future::ok(blob),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|blob| image_blob(&blob))
-}
-
-#[cfg(feature = "image")]
-pub fn image_f32<T: AsRef<[f32]>>(
-    data: T,
-    mime_type: &str,
-) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    let mut blob_opts = BlobPropertyBag::new();
-    blob_opts.type_(mime_type);
-
-    match Blob::new_with_buffer_source_sequence_and_options(
-        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
-        &blob_opts,
-    ) {
-        Ok(blob) => future::ok(blob),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|blob| image_blob(&blob))
-}
-
-#[cfg(feature = "image")]
-pub fn image_f64<T: AsRef<[f64]>>(
-    data: T,
-    mime_type: &str,
-) -> impl Future<Output = Result<HtmlImageElement, Error>> {
-    let mut blob_opts = BlobPropertyBag::new();
-    blob_opts.type_(mime_type);
-
-    match Blob::new_with_buffer_source_sequence_and_options(
-        &Array::of1(&TypedData::new(data.as_ref()).into()).into(),
-        &blob_opts,
-    ) {
-        Ok(blob) => future::ok(blob),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|blob| image_blob(&blob))
-}
-
-//Audio
-
-#[cfg(feature = "audio")]
-pub fn audio<'a>(
-    url: &str,
-    ctx: &'a AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> + 'a {
-    array_buffer(&url).and_then(move |buf| audio_buffer(&buf, &ctx))
-}
-
-#[cfg(feature = "audio")]
-pub fn audio_buffer<'a>(
-    array_buffer: &ArrayBuffer,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    match ctx.decode_audio_data(&array_buffer) {
-        Ok(promise) => future::ok(promise),
-        Err(err) => future::err(err.into()),
-    }
-    .and_then(|promise| JsFuture::from(promise))
-    .map(|res| match res {
-        Ok(x) => Ok(AudioBuffer::from(x)),
-        Err(x) => Err(Error::from(x)),
-    })
-}
-
-//convenince helpers for loading slices, vecs, etc.
-#[cfg(feature = "audio")]
-pub fn audio_u8<T: AsRef<[u8]>>(
-    data: T,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
-    audio_buffer(&array_buffer, &ctx)
-}
-
-#[cfg(feature = "audio")]
-pub fn audio_u16<T: AsRef<[u16]>>(
-    data: T,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
-    audio_buffer(&array_buffer, &ctx)
-}
-#[cfg(feature = "audio")]
-pub fn audio_u32<T: AsRef<[u32]>>(
-    data: T,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
-    audio_buffer(&array_buffer, &ctx)
-}
-#[cfg(feature = "audio")]
-pub fn audio_i8<T: AsRef<[i8]>>(
-    data: T,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
-    audio_buffer(&array_buffer, &ctx)
-}
-#[cfg(feature = "audio")]
-pub fn audio_i16<T: AsRef<[i16]>>(
-    data: T,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
-    audio_buffer(&array_buffer, &ctx)
-}
-#[cfg(feature = "audio")]
-pub fn audio_i32<T: AsRef<[i32]>>(
-    data: T,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
-    audio_buffer(&array_buffer, &ctx)
-}
-#[cfg(feature = "audio")]
-pub fn audio_f32<T: AsRef<[f32]>>(
-    data: T,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
-    audio_buffer(&array_buffer, &ctx)
-}
-#[cfg(feature = "audio")]
-pub fn audio_f64<T: AsRef<[f64]>>(
-    data: T,
-    ctx: &AudioContext,
-) -> impl Future<Output = Result<AudioBuffer, Error>> {
-    let array_buffer: ArrayBuffer = TypedData::new(data.as_ref()).into();
-    audio_buffer(&array_buffer, &ctx)
-}
-
-//json
-#[cfg(feature = "serde")]
-pub fn json<T: DeserializeOwned>(url: &str) -> impl Future<Output = Result<T, Error>> {
-    let req = Request::new_with_str(url);
-    async {
-        let req = req?;
-        let res = json_req(req).await?;
-        Ok(res)
-    }
-}
 
 #[cfg(feature = "serde")]
-pub fn json_req<T: DeserializeOwned>(req: Request) -> impl Future<Output = Result<T, Error>> {
-    async move {
-        let resp: Response = request(&req).await?;
+use serde::{Serialize, de::DeserializeOwned};
 
-        let promise = resp.json()?;
+/** core fetch primitives. Thanks Pauan! 
+ **
+ ** these fetches will automatically abort when dropped :D
+ */
 
-        let data = JsFuture::from(promise).await?;
+struct Abort {
+    controller: AbortController,
+}
 
-        serde_wasm_bindgen::from_value(data).map_err(|err| JsValue::from(err).into())
+impl Abort {
+    fn new() -> Result<Self, JsValue> {
+        Ok(Self {
+            controller: AbortController::new()?,
+        })
+    }
+
+    fn signal(&self) -> AbortSignal {
+        self.controller.signal()
     }
 }
 
-//text
-pub fn text(url: &str) -> impl Future<Output = Result<String, Error>> {
-    let req = Request::new_with_str(url);
-
-    async {
-        let req = req?;
-
-        let resp: Response = request(&req).await?;
-
-        let promise = resp.text()?;
-
-        let data = JsFuture::from(promise).await?;
-
-        let text = data.as_string().ok_or(Error::from(NativeError::Internal))?;
-
-        Ok(text)
+impl Drop for Abort {
+    fn drop(&mut self) {
+        self.controller.abort();
     }
 }
 
-//pure data
-pub fn array_buffer(url: &str) -> impl Future<Output = Result<ArrayBuffer, Error>> {
-    let req = Request::new_with_str(url);
+pub struct Response {
+    response: web_sys::Response,
+    abort: Abort,
+}
 
-    async {
-        let req = req?;
+impl Response {
+    pub async fn text(self) -> Result<String, Error> {
+        JsFuture::from(
+            self.response
+                .text()
+                .map_err(|err| Error::from(err))?
+        ).await
+            .map_err(|err| Error::from(err))
+            .map(|value| value.as_string().unwrap_throw())
+    }
 
-        let resp: Response = request(&req).await?;
+    pub async fn json_raw(self) -> Result<JsValue, Error> {
+        JsFuture::from(
+            self.response
+                .json()
+                .map_err(|err| Error::from(err))?
+        ).await.map_err(|err| Error::from(err))
+    }
 
-        let promise = resp.array_buffer()?;
+    pub async fn array_buffer(self) -> Result<ArrayBuffer, Error> { 
+        JsFuture::from(
+            self.response
+                .array_buffer()
+                .map_err(|err| Error::from(err))?
+        ).await
+            .map_err(|err| Error::from(err))
+            .map(|value| value.into()) 
+    }
 
-        let data = JsFuture::from(promise).await?;
+    #[cfg(feature = "serde")]
+    pub async fn json<T: DeserializeOwned>(self) -> Result<T, Error> { 
+        let data = self.json_raw().await?;
 
-        Ok(data.into())
+        serde_wasm_bindgen::from_value(data).map_err(|err| Error::from(JsValue::from(err)))
+    }
+
+    #[cfg(feature = "audio")]
+    pub async fn audio(self, ctx: &web_sys::AudioContext) -> Result<web_sys::AudioBuffer, Error> {
+        let buffer = self.array_buffer().await?;
+
+        super::audio::audio_buffer(&buffer, &ctx).await
+    }
+
+    #[cfg(feature = "image")]
+    pub async fn image(self, mime_type:&str) -> Result<web_sys::HtmlImageElement, Error> { 
+        let buffer= self.array_buffer().await?;
+
+        super::image::load_js_value(&buffer, mime_type).await
     }
 }
 
-pub fn vec_f32(url: &str) -> impl Future<Output = Result<Vec<f32>, Error>> {
-    let url = url.to_owned();
-    async move {
-        let data = array_buffer(&url).await?;
-        let data: ArrayBuffer = data.into();
-        Ok(clone_to_vec_f32(&js_sys::Float32Array::new(&data)))
+/// Warning: Will overwrite the init's signal!
+/// Generally, this is for internal use and it's recommended to use the other helper functions
+/// It's made pub to avoid needing a helper function to cover *every* scenario
+pub async fn fetch_req(req: &Request, init:&mut RequestInit) -> Result<Response, Error> {
+    let abort = Abort::new().map_err(|err| Error::from(err))?;
+
+    init.signal(Some(&abort.signal()));
+
+    let future = web_sys::window()
+        .unwrap_throw()
+        .fetch_with_request_and_init(req, init);
+
+    let response = JsFuture::from(future)
+        .await?
+        .unchecked_into::<web_sys::Response>();
+
+    if !response.ok() {
+        Err(js_sys::Error::new("Fetch failed with bad HTTP code").into())
+    } else {
+        Ok(Response { response, abort })
     }
 }
 
-pub fn vec_f64(url: &str) -> impl Future<Output = Result<Vec<f64>, Error>> {
-    let url = url.to_owned();
-    async move {
-        let data = array_buffer(&url).await?;
-        let data: ArrayBuffer = data.into();
-        Ok(clone_to_vec_f64(&js_sys::Float64Array::new(&data)))
-    }
+pub async fn fetch_url(url:&str) -> Result<Response, Error> {
+    fetch_req(&Request::new_with_str(url)?, &mut RequestInit::new()).await
 }
 
-pub fn vec_i8(url: &str) -> impl Future<Output = Result<Vec<i8>, Error>> {
-    let url = url.to_owned();
-    async move {
-        let data = array_buffer(&url).await?;
-        let data: ArrayBuffer = data.into();
-        Ok(clone_to_vec_i8(&js_sys::Int8Array::new(&data)))
+pub async fn fetch_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &str, method:&str, include_credentials: bool, pairs: &[(A, B)]) -> Result<Response, Error> {
+    let mut req_init = web_sys::RequestInit::new();
+    req_init.method(method);
+    if include_credentials {
+        req_init.credentials(web_sys::RequestCredentials::Include);
     }
-}
-pub fn vec_i16(url: &str) -> impl Future<Output = Result<Vec<i16>, Error>> {
-    let url = url.to_owned();
-    async move {
-        let data = array_buffer(&url).await?;
-        let data: ArrayBuffer = data.into();
-        Ok(clone_to_vec_i16(&js_sys::Int16Array::new(&data)))
+    
+
+    let req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
+
+    let headers = req.headers();
+
+    for (name, value) in pairs.iter() {
+        headers.set(name.as_ref(), value.as_ref())?;
     }
-}
-pub fn vec_i32(url: &str) -> impl Future<Output = Result<Vec<i32>, Error>> {
-    let url = url.to_owned();
-    async move {
-        let data = array_buffer(&url).await?;
-        let data: ArrayBuffer = data.into();
-        Ok(clone_to_vec_i32(&js_sys::Int32Array::new(&data)))
-    }
+
+    fetch_req(&req, &mut req_init).await
 }
 
-pub fn vec_u8(url: &str) -> impl Future<Output = Result<Vec<u8>, Error>> {
-    let url = url.to_owned();
-    async move {
-        let data = array_buffer(&url).await?;
-        let data: ArrayBuffer = data.into();
-        Ok(clone_to_vec_u8(&js_sys::Uint8Array::new(&data)))
+#[cfg(feature = "serde_json")]
+pub async fn fetch_with_data<A: AsRef<str>, B: AsRef<str>>(url: &str, method:&str, include_credentials: bool, pairs: &[(A, B)], data:Option<impl Serialize>) -> Result<Response, Error> {
+    let mut req_init = web_sys::RequestInit::new();
+    req_init.method(method);
+    if include_credentials {
+        req_init.credentials(web_sys::RequestCredentials::Include);
     }
-}
-pub fn vec_u16(url: &str) -> impl Future<Output = Result<Vec<u16>, Error>> {
-    let url = url.to_owned();
-    async move {
-        let data = array_buffer(&url).await?;
-        let data: ArrayBuffer = data.into();
-        Ok(clone_to_vec_u16(&js_sys::Uint16Array::new(&data)))
-    }
-}
-pub fn vec_u32(url: &str) -> impl Future<Output = Result<Vec<u32>, Error>> {
-    let url = url.to_owned();
-    async move {
-        let data = array_buffer(&url).await?;
-        let data: ArrayBuffer = data.into();
-        Ok(clone_to_vec_u32(&js_sys::Uint32Array::new(&data)))
-    }
+    
+
+    let req = match data {
+        None => web_sys::Request::new_with_str_and_init(url, &req_init)?,
+
+        Some(data) => {
+            let json_str = serde_json::to_string(&data).map_err(|err| JsValue::from_str(&err.to_string()))?;
+            //req_init.mode(web_sys::RequestMode::Cors);
+            req_init.body(Some(&JsValue::from_str(&json_str)));
+            let mut req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
+            req.headers().set("Content-Type", "application/json")?;
+
+            req
+        }
+    };
+
+    fetch_req(&req, &mut req_init).await
 }
 
-pub fn request(req: &Request) -> impl Future<Output = Result<Response, Error>> {
-    let promise: Result<Promise, Error> =
-        get_window().map(|window| window.fetch_with_request(&req));
 
-    async {
-        let promise = promise?;
-
-        let resp_value = JsFuture::from(promise).await?;
-        let resp: Response = resp_value.dyn_into()?;
-
-        Ok(resp)
+#[cfg(feature = "serde_json")]
+pub async fn fetch_with_headers_and_data<A: AsRef<str>, B: AsRef<str>>(url: &str, method:&str, include_credentials: bool, pairs: &[(A, B)], data:Option<impl Serialize>) -> Result<Response, Error> {
+    let mut req_init = web_sys::RequestInit::new();
+    req_init.method(method);
+    if include_credentials {
+        req_init.credentials(web_sys::RequestCredentials::Include);
     }
+    
+
+    let req = match data {
+        None => web_sys::Request::new_with_str_and_init(url, &req_init)?,
+
+        Some(data) => {
+            let json_str = serde_json::to_string(&data).map_err(|err| JsValue::from_str(&err.to_string()))?;
+            //req_init.mode(web_sys::RequestMode::Cors);
+            req_init.body(Some(&JsValue::from_str(&json_str)));
+            let mut req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
+            req.headers().set("Content-Type", "application/json")?;
+
+            req
+        }
+    };
+
+    let headers = req.headers();
+
+    for (name, value) in pairs.iter() {
+        headers.set(name.as_ref(), value.as_ref())?;
+    }
+
+    fetch_req(&req, &mut req_init).await
 }
+

@@ -1,5 +1,4 @@
 use super::enums::GlQuery;
-use crate::data::clone_to_vec_f32;
 use crate::errors::Error;
 use wasm_bindgen::prelude::JsValue;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
@@ -25,8 +24,10 @@ macro_rules! impl_context {
 
             fn awsm_get_parameter_vf32(&self, query:GlQuery) -> Result<Vec<f32>, Error> {
                 self.get_parameter(query as u32)
-                        .map(|value| value.into()) //JsValue -> Float32Array
-                        .map(|value| clone_to_vec_f32(&value)) //Float32Array -> Vec<f32>
+                        .map(|value| {
+                            let value:js_sys::Float32Array = value.into();
+                            value.to_vec()
+                        })
                         .map_err(|err| err.into())
             }
 
