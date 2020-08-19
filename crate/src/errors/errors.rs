@@ -232,6 +232,13 @@ impl From<&str> for Error {
     }
 }
 
+#[cfg(feature = "serde")]
+impl From<serde_json::Error> for Error {
+    fn from(err: serde_json::Error) -> Self {
+        Error::String(format!("{}", err))
+    }
+}
+
 /* TODO: this doesn't work, but maybe it could!
  * idea is to consolidate str and String into one impl
 impl From<Borrow<str>> for Error

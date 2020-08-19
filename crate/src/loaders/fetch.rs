@@ -71,10 +71,17 @@ impl Response {
     }
 
     #[cfg(feature = "serde")]
-    pub async fn json<T: DeserializeOwned>(self) -> Result<T, Error> { 
+    pub async fn json_from_obj<T: DeserializeOwned>(self) -> Result<T, Error> { 
         let data = self.json_raw().await?;
 
         serde_wasm_bindgen::from_value(data).map_err(|err| Error::from(JsValue::from(err)))
+    }
+
+    #[cfg(feature = "serde")]
+    pub async fn json_from_str<T: DeserializeOwned>(self) -> Result<T, Error> { 
+        let data = self.text().await?;
+
+        serde_json::from_str(&data).map_err(|err| Error::from(err))
     }
 
     #[cfg(feature = "audio")]

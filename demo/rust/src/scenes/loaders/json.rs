@@ -22,8 +22,10 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
         move |_e: &web_sys::Event| {
             let future = async move {
                 let href = get_static_href("people.json");
-                let people: People = fetch_url(&href).await?.json().await?;
+                let people: People = fetch_url(&href).await?.json_from_obj().await?;
+                show_people(&people, &document, &root)?;
 
+                let people: People = fetch_url(&href).await?.json_from_str().await?;
                 show_people(&people, &document, &root)
             };
 
