@@ -73,7 +73,7 @@ pub trait ElementExt {
     }
     fn try_toggle_class(&self, class:&str, flag:bool) -> Result<(), JsValue>;
     fn closest_data_id(&self, id:&str) -> Option<Element> {
-        self.try_closest_data_id(id).unwrap_throw();
+        self.try_closest_data_id(id).unwrap_throw()
     }
     fn try_closest_data_id(&self, id:&str) -> Result<Option<Element>, JsValue>;
 }
