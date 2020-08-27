@@ -75,7 +75,7 @@ pub trait ElementExt {
     fn closest_data_id(&self, id:&str) -> Option<Element> {
         self.try_closest_data_id(id).unwrap_throw();
     }
-    fn try_closest_data_id(&self, class:&str, flag:bool) -> Result<Option<Element>, JsValue>;
+    fn try_closest_data_id(&self, id:&str) -> Result<Option<Element>, JsValue>;
 }
 
 impl ElementExt for Element {
