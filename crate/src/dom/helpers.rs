@@ -72,6 +72,10 @@ pub trait ElementExt {
         self.try_toggle_class(class, flag).unwrap_throw();
     }
     fn try_toggle_class(&self, class:&str, flag:bool) -> Result<(), JsValue>;
+    fn closest_data_id(&self, id:&str) -> Option<Element> {
+        self.try_closest_data_id(id).unwrap_throw();
+    }
+    fn try_closest_data_id(&self, class:&str, flag:bool) -> Result<Option<Element>, JsValue>;
 }
 
 impl ElementExt for Element {
@@ -83,6 +87,9 @@ impl ElementExt for Element {
         } else {
             class_list.remove_1(class)
         }
+    }
+    fn try_closest_data_id(&self, id:&str) -> Result<Option<Element>, JsValue> {
+        self.closest(data_id(id))
     }
 }
 
