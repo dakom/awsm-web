@@ -89,7 +89,7 @@ impl ElementExt for Element {
         }
     }
     fn try_closest_data_id(&self, id:&str) -> Result<Option<Element>, JsValue> {
-        self.closest(data_id(id))
+        self.closest(&data_id(id))
     }
 }
 
