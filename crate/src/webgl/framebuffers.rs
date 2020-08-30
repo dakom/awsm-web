@@ -192,7 +192,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         let framebuffer = self
             .framebuffer_lookup
             .get(framebuffer_id)
-            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+            .ok_or(Error::from(NativeError::MissingFrameBuffer))?;
         self.gl.awsm_bind_framebuffer(target, &framebuffer);
 
         Ok(())
