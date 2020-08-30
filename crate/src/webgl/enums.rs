@@ -250,6 +250,7 @@ pub enum GlQuery {
     MaxVertexTextureImageUnits = 0x8B4C,
     MaxTextureImageUnits = 0x8872,
     MaxFragmentUniformVectors = 0x8DFD,
+    MaxSamples = 0x8D57,
     ShadingLanguageVersion = 0x8B8C,
     CurrentProgram = 0x8B8D,
     BlendColor = 0x8005,

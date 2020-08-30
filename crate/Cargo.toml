@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.5.4"
+version = "0.5.5"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -29,6 +29,7 @@ dom= [
     "web-sys/Document",
     "web-sys/DomTokenList",
     "web-sys/NodeList",
+    "web-sys/CssStyleDeclaration",
 ]
 
 audio = [
