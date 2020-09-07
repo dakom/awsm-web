@@ -4,7 +4,7 @@ use js_sys::ArrayBuffer;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{ Request, AbortController, AbortSignal,RequestInit, };
+use web_sys::{ Request, AbortController, AbortSignal,RequestInit, File};
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, de::DeserializeOwned};
