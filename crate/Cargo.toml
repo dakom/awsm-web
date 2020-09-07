@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.5.6"
+version = "0.5.7"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -80,6 +80,7 @@ loaders = [
     'web-sys/AbortSignal',
     'web-sys/Headers',
     'web-sys/RequestCredentials',
+    'web-sys/File',
 
     "futures",
     "wasm-bindgen-futures",
