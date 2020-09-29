@@ -1,4 +1,5 @@
 use crate::errors::Error;
+use std::ops::Deref;
 //Don't know why awsm_web needs FutureExt but awsm_renderer doesn't...
 use js_sys::ArrayBuffer;
 use wasm_bindgen::JsCast;
@@ -37,15 +38,19 @@ impl Drop for Abort {
 }
 
 pub struct Response {
-    pub response: web_sys::Response,
+    response: web_sys::Response,
     _abort: Abort,
 }
 
-impl Response {
-    pub fn ok(&self) -> bool {
-        self.response.ok()
-    }
+impl Deref for Response {
+    type Target = web_sys::Response;
 
+    fn deref(&self) -> &Self::Target {
+        &self.response
+    }
+}
+
+impl Response {
     pub async fn text(self) -> Result<String, Error> {
         JsFuture::from(
             self.response
@@ -119,11 +124,7 @@ pub async fn fetch_req(req: &Request, init:&mut RequestInit) -> Result<Response,
         .await?
         .unchecked_into::<web_sys::Response>();
 
-    if !response.ok() {
-        Err(js_sys::Error::new("Fetch failed with bad HTTP code").into())
-    } else {
-        Ok(Response { response, _abort: abort })
-    }
+    Ok(Response { response, _abort: abort })
 }
 
 pub async fn fetch_url(url:&str) -> Result<Response, Error> {
