@@ -37,11 +37,15 @@ impl Drop for Abort {
 }
 
 pub struct Response {
-    response: web_sys::Response,
+    pub response: web_sys::Response,
     _abort: Abort,
 }
 
 impl Response {
+    pub fn ok(&self) -> bool {
+        self.response.ok()
+    }
+
     pub async fn text(self) -> Result<String, Error> {
         JsFuture::from(
             self.response
