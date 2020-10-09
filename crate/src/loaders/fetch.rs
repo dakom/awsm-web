@@ -150,9 +150,9 @@ pub async fn fetch_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &str, method:
     fetch_req(&req, &mut req_init).await
 }
 
-pub async fn fetch_upload_file(url:&str, file:&File) -> Result<Response, Error> {
+pub async fn fetch_upload_file(url:&str, file:&File, method:&str) -> Result<Response, Error> {
     let mut req_init = web_sys::RequestInit::new();
-    req_init.method("PUT");
+    req_init.method(method);
     req_init.body(Some(file));
 
     let req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
