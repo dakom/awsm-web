@@ -1,3 +1,4 @@
+pub mod helpers;
 pub mod fetch;
 
 #[cfg(feature = "image")]
