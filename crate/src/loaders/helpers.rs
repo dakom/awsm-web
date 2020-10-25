@@ -36,7 +36,13 @@ pub async fn timeout<A, F>(ms: u32, f: F) -> Option<A>
     }
 }
 
-/// Makes it easier to run a future in the background with the ability to cancel and/or swap it
+/// Makes it easier to run a Future in the background with the ability to:
+/// * cancel (explicitly or on Drop)
+/// * swap it with a different Future
+///
+/// Stolen/Adapted with permission from Dominator (https://github.com/Pauan/rust-dominator/blob/24920fd7af3b1b782cb4e59ffe5986a5f7a9e083/examples/async/src/util.rs#L31)
+///
+/// Hold onto the AsyncLoader somewhere and call load(async move {...}) or cancel()
 pub struct AsyncLoader {
     loading: Rc<RefCell<Option<AsyncState>>>,
 }
