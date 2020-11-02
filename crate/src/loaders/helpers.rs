@@ -15,17 +15,17 @@ use gloo_timers::future::TimeoutFuture;
 
 /// makes it easier to run futures with a timeout
 ///
-/// timeout(10_000, some_future).await
+/// future_until(10_000, some_future).await
 ///
 /// or
 ///
-/// timeout(10_000, async move {
+/// future_util(10_000, async move {
 ///    some_future1().await;
 ///    some_future2().await;
 ///    some_future3().await;
 /// }).await
 ///
-pub async fn timeout<A, F>(ms: u32, f: F) -> Option<A>
+pub async fn future_until<A, F>(ms: u32, f: F) -> Option<A>
     where F: Future<Output = A> {
 
     pin_mut!(f);
