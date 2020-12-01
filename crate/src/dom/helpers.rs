@@ -38,8 +38,9 @@ pub trait DomSelector {
 impl DomSelector for Document {
     fn try_select<T: JsCast>(&self, query:&str) -> Option<T> {
         self.query_selector(query)
-            .unwrap_throw()
-            .map(|elem| elem.dyn_into().unwrap_throw())
+            .ok()
+            .flatten()
+            .and_then(|elem| elem.dyn_into().ok())
     }
     fn select_vec<T: JsCast>(&self, query:&str) -> Vec<T> {
         node_list_to_vec(&self.query_selector_all(query).unwrap_throw())
@@ -48,8 +49,9 @@ impl DomSelector for Document {
 impl DomSelector for Element {
     fn try_select<T: JsCast>(&self, query:&str) -> Option<T> {
         self.query_selector(query)
-            .unwrap_throw()
-            .map(|elem| elem.dyn_into().unwrap_throw())
+            .ok()
+            .flatten()
+            .and_then(|elem| elem.dyn_into().ok())
     }
     fn select_vec<T: JsCast>(&self, query:&str) -> Vec<T> {
         node_list_to_vec(&self.query_selector_all(query).unwrap_throw())
@@ -59,8 +61,9 @@ impl DomSelector for Element {
 impl DomSelector for DocumentFragment {
     fn try_select<T: JsCast>(&self, query:&str) -> Option<T> {
         self.query_selector(query)
-            .unwrap_throw()
-            .map(|elem| elem.dyn_into().unwrap_throw())
+            .ok()
+            .flatten()
+            .and_then(|elem| elem.dyn_into().ok())
     }
     fn select_vec<T: JsCast>(&self, query:&str) -> Vec<T> {
         node_list_to_vec(&self.query_selector_all(query).unwrap_throw())
