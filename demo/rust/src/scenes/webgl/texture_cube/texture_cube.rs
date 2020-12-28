@@ -7,7 +7,8 @@ use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferMask, DataType, Id, SimpleTextureOptions,
     TextureCubeFace, TextureTarget, VertexArray, WebGlTextureSource,
     WebGlVersion,
-    ShaderType
+    ShaderType,
+    NameOrLoc
 
 };
 use futures::future::{try_join_all};
@@ -129,7 +130,7 @@ pub fn start(
                         vao_id,
                         Some(elements_id),
                         &vec![VertexArray {
-                            attribute_name: "a_vertex",
+                            attribute: NameOrLoc::Name("a_vertex"),
                             buffer_id: geom_id,
                             opts: AttributeOptions::new(3, DataType::Float),
                         }],

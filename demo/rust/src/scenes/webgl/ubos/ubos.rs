@@ -3,7 +3,8 @@ use awsm_web::errors::Error;
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferData, BufferTarget, BufferUsage, BufferMask, DataType,
     GlToggle, Id, VertexArray, WebGl2Renderer,
-    ShaderType
+    ShaderType,
+    NameOrLoc
 
 };
 use log::info;
@@ -103,12 +104,12 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
                     Some(elements_id),
                     &vec![
                         VertexArray {
-                            attribute_name: "a_vertex",
+                            attribute: NameOrLoc::Name("a_vertex"),
                             buffer_id: geom_id,
                             opts: AttributeOptions::new(3, DataType::Float),
                         },
                         VertexArray {
-                            attribute_name: "a_color",
+                            attribute: NameOrLoc::Name("a_color"),
                             buffer_id: colors_id,
                             opts: AttributeOptions::new(3, DataType::Float),
                         },

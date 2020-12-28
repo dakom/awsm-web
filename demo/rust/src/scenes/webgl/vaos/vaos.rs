@@ -3,7 +3,8 @@ use crate::start_webgl;
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferMask, DataType, GlToggle, Id, VertexArray,
     WebGlVersion,
-    ShaderType
+    ShaderType,
+    NameOrLoc
 
 };
 use nalgebra::{Isometry3, Matrix4, Perspective3, Point3, Vector3};
@@ -79,12 +80,12 @@ pub fn start(
                     Some(elements_id),
                     &vec![
                         VertexArray {
-                            attribute_name: "a_vertex",
+                            attribute: NameOrLoc::Name("a_vertex"),
                             buffer_id: geom_id,
                             opts: AttributeOptions::new(3, DataType::Float),
                         },
                         VertexArray {
-                            attribute_name: "a_color",
+                            attribute: NameOrLoc::Name("a_color"),
                             buffer_id: colors_id,
                             opts: AttributeOptions::new(3, DataType::Float),
                         },

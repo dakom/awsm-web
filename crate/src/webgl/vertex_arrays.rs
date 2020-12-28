@@ -5,15 +5,21 @@ use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 #[derive(Debug)]
 pub struct VertexArray {
-    pub attribute_name: &'static str,
+    pub attribute: NameOrLoc,
     pub buffer_id: Id,
     pub opts: AttributeOptions,
 }
 
+#[derive(Debug)]
+pub enum NameOrLoc {
+    Name(&'static str),
+    Loc(u32)
+}
+
 impl VertexArray {
-    pub fn new (attribute_name: &'static str, buffer_id: Id, opts: AttributeOptions) -> Self {
+    pub fn new (attribute: NameOrLoc, buffer_id: Id, opts: AttributeOptions) -> Self {
         Self {
-            attribute_name,
+            attribute,
             buffer_id,
             opts,
         }
@@ -52,7 +58,14 @@ macro_rules! impl_renderer {
 
                     for config in configs {
                         self._bind_buffer_nocheck(config.buffer_id, BufferTarget::ArrayBuffer)?;
-                        self.activate_attribute(&config.attribute_name, &config.opts)?;
+                        match config.attribute {
+                            NameOrLoc::Name(name) => {
+                                self.activate_attribute(&name, &config.opts)?;
+                            },
+                            NameOrLoc::Loc(loc) => {
+                                self.activate_attribute_loc(loc, &config.opts);
+                            }
+                        }
                     }
                     Ok(())
                 } else {

@@ -109,6 +109,17 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         self.activate_attribute(&attribute_name, &opts)?;
         Ok(())
     }
+    pub fn activate_buffer_for_attribute_loc(
+        &self,
+        buffer_id: Id,
+        buffer_target: BufferTarget,
+        attribute_loc: u32,
+        opts: &AttributeOptions,
+    ) -> Result<(), Error> {
+        self.bind_buffer(buffer_id, buffer_target)?;
+        self.activate_attribute_loc(attribute_loc, &opts);
+        Ok(())
+    }
 
     pub fn upload_buffer_to_attribute<B: BufferDataImpl>(
         &self,
@@ -119,6 +130,17 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
     ) -> Result<(), Error> {
         self.upload_buffer(id, data)?;
         self.activate_attribute(&attribute_name, &opts)?;
+        Ok(())
+    }
+    pub fn upload_buffer_to_attribute_loc<B: BufferDataImpl>(
+        &self,
+        id: Id,
+        data: B,
+        attribute_loc: u32,
+        opts: &AttributeOptions,
+    ) -> Result<(), Error> {
+        self.upload_buffer(id, data)?;
+        self.activate_attribute_loc(attribute_loc, &opts);
         Ok(())
     }
 }
