@@ -6,6 +6,7 @@ use awsm_web::webgl::{
     BeginMode, BlendFactor, BufferMask, GlToggle, Id, PixelFormat, SimpleTextureOptions,
     TextureTarget, WebGlTextureSource,
     WebGlVersion,
+    ShaderType
 };
 use log::info;
 use nalgebra::{Matrix4, Point2, Vector3};
@@ -61,10 +62,12 @@ pub fn start(
 
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/blending-vertex.glsl"),
-                    include_str!("shaders/blending-fragment.glsl"),
-                )?;
+                let shaders = vec![
+                    webgl_renderer.compile_shader(include_str!("shaders/blending-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                    webgl_renderer.compile_shader(include_str!("shaders/blending-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                ];
+
+                let program_id = webgl_renderer.compile_program(&shaders)?;
 
                 state.borrow_mut().program_id = Some(program_id);
 

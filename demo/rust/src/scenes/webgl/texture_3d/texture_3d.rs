@@ -7,6 +7,8 @@ use awsm_web::webgl::{
     BeginMode, BufferMask, DataType, Id, PixelFormat, SimpleTextureOptions, TextureMagFilter,
     TextureMinFilter, TextureOptions, TextureTarget, TextureWrapMode, TextureWrapTarget,
     WebGlTextureSource,
+    ShaderType
+
 };
 use gloo_events::EventListener;
 use log::info;
@@ -62,10 +64,11 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/texture_3d-vertex.glsl"),
-                    include_str!("shaders/texture_3d-fragment.glsl"),
-                )?;
+                let shaders = vec![
+                    webgl_renderer.compile_shader(include_str!("shaders/texture_3d-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                    webgl_renderer.compile_shader(include_str!("shaders/texture_3d-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                ];
+                let program_id = webgl_renderer.compile_program(&shaders)?;
 
                 state.borrow_mut().program_id = Some(program_id);
 

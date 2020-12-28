@@ -1,7 +1,7 @@
 use crate::scenes::webgl::common::*;
 use crate::start_webgl;
 use awsm_web::webgl::{
-    AttributeOptions, BeginMode, BufferTarget, BufferMask, DataType, GlToggle, Id,WebGlVersion
+    AttributeOptions, BeginMode, BufferTarget, BufferMask, DataType, GlToggle, Id,WebGlVersion, ShaderType
 };
 use nalgebra::{Isometry3, Matrix4, Perspective3, Point3, Vector3};
 use std::cell::RefCell;
@@ -55,10 +55,11 @@ pub fn start(
 
                 webgl_renderer.hardcoded_attribute_locations.insert("a_vertex".to_string(), 3);
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/elements-vertex.glsl"),
-                    include_str!("shaders/elements-fragment.glsl"),
-                )?;
+                let shaders = vec![
+                    webgl_renderer.compile_shader(include_str!("shaders/elements-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                    webgl_renderer.compile_shader(include_str!("shaders/elements-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                ];
+                let program_id = webgl_renderer.compile_program(&shaders)?;
 
                 let loc = webgl_renderer.get_attribute_location_value("a_vertex").unwrap();
                 if loc != 3 {

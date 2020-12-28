@@ -8,7 +8,7 @@ use beach_map::{BeachMap, DefaultVersion};
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 use std::any::Any;
-use web_sys::{HtmlCanvasElement, WebGlBuffer, WebGlVertexArrayObject, WebGlRenderbuffer, WebGlFramebuffer};
+use web_sys::{HtmlCanvasElement, WebGlBuffer, WebGlShader, WebGlVertexArrayObject, WebGlRenderbuffer, WebGlFramebuffer};
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 pub type WebGl1Renderer = WebGlRenderer<WebGlRenderingContext>;
@@ -36,6 +36,8 @@ pub struct WebGlRenderer<T: WebGlCommon> {
     //really just local to the module
     pub(super) last_resize_strategy: Option<ResizeStrategy>, 
     pub(super) viewport: Option<(u32, u32, u32, u32)>,
+
+    pub(super) shader_lookup: BeachMap<DefaultVersion, WebGlShader>,
     
     pub(super) current_program_id: Option<Id>,
     pub(super) program_lookup: BeachMap<DefaultVersion, ProgramInfo>,
@@ -111,6 +113,8 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
 
             last_resize_strategy: None,
             viewport: None,
+
+            shader_lookup: BeachMap::default(),
 
             current_program_id: None,
             program_lookup: BeachMap::default(),

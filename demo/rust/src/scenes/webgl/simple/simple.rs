@@ -1,6 +1,6 @@
 use crate::scenes::webgl::common::*;
 use crate::start_webgl;
-use awsm_web::webgl::{BeginMode, BufferMask, Id, WebGlVersion};
+use awsm_web::webgl::{BeginMode, BufferMask, Id, WebGlVersion, ShaderType};
 use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -52,10 +52,11 @@ pub fn start(
 
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/simple-vertex.glsl"),
-                    include_str!("shaders/simple-fragment.glsl"),
-                )?;
+                let shaders = vec![
+                    webgl_renderer.compile_shader(include_str!("shaders/simple-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                    webgl_renderer.compile_shader(include_str!("shaders/simple-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                ];
+                let program_id = webgl_renderer.compile_program(&shaders)?;
 
                 state.borrow_mut().program_id = Some(program_id);
                 let _buffer_id = create_and_assign_unit_quad_buffer(&mut webgl_renderer)?;

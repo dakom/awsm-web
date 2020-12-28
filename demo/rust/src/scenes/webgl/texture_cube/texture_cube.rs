@@ -6,7 +6,9 @@ use awsm_web::loaders::image;
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferMask, DataType, Id, SimpleTextureOptions,
     TextureCubeFace, TextureTarget, VertexArray, WebGlTextureSource,
-    WebGlVersion
+    WebGlVersion,
+    ShaderType
+
 };
 use futures::future::{try_join_all};
 use nalgebra::{Isometry3, Matrix4, Perspective3, Point3, Vector3};
@@ -64,10 +66,11 @@ pub fn start(
                         .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
                 }
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/texture_cube-vertex.glsl"),
-                    include_str!("shaders/texture_cube-fragment.glsl"),
-                )?;
+                let shaders = vec![
+                    webgl_renderer.compile_shader(include_str!("shaders/texture_cube-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                    webgl_renderer.compile_shader(include_str!("shaders/texture_cube-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                ];
+                let program_id = webgl_renderer.compile_program(&shaders)?;
 
                 state.borrow_mut().program_id = Some(program_id);
 

@@ -3,6 +3,8 @@ use awsm_web::errors::Error;
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferData, BufferTarget, BufferUsage, BufferMask, DataType,
     GlToggle, Id, VertexArray, WebGl2Renderer,
+    ShaderType
+
 };
 use log::info;
 use nalgebra::{Isometry3, Matrix4, Perspective3, Point3, Vector3};
@@ -68,10 +70,11 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
                 webgl_renderer.register_global_uniform_buffer("camera");
                 webgl_renderer.register_global_uniform_buffer("chair");
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/ubos-vertex.glsl"),
-                    include_str!("shaders/ubos-fragment.glsl"),
-                )?;
+                let shaders = vec![
+                    webgl_renderer.compile_shader(include_str!("shaders/ubos-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                    webgl_renderer.compile_shader(include_str!("shaders/ubos-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                ];
+                let program_id = webgl_renderer.compile_program(&shaders)?;
 
                 let mut state_obj = state.borrow_mut();
 

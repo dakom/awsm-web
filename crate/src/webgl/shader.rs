@@ -323,11 +323,28 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
 
         Ok(())
     }
+
+    //Compile the shader - and cache it for later use
+    pub fn compile_shader(&mut self, source:&str, source_type: ShaderType) -> Result<Id, Error> {
+        let shader = compile_shader(&self.gl, source, source_type)?;
+
+        Ok(self.shader_lookup.insert(shader))
+    }
 }
 
 impl WebGlRenderer<WebGlRenderingContext> {
-    pub fn compile_program(&mut self, vertex: &str, fragment: &str) -> Result<Id, Error> {
-        let program = compile_program(&self.gl, &vertex, &fragment, &self.hardcoded_attribute_locations)?;
+    //Compile the program and cache it for later use
+    pub fn compile_program(&mut self, shaders:&[Id]) -> Result<Id, Error> {
+        let shaders:Vec<&WebGlShader> = 
+            shaders
+                .iter()
+                .map(|id| {
+                    self.shader_lookup
+                        .get(*id)
+                        .ok_or(Error::from("can't get shader for id!"))
+                }).collect::<Result<Vec<&WebGlShader>, Error>>()?;
+
+        let program = compile_program(&self.gl, &shaders, &self.hardcoded_attribute_locations)?;
 
         let program_info = ProgramInfo::new(program);
 
@@ -348,8 +365,18 @@ impl WebGlRenderer<WebGlRenderingContext> {
 }
 
 impl WebGlRenderer<WebGl2RenderingContext> {
-    pub fn compile_program(&mut self, vertex: &str, fragment: &str) -> Result<Id, Error> {
-        let program = compile_program(&self.gl, &vertex, &fragment, &self.hardcoded_attribute_locations)?;
+    //Compile the program and cache it for later use
+    pub fn compile_program(&mut self, shaders:&[Id]) -> Result<Id, Error> {
+        let shaders:Vec<&WebGlShader> = 
+            shaders
+                .iter()
+                .map(|id| {
+                    self.shader_lookup
+                        .get(*id)
+                        .ok_or(Error::from("can't get shader for id!"))
+                }).collect::<Result<Vec<&WebGlShader>, Error>>()?;
+
+        let program = compile_program(&self.gl, &shaders, &self.hardcoded_attribute_locations)?;
 
         let program_info = ProgramInfo::new(program);
 
@@ -502,149 +529,75 @@ impl WebGlRenderer<WebGl2RenderingContext> {
     }
 }
 
-struct CompileSteps {
-    program: Option<WebGlProgram>,
-    fragment: Option<WebGlShader>,
-    vertex: Option<WebGlShader>,
-}
 
-type WithError<T> = Result<T, (T, Error)>;
-
-impl CompileSteps {
-    pub fn new() -> CompileSteps {
-        CompileSteps {
-            program: None,
-            fragment: None,
-            vertex: None,
-        }
-    }
-
-    pub fn free_shaders<T: WebGlCommon>(&mut self, gl: &T) {
-        let free_shader = |s: Option<&WebGlShader>| {
-            s.map(|shader: &WebGlShader| {
-                //if the shader exists, the program had to have been valid
-                gl.awsm_detach_shader(self.program.as_ref().unwrap_throw(), shader);
-                gl.awsm_delete_shader(shader);
-            });
-        };
-
-        free_shader(self.fragment.as_ref());
-        free_shader(self.vertex.as_ref());
-
-        self.fragment = None;
-        self.vertex = None;
-    }
-
-    pub fn free_all<T: WebGlCommon>(&mut self, gl: &T) {
-        self.free_shaders(gl);
-
-        self.program.as_ref().map(|program: &WebGlProgram| {
-            gl.awsm_delete_program(program);
-        });
-
-        self.program = None;
-    }
-}
-
+//These are free functions since they might
+//Be useful for compiling shaders and programs
+//Without storing in the renderer cache
 pub fn compile_program<T: WebGlCommon>(
     gl: &T,
-    vertex: &str,
-    fragment: &str,
+    shaders: &[&WebGlShader],
     hardcoded_attribute_locations: &FxHashMap<String, u32>
 ) -> Result<WebGlProgram, Error> {
-    let result = compile_program_steps(gl, CompileSteps::new())
-        .and_then(|compile_steps: CompileSteps| {
-            compile_source(gl, compile_steps, fragment, ShaderType::Fragment)
-        })
-        .and_then(|compile_steps: CompileSteps| {
-            compile_source(gl, compile_steps, vertex, ShaderType::Vertex)
-        })
-        .and_then(|compile_steps: CompileSteps| hardcode_attributes(gl, compile_steps, hardcoded_attribute_locations))
-        .and_then(|compile_steps: CompileSteps| link_program(gl, compile_steps));
 
-    match result {
-        Ok(mut compile_steps) => {
-            compile_steps.free_shaders(gl);
-            Ok(compile_steps.program.unwrap_throw())
-        }
-        Err((mut compile_steps, error_message)) => {
-            compile_steps.free_all(gl);
-            Err(Error::from(error_message))
-        }
-    }
-}
 
-fn hardcode_attributes<T: WebGlCommon>(
-    gl: &T,
-    compile_steps: CompileSteps,
-    hardcoded_attribute_locations: &FxHashMap<String, u32>
-) -> WithError<CompileSteps> {
-    let program = compile_steps.program.as_ref().unwrap_throw();
-    for (name, loc) in hardcoded_attribute_locations {
-        gl.awsm_bind_attrib_location(program, *loc, name);
-    }
-    Ok(compile_steps)
-}
-
-fn compile_program_steps<T: WebGlCommon>(
-    gl: &T,
-    mut compile_steps: CompileSteps,
-) -> WithError<CompileSteps> {
-    match gl.awsm_create_program() {
-        Ok(program) => {
-            compile_steps.program = Some(program);
-            Ok(compile_steps)
-        }
-        Err(err) => Err((compile_steps, err)),
-    }
-}
-
-fn compile_source<T: WebGlCommon>(
-    gl: &T,
-    mut compile_steps: CompileSteps,
-    source: &str,
-    source_type: ShaderType,
-) -> WithError<CompileSteps> {
-    let option_shader = gl.awsm_create_shader(source_type);
-
-    match option_shader {
-        Some(shader) => {
-            gl.awsm_shader_source(&shader, source);
-            gl.awsm_compile_shader(&shader);
-            match do_with_check(
-                || gl.awsm_get_shader_parameter_bool(&shader, ShaderQuery::CompileStatus),
-                || gl.awsm_get_shader_info_log(&shader),
-            ) {
-                Some(error_message) => Err((compile_steps, Error::from(error_message))),
-                None => {
-                    gl.awsm_attach_shader(&compile_steps.program.as_ref().unwrap_throw(), &shader);
-                    if source_type == ShaderType::Vertex {
-                        compile_steps.vertex = Some(shader);
-                    } else {
-                        compile_steps.fragment = Some(shader);
-                    }
-                    Ok(compile_steps)
-                }
+    gl.awsm_create_program()
+        .and_then(|program| {
+            //Hardcode our stashed attribute locations
+            //TODO - is this necessary?
+            //I think it is for WebGl1 or if layout isn't specified in WebGl2
+            //So.... yeah?
+            //Anyway it's not expensive to do this...
+            for (name, loc) in hardcoded_attribute_locations {
+                gl.awsm_bind_attrib_location(&program, *loc, name);
             }
-        }
-        None => Err((compile_steps, Error::from("bad shader (unknown error"))),
-    }
+            
+            for shader in shaders.iter() {
+                gl.awsm_attach_shader(&program, shader);
+            }
+
+            //Link the program
+            gl.awsm_link_program(&program);
+
+            //Check for errors
+            check_status_with(
+                || gl.awsm_get_program_parameter_bool(&program, ProgramQuery::LinkStatus),
+                || gl.awsm_get_program_info_log(&program),
+            )
+                .map_err(|err| {
+                    //Don't delete the shader - technically a delete will be only marked
+                    //for GC, but if this is the _first_ use of it, and we want to use
+                    //it after, that will collect it before we get the chance
+                    for shader in shaders.iter() {
+                        gl.awsm_detach_shader(&program, shader);
+                    }
+
+                    gl.awsm_delete_program(&program);
+
+                    err
+                })
+                .map(|_| program)
+        })
 }
 
-fn link_program<T: WebGlCommon>(gl: &T, compile_steps: CompileSteps) -> WithError<CompileSteps> {
-    let program = &compile_steps.program.as_ref().unwrap_throw();
-    gl.awsm_link_program(program);
+pub fn compile_shader<T: WebGlCommon>(
+    gl: &T,
+    source: &str,
+    source_type: ShaderType
+) -> Result<WebGlShader, Error> {
+    let shader = gl.awsm_create_shader(source_type).ok_or(Error::from("bad shader (unknown error)"))?;
 
-    match do_with_check(
-        || gl.awsm_get_program_parameter_bool(program, ProgramQuery::LinkStatus),
-        || gl.awsm_get_program_info_log(program),
-    ) {
-        Some(error_message) => Err((compile_steps, Error::from(error_message))),
-        None => Ok(compile_steps),
-    }
+    gl.awsm_shader_source(&shader, source);
+    gl.awsm_compile_shader(&shader);
+    check_status_with(
+        || gl.awsm_get_shader_parameter_bool(&shader, ShaderQuery::CompileStatus),
+        || gl.awsm_get_shader_info_log(&shader),
+    )?;
+
+    Ok(shader)
+
 }
 
-fn do_with_check<T, U>(set_status: T, get_status: U) -> Option<String>
+fn check_status_with<T, U>(set_status: T, get_status: U) -> Result<(), Error>
 where
     T: Fn() -> Result<bool, Error>,
     U: Fn() -> Option<String>,
@@ -653,16 +606,17 @@ where
         Ok(flag) => {
             if !flag {
                 match get_status() {
-                    None => Some(String::from("unknown shader compiler error!")),
-                    err => err,
+                    None => Err(String::from("unknown shader compiler error!")),
+                    Some(err) => Err(err),
                 }
             } else {
-                None
+                Ok(())
             }
         }
 
-        Err(err) => Some(err.to_string()),
+        Err(err) => Err(err.to_string()),
     }
+    .map_err(|err| err.into())
 }
 
 // see: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getActiveUniform

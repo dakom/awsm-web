@@ -10,7 +10,8 @@ use awsm_web::webgl::{BeginMode, BufferMask, Id, WebGlCommon, WebGlRenderer,
     ReadPixelFormat,
     ReadPixelDataType,
     WebGlVersion,
-    DrawBuffer
+    DrawBuffer,
+    ShaderType
 };
 use nalgebra::{Matrix4, Point2, Vector3};
 use std::cell::RefCell;
@@ -78,24 +79,27 @@ pub fn start(
 
                     let program_id = {
                         if webgl_renderer.version == WebGlVersion::One {
-                            webgl_renderer.compile_program(
-                                include_str!("shaders/draw-buffers-webgl1-vertex.glsl"),
-                                include_str!("shaders/draw-buffers-webgl1-fragment.glsl"),
-                            )
+                            let shaders = vec![
+                                webgl_renderer.compile_shader(include_str!("shaders/draw-buffers-webgl1-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                                webgl_renderer.compile_shader(include_str!("shaders/draw-buffers-webgl1-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                            ];
+                            webgl_renderer.compile_program(&shaders)
                         } else {
-                            webgl_renderer.compile_program(
-                                include_str!("shaders/draw-buffers-webgl2-vertex.glsl"),
-                                include_str!("shaders/draw-buffers-webgl2-fragment.glsl"),
-                            )
+                            let shaders = vec![
+                                webgl_renderer.compile_shader(include_str!("shaders/draw-buffers-webgl2-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                                webgl_renderer.compile_shader(include_str!("shaders/draw-buffers-webgl2-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                            ];
+                            webgl_renderer.compile_program(&shaders)
                         }
                     }?;
 
                     state.borrow_mut().program_id = Some(program_id);
                     
-                    let texture_program_id = webgl_renderer.compile_program(
-                        include_str!("shaders/draw-buffers-texture-vertex.glsl"),
-                        include_str!("shaders/draw-buffers-texture-fragment.glsl"),
-                    )?;
+                    let shaders = vec![
+                        webgl_renderer.compile_shader(include_str!("shaders/draw-buffers-texture-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                        webgl_renderer.compile_shader(include_str!("shaders/draw-buffers-texture-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                    ];
+                    let texture_program_id = webgl_renderer.compile_program(&shaders)?;
 
                     state.borrow_mut().texture_program_id = Some(texture_program_id);
 

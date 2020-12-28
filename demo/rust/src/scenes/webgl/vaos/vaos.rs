@@ -2,7 +2,9 @@ use crate::scenes::webgl::common::*;
 use crate::start_webgl;
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferMask, DataType, GlToggle, Id, VertexArray,
-    WebGlVersion
+    WebGlVersion,
+    ShaderType
+
 };
 use nalgebra::{Isometry3, Matrix4, Perspective3, Point3, Vector3};
 use std::cell::RefCell;
@@ -59,10 +61,11 @@ pub fn start(
                         .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
                 }
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/vaos-vertex.glsl"),
-                    include_str!("shaders/vaos-fragment.glsl"),
-                )?;
+                let shaders = vec![
+                    webgl_renderer.compile_shader(include_str!("shaders/vaos-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                    webgl_renderer.compile_shader(include_str!("shaders/vaos-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                ];
+                let program_id = webgl_renderer.compile_program(&shaders)?;
 
                 state.borrow_mut().program_id = Some(program_id);
 

@@ -5,7 +5,9 @@ use awsm_web::loaders::image;
 use awsm_web::webgl::{
     AttributeOptions, BeginMode, BufferData, BufferTarget, BufferUsage, BufferMask, DataType,
     Id, PixelFormat, SimpleTextureOptions, TextureTarget, WebGlTextureSource,
-    WebGlVersion
+    WebGlVersion,
+    ShaderType
+
 };
 use log::info;
 use nalgebra::{Matrix4, Point2, Vector3};
@@ -70,10 +72,11 @@ pub fn start(
                         .map_err(|err| JsValue::from_str(err.to_string().as_ref()))?;
                 }
 
-                let program_id = webgl_renderer.compile_program(
-                    include_str!("shaders/instancing-vertex.glsl"),
-                    include_str!("shaders/instancing-fragment.glsl"),
-                )?;
+                let shaders = vec![
+                    webgl_renderer.compile_shader(include_str!("shaders/instancing-vertex.glsl"), ShaderType::Vertex).unwrap(),
+                    webgl_renderer.compile_shader(include_str!("shaders/instancing-fragment.glsl"), ShaderType::Fragment).unwrap(),
+                ];
+                let program_id = webgl_renderer.compile_program(&shaders)?;
 
                 state.borrow_mut().program_id = Some(program_id);
                 let _buffer_id = create_and_assign_unit_quad_buffer(&mut webgl_renderer)?;
