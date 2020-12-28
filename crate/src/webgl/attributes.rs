@@ -67,6 +67,7 @@ impl_context! {
 }
 
 //The attribute lookups are cached at shader compilation (see shader.rs)
+//However, they can also be used by direct u32, before the shader
 impl<T: WebGlCommon> WebGlRenderer<T> {
     pub fn get_attribute_location_value(&self, name: &str) -> Result<u32, Error> {
         let program_id = self

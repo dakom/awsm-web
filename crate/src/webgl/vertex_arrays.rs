@@ -10,6 +10,9 @@ pub struct VertexArray {
     pub opts: AttributeOptions,
 }
 
+//Name is convenient and uses a local HashMap
+//However - it can't reliably be used for vao's
+//In a setup where vao's are loaded separately from shaders
 #[derive(Debug)]
 pub enum NameOrLoc {
     Name(&'static str),
