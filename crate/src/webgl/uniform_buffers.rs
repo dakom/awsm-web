@@ -240,13 +240,13 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         }
     }
 
-    pub fn get_uniform_buffer_location_name(&mut self, name: &str) -> Result<(BlockOffset, BufferSlot), Error> {
+    pub fn get_uniform_buffer_slot_name(&mut self, name: &str) -> Result<(BufferSlot), Error> {
         let program_id = self
             .current_program_id
             .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
         self.cache_uniform_buffer_name(program_id, name)
-            .map(|(offset, slot, _cached)| (offset, slot))
+            .map(|(_offset, slot, _cached)| slot)
     }
 
     pub fn get_uniform_buffer_block_offset_name(
@@ -265,7 +265,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
     }
 
     pub fn activate_uniform_buffer_name(&mut self, id: Id, name: &str) -> Result<(), Error> {
-        let (_, slot) = self.get_uniform_buffer_location_name(&name)?;
+        let slot = self.get_uniform_buffer_slot_name(&name)?;
         self.bind_buffer_base(id, slot, BufferTarget::UniformBuffer)
     }
 
