@@ -26,6 +26,7 @@ extern "C" {
 /// this has no `disconnect()` since it will call that on Drop
 pub struct ResizeObserver {
     observer: JsResizeObserver,
+    #[allow(dead_code)]
     closure: Closure<dyn FnMut()>,
 }
 

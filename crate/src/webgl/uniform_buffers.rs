@@ -19,6 +19,7 @@ pub type BlockOffset = u32;
 pub type BufferSlot = u32;
 impl WebGlRenderer<WebGl2RenderingContext> {
 
+    //Just used for debugging
     pub fn get_uniform_buffer_offsets(&self, program_id:Id) -> Result<Vec<(String, UniformIndex, BlockOffset)>, Error> {
         let program_info = self
             .program_lookup
@@ -236,7 +237,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
                     Error::from(NativeError::UniformBufferOffsetMissing(Some((uniform_name.to_string(), block_name.to_string()))))
                 })?;
 
-            let mut offsets = &mut self
+            let offsets = &mut self
                 .program_lookup
                 .get_mut(program_id)
                 .ok_or(Error::from(NativeError::MissingShaderProgram))?
@@ -259,7 +260,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         }
     }
 
-    pub fn get_uniform_buffer_slot_name(&mut self, name: &str) -> Result<(BufferSlot), Error> {
+    pub fn get_uniform_buffer_slot_name(&mut self, name: &str) -> Result<BufferSlot, Error> {
         let program_id = self
             .current_program_id
             .ok_or(Error::from(NativeError::MissingShaderProgram))?;

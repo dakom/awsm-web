@@ -216,7 +216,7 @@ impl PartialWebGl2Uniforms for WebGl2RenderingContext {
             .and_then(|arr| {
                 let mut values = Vec::with_capacity(len);
                 for i in 0..len {
-                    let value = arr.get(0);
+                    let value = arr.get(i.try_into().unwrap());
                     if value == JsValue::UNDEFINED || value == JsValue::NULL {
                         return None;
                     } else {
@@ -472,6 +472,15 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     //this covers all the slice-based versions due to the impl above
 
     //Just some convenience helpers
+    pub fn upload_uniform_fvec<T: AsRef<[f32]>>(
+        &self,
+        loc: &WebGlUniformLocation,
+        _type: UniformType,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.gl.awsm_upload_uniform_fvec(&loc, _type, data)
+    }
+
     pub fn upload_uniform_fvec_name<T: AsRef<[f32]>>(
         &mut self,
         target_name: &str,
@@ -479,7 +488,16 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         data: &T,
     ) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
-        self.gl.awsm_upload_uniform_fvec(&loc, _type, data)
+        self.upload_uniform_fvec(&loc, _type, data)
+    }
+
+    pub fn upload_uniform_ivec<T: AsRef<[i32]>>(
+        &self,
+        loc: &WebGlUniformLocation,
+        _type: UniformType,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.gl.awsm_upload_uniform_ivec(&loc, _type, data)
     }
 
     pub fn upload_uniform_ivec_name<T: AsRef<[i32]>>(
@@ -489,7 +507,15 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         data: &T,
     ) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
-        self.gl.awsm_upload_uniform_ivec(&loc, _type, data)
+        self.upload_uniform_ivec(&loc, _type, data)
+    }
+
+    pub fn upload_uniform_mat_4<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::Matrix4, &data)
     }
 
     pub fn upload_uniform_mat_4_name<T: AsRef<[f32]>>(
@@ -499,6 +525,14 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::Matrix4, &data)
     }
+    
+    pub fn upload_uniform_mat_3<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::Matrix3, &data)
+    }
 
     pub fn upload_uniform_mat_3_name<T: AsRef<[f32]>>(
         &mut self,
@@ -507,6 +541,16 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::Matrix3, data)
     }
+
+
+    pub fn upload_uniform_mat_2<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::Matrix2, &data)
+    }
+
     pub fn upload_uniform_mat_2_name<T: AsRef<[f32]>>(
         &mut self,
         target_name: &str,
@@ -514,6 +558,15 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::Matrix2, data)
     }
+
+    pub fn upload_uniform_mat_transposed_4<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::MatrixTransposed4, data)
+    }
+
     pub fn upload_uniform_mat_transposed_4_name<T: AsRef<[f32]>>(
         &mut self,
         target_name: &str,
@@ -521,6 +574,15 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::MatrixTransposed4, data)
     }
+
+    pub fn upload_uniform_mat_transposed_3<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::MatrixTransposed3, data)
+    }
+
     pub fn upload_uniform_mat_transposed_3_name<T: AsRef<[f32]>>(
         &mut self,
         target_name: &str,
@@ -528,12 +590,30 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::MatrixTransposed3, data)
     }
+
+
+    pub fn upload_uniform_mat_transposed_2<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::MatrixTransposed2, data)
+    }
+
     pub fn upload_uniform_mat_transposed_2_name<T: AsRef<[f32]>>(
         &mut self,
         target_name: &str,
         data: &T,
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::MatrixTransposed2, data)
+    }
+
+    pub fn upload_uniform_fvec_4<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::Vector4, data)
     }
 
     pub fn upload_uniform_fvec_4_name<T: AsRef<[f32]>>(
@@ -543,6 +623,13 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::Vector4, data)
     }
+    pub fn upload_uniform_fvec_3<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::Vector3, data)
+    }
     pub fn upload_uniform_fvec_3_name<T: AsRef<[f32]>>(
         &mut self,
         target_name: &str,
@@ -550,12 +637,26 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::Vector3, data)
     }
+    pub fn upload_uniform_fvec_2<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::Vector2, data)
+    }
     pub fn upload_uniform_fvec_2_name<T: AsRef<[f32]>>(
         &mut self,
         target_name: &str,
         data: &T,
     ) -> Result<(), Error> {
         self.upload_uniform_fvec_name(target_name, UniformType::Vector2, data)
+    }
+    pub fn upload_uniform_fvec_1<T: AsRef<[f32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_fvec(loc, UniformType::Vector1, data)
     }
     pub fn upload_uniform_fvec_1_name<T: AsRef<[f32]>>(
         &mut self,
@@ -565,12 +666,26 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         self.upload_uniform_fvec_name(target_name, UniformType::Vector1, data)
     }
 
+    pub fn upload_uniform_ivec_4<T: AsRef<[i32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_ivec(loc, UniformType::Vector4, data)
+    }
     pub fn upload_uniform_ivec_4_name<T: AsRef<[i32]>>(
         &mut self,
         target_name: &str,
         data: &T,
     ) -> Result<(), Error> {
         self.upload_uniform_ivec_name(target_name, UniformType::Vector4, data)
+    }
+    pub fn upload_uniform_ivec_3<T: AsRef<[i32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_ivec(loc, UniformType::Vector3, data)
     }
     pub fn upload_uniform_ivec_3_name<T: AsRef<[i32]>>(
         &mut self,
@@ -579,12 +694,26 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
         self.upload_uniform_ivec_name(target_name, UniformType::Vector3, data)
     }
+    pub fn upload_uniform_ivec_2<T: AsRef<[i32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_ivec(loc, UniformType::Vector2, data)
+    }
     pub fn upload_uniform_ivec_2_name<T: AsRef<[i32]>>(
         &mut self,
         target_name: &str,
         data: &T,
     ) -> Result<(), Error> {
         self.upload_uniform_ivec_name(target_name, UniformType::Vector2, data)
+    }
+    pub fn upload_uniform_ivec_1<T: AsRef<[i32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_ivec(loc, UniformType::Vector1, data)
     }
     pub fn upload_uniform_ivec_1_name<T: AsRef<[i32]>>(
         &mut self,
@@ -594,8 +723,13 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         self.upload_uniform_ivec_name(target_name, UniformType::Vector1, data)
     }
 
-    //Scalar versions - only need "convenience" form with string because if the caller
-    //already knows the location, there's no reason to just use the context directly
+    pub fn upload_uniform_fvals_4(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (f32, f32, f32, f32),
+    ) {
+        self.gl.awsm_uniform4f(&loc, data.0, data.1, data.2, data.3);
+    }
 
     pub fn upload_uniform_fvals_4_name(
         &mut self,
@@ -606,6 +740,13 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         self.gl.awsm_uniform4f(&loc, data.0, data.1, data.2, data.3);
         Ok(())
     }
+    pub fn upload_uniform_fvals_3(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (f32, f32, f32),
+    ) {
+        self.gl.awsm_uniform3f(&loc, data.0, data.1, data.2);
+    }
     pub fn upload_uniform_fvals_3_name(
         &mut self,
         target_name: &str,
@@ -615,15 +756,37 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         self.gl.awsm_uniform3f(&loc, data.0, data.1, data.2);
         Ok(())
     }
+    pub fn upload_uniform_fvals_2(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (f32, f32),
+    ) {
+        self.gl.awsm_uniform2f(&loc, data.0, data.1);
+    }
     pub fn upload_uniform_fvals_2_name(&mut self, target_name: &str, data: (f32, f32)) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
         self.gl.awsm_uniform2f(&loc, data.0, data.1);
         Ok(())
     }
+    pub fn upload_uniform_fval(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: f32
+    ) {
+        self.gl.awsm_uniform1f(&loc, data);
+    }
     pub fn upload_uniform_fval_name(&mut self, target_name: &str, data: f32) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
         self.gl.awsm_uniform1f(&loc, data);
         Ok(())
+    }
+
+    pub fn upload_uniform_ivals_4(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (i32, i32, i32, i32),
+    ) {
+        self.gl.awsm_uniform4i(&loc, data.0, data.1, data.2, data.3);
     }
 
     pub fn upload_uniform_ivals_4_name(
@@ -635,6 +798,13 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         self.gl.awsm_uniform4i(&loc, data.0, data.1, data.2, data.3);
         Ok(())
     }
+    pub fn upload_uniform_ivals_3(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (i32, i32, i32),
+    ) {
+        self.gl.awsm_uniform3i(&loc, data.0, data.1, data.2);
+    }
     pub fn upload_uniform_ivals_3_name(
         &mut self,
         target_name: &str,
@@ -644,10 +814,24 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         self.gl.awsm_uniform3i(&loc, data.0, data.1, data.2);
         Ok(())
     }
+    pub fn upload_uniform_ivals_2(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (i32, i32),
+    ) {
+        self.gl.awsm_uniform2i(&loc, data.0, data.1);
+    }
     pub fn upload_uniform_ivals_2_name(&mut self, target_name: &str, data: (i32, i32)) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
         self.gl.awsm_uniform2i(&loc, data.0, data.1);
         Ok(())
+    }
+    pub fn upload_uniform_ivals(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: i32,
+    ) {
+        self.gl.awsm_uniform1i(&loc, data);
     }
     pub fn upload_uniform_ival_name(&mut self, target_name: &str, data: i32) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
@@ -671,6 +855,15 @@ impl WebGlRenderer<WebGl2RenderingContext> {
             })
     }
 
+    pub fn upload_uniform_uvec<T: AsRef<[u32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        _type: UniformType,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.gl.awsm_upload_uniform_uvec(&loc, _type, data)
+    }
+
     pub fn upload_uniform_uvec_name<T: AsRef<[u32]>>(
         &mut self,
         target_name: &str,
@@ -678,14 +871,30 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         data: &T,
     ) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
-        self.gl.awsm_upload_uniform_uvec(&loc, _type, data)
+        self.upload_uniform_uvec(&loc, _type, data)
     }
+
+    pub fn upload_uniform_uvec_4<T: AsRef<[u32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_uvec(loc, UniformType::Vector4, data)
+    }
+
     pub fn upload_uniform_uvec_4_name<T: AsRef<[u32]>>(
         &mut self,
         target_name: &str,
         data: &T,
     ) -> Result<(), Error> {
         self.upload_uniform_uvec_name(target_name, UniformType::Vector4, data)
+    }
+    pub fn upload_uniform_uvec_3<T: AsRef<[u32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_uvec(loc, UniformType::Vector3, data)
     }
     pub fn upload_uniform_uvec_3_name<T: AsRef<[u32]>>(
         &mut self,
@@ -694,12 +903,26 @@ impl WebGlRenderer<WebGl2RenderingContext> {
     ) -> Result<(), Error> {
         self.upload_uniform_uvec_name(target_name, UniformType::Vector3, data)
     }
+    pub fn upload_uniform_uvec_2<T: AsRef<[u32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_uvec(loc, UniformType::Vector2, data)
+    }
     pub fn upload_uniform_uvec_2_name<T: AsRef<[u32]>>(
         &mut self,
         target_name: &str,
         data: &T,
     ) -> Result<(), Error> {
         self.upload_uniform_uvec_name(target_name, UniformType::Vector2, data)
+    }
+    pub fn upload_uniform_uvec_1<T: AsRef<[u32]>>(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: &T,
+    ) -> Result<(), Error> {
+        self.upload_uniform_uvec(loc, UniformType::Vector1, data)
     }
     pub fn upload_uniform_uvec_1_name<T: AsRef<[u32]>>(
         &mut self,
@@ -709,15 +932,29 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         self.upload_uniform_uvec_name(target_name, UniformType::Vector1, data)
     }
 
+    pub fn upload_uniform_uvals_4(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (u32, u32, u32, u32),
+    ) {
+        self.gl.awsm_uniform4ui(&loc, data.0, data.1, data.2, data.3);
+    }
+
     pub fn upload_uniform_uvals_4_name(
         &mut self,
         target_name: &str,
         data: (u32, u32, u32, u32),
     ) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
-        self.gl
-            .awsm_uniform4ui(&loc, data.0, data.1, data.2, data.3);
+        self.gl.awsm_uniform4ui(&loc, data.0, data.1, data.2, data.3);
         Ok(())
+    }
+    pub fn upload_uniform_uvals_3(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (u32, u32, u32),
+    ) {
+        self.gl.awsm_uniform3ui(&loc, data.0, data.1, data.2);
     }
     pub fn upload_uniform_uvals_3_name(
         &mut self,
@@ -728,10 +965,24 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         self.gl.awsm_uniform3ui(&loc, data.0, data.1, data.2);
         Ok(())
     }
+    pub fn upload_uniform_uvals_2(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: (u32, u32),
+    ) {
+        self.gl.awsm_uniform2ui(&loc, data.0, data.1);
+    }
     pub fn upload_uniform_uvals_2_name(&mut self, target_name: &str, data: (u32, u32)) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
         self.gl.awsm_uniform2ui(&loc, data.0, data.1);
         Ok(())
+    }
+    pub fn upload_uniform_uval(
+        &mut self,
+        loc: &WebGlUniformLocation,
+        data: u32,
+    ) {
+        self.gl.awsm_uniform1ui(&loc, data);
     }
     pub fn upload_uniform_uval_name(&mut self, target_name: &str, data: u32) -> Result<(), Error> {
         let loc = self.get_uniform_location_name(&target_name)?;
