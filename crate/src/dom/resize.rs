@@ -1,5 +1,4 @@
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 use web_sys::Element;
 
 /// Temporary placeholder until https://github.com/rustwasm/wasm-bindgen/issues/2289

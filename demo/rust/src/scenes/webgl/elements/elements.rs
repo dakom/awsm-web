@@ -61,7 +61,7 @@ pub fn start(
                 ];
                 let program_id = webgl_renderer.compile_program(&shaders)?;
 
-                let loc = webgl_renderer.get_attribute_location_value("a_vertex").unwrap();
+                let loc = webgl_renderer.get_attribute_location_name("a_vertex").unwrap();
                 if loc != 3 {
                     panic!("hardcoded attribute fail!");
                 }
@@ -132,10 +132,10 @@ pub fn start(
 
                 //Upload them to the GPU
                 webgl_renderer
-                    .upload_uniform_mat_4("u_size", &scaling_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_size", &scaling_mat.as_slice())
                     .unwrap();
                 webgl_renderer
-                    .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_modelViewProjection", &mvp_mat.as_slice())
                     .unwrap();
 
                 //activate buffers
@@ -145,7 +145,7 @@ pub fn start(
                     .unwrap();
 
                 webgl_renderer
-                    .activate_buffer_for_attribute(
+                    .activate_buffer_for_attribute_name(
                         geom_id,
                         BufferTarget::ArrayBuffer,
                         "a_vertex",
@@ -154,7 +154,7 @@ pub fn start(
                     .unwrap();
 
                 webgl_renderer
-                    .activate_buffer_for_attribute(
+                    .activate_buffer_for_attribute_name(
                         colors_id,
                         BufferTarget::ArrayBuffer,
                         "a_color",

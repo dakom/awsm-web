@@ -21,6 +21,7 @@ pub enum NativeError {
     CanvasCreate,
     AttributeLocation(Option<String>),
     UniformLocation(Option<String>),
+    UniformIndex(Option<String>),
     MipsPowerOf2,
     NoExtension,
     MissingShaderProgram,
@@ -115,6 +116,7 @@ impl NativeError {
             NativeError::CanvasCreate => "Couldn't create canvas",
             NativeError::AttributeLocation(_optional_name) => "Couldn't get attribute location",
             NativeError::UniformLocation(_optional_name) => "Couldn't get uniform location",
+            NativeError::UniformIndex(_optional_name) => "Couldn't get uniform index",
             NativeError::MipsPowerOf2 => "mipmapping requires that textures be power of 2",
             NativeError::NoExtension => "extension not found",
             NativeError::NoCreateBuffer => "couldn't create buffer",
@@ -170,6 +172,10 @@ impl NativeError {
             NativeError::UniformLocation(optional_name) => match optional_name {
                 None => self.default_str().to_string(),
                 Some(name) => format!("couldn't get uniform location named {}", name.as_str()),
+            },
+            NativeError::UniformIndex(optional_name) => match optional_name {
+                None => self.default_str().to_string(),
+                Some(name) => format!("couldn't get uniform index named {}", name.as_str()),
             },
             NativeError::UniformBufferMissing(optional_name) => match optional_name {
                 None => self.default_str().to_string(),

@@ -116,10 +116,10 @@ pub fn start(
 
                 //Upload them to the GPU
                 webgl_renderer
-                    .upload_uniform_mat_4("u_size", &scaling_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_size", &scaling_mat.as_slice())
                     .unwrap();
                 webgl_renderer
-                    .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_modelViewProjection", &mvp_mat.as_slice())
                     .unwrap();
 
                 let color_values = color.values();
@@ -130,7 +130,7 @@ pub fn start(
                     color_values[3] as f32,
                 );
                 webgl_renderer
-                    .upload_uniform_fvals_4("u_color", color_values)
+                    .upload_uniform_fvals_4_name("u_color", color_values)
                     .unwrap();
 
                 //draw!

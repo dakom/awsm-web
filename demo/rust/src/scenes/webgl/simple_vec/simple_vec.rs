@@ -119,20 +119,20 @@ pub fn start(
 
                 //Upload them to the GPU
                 webgl_renderer
-                    .upload_uniform_mat_4("u_size", &scaling_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_size", &scaling_mat.as_slice())
                     .unwrap();
                 webgl_renderer
-                    .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_modelViewProjection", &mvp_mat.as_slice())
                     .unwrap();
 
                 let color_values = color.to_vec_f32();
                 //see the shader... we want to separately set 0,1 and 4,5
                 webgl_renderer
-                    .upload_uniform_fvec_2("u_color", &color_values)
+                    .upload_uniform_fvec_2_name("u_color", &color_values)
                     .unwrap();
 
                 webgl_renderer
-                    .upload_uniform_fvec_2("u_color[2]", &&color_values[2..])
+                    .upload_uniform_fvec_2_name("u_color[2]", &&color_values[2..])
                     .unwrap();
                 //draw!
                 webgl_renderer.clear(&[

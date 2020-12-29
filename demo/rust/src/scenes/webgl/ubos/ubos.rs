@@ -32,6 +32,7 @@ struct State {
     pub model_buffer_id: Option<Id>,
     pub camera_buffer_id: Option<Id>,
     pub scale_buffer_id: Option<Id>,
+    pub ticks: usize,
 }
 
 impl State {
@@ -46,6 +47,7 @@ impl State {
             model_buffer_id: None,
             camera_buffer_id: None,
             scale_buffer_id: None,
+            ticks: 0
         }
     }
 }
@@ -63,13 +65,6 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
                 let _webgl_renderer_clone = Rc::clone(&webgl_renderer);
 
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
-
-                //simple test that the global registery works
-                //camera will be bound at 1 (due to being registered)
-                //model will be bound at 3 (due to not being registered
-                webgl_renderer.register_global_uniform_buffer("dog");
-                webgl_renderer.register_global_uniform_buffer("camera");
-                webgl_renderer.register_global_uniform_buffer("chair");
 
                 let shaders = vec![
                     webgl_renderer.compile_shader(include_str!("shaders/ubos-vertex.glsl"), ShaderType::Vertex).unwrap(),
@@ -92,7 +87,7 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
                 let model_buffer_id = webgl_renderer.create_buffer()?;
                 state_obj.model_buffer_id = Some(model_buffer_id);
 
-                set_model_buffer(&mut state_obj, &webgl_renderer)?;
+                set_model_buffer(&mut state_obj, &mut webgl_renderer)?;
 
                 let scale_buffer_id = webgl_renderer.create_buffer()?;
                 state_obj.scale_buffer_id = Some(scale_buffer_id);
@@ -135,6 +130,9 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
             move |_time, webgl_renderer| {
                 let mut state = state.borrow_mut();
 
+                if state.ticks > 3 {
+                    return;
+                }
                 webgl_renderer
                     .activate_program(state.program_id.unwrap())
                     .unwrap();
@@ -149,7 +147,7 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 //Model just needs to be activated so that it pulls from the buffer (which was set at init time)
                 webgl_renderer
-                    .activate_uniform_buffer(state.model_buffer_id.unwrap(), "model")
+                    .activate_uniform_buffer_name(state.model_buffer_id.unwrap(), "model")
                     .unwrap();
 
                 //activate VAO's
@@ -168,6 +166,8 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
                     DataType::UnsignedByte,
                     0,
                 );
+
+                state.ticks += 1;
             }
         },
     )
@@ -191,18 +191,18 @@ fn set_initial_scale_buffer(
     )
 }
 
-fn update_scale_buffer(state: &State, webgl_renderer: &WebGl2Renderer) -> Result<(), Error> {
+fn update_scale_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> Result<(), Error> {
     let scale_y: [f32; 3] = [0.0, 3.0, 0.0];
 
-    webgl_renderer.upload_buffer_sub_to_uniform_buffer_f32(
-        "u_scale_y",
+    webgl_renderer.upload_buffer_sub_to_uniform_buffer_f32_name(
         "scale",
+        "u_scale_y",
         state.scale_buffer_id.unwrap(),
         &scale_y[1..2],
     )
 }
 
-fn set_model_buffer(state: &State, webgl_renderer: &WebGl2Renderer) -> Result<(), Error> {
+fn set_model_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> Result<(), Error> {
     let State {
         pos,
         volume,
@@ -234,7 +234,7 @@ fn set_model_buffer(state: &State, webgl_renderer: &WebGl2Renderer) -> Result<()
     )
 }
 
-fn update_camera_buffer(state: &State, webgl_renderer: &WebGl2Renderer) -> Result<(), Error> {
+fn update_camera_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> Result<(), Error> {
     // Our camera looks toward the point (1.0, 0.0, 0.0).
     // It is located at (0.0, 0.0, 1.0).
     let eye = Point3::new(1000.0, 500.0, 1000.0);
@@ -253,7 +253,7 @@ fn update_camera_buffer(state: &State, webgl_renderer: &WebGl2Renderer) -> Resul
     let camera = vec![view.as_slice(), projection.as_slice()].concat();
 
     //will activate it too
-    webgl_renderer.upload_buffer_to_uniform_buffer_f32(
+    webgl_renderer.upload_buffer_to_uniform_buffer_f32_name(
         "camera",
         state.camera_buffer_id.unwrap(),
         &camera,

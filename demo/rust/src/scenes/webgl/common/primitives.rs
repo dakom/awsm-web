@@ -45,7 +45,7 @@ pub fn create_and_assign_unit_quad_buffer<T: WebGlCommon>(
 ) -> Result<Id, Error> {
     let buffer_id = webgl_renderer.create_buffer()?;
 
-    webgl_renderer.upload_buffer_to_attribute(
+    webgl_renderer.upload_buffer_to_attribute_name(
         buffer_id,
         BufferData::new(
             &QUAD_GEOM_UNIT,

@@ -174,7 +174,7 @@ pub fn start(
 
                 //enable texture
                 webgl_renderer
-                    .activate_texture_for_sampler(texture_id.unwrap(), "u_sampler")
+                    .activate_texture_for_sampler_name(texture_id.unwrap(), "u_sampler")
                     .unwrap();
 
                 //Build our matrices (must cast to f32)
@@ -194,10 +194,10 @@ pub fn start(
 
                 //Upload them to the GPU
                 webgl_renderer
-                    .upload_uniform_mat_4("u_size", &scaling_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_size", &scaling_mat.as_slice())
                     .unwrap();
                 webgl_renderer
-                    .upload_uniform_mat_4("u_camera", &camera_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_camera", &camera_mat.as_slice())
                     .unwrap();
 
                 //upload our buffer for instancing
@@ -210,7 +210,7 @@ pub fn start(
 
                 //need the location for the attrib_divisor below
                 let loc = webgl_renderer
-                    .get_attribute_location_value("a_position")
+                    .get_attribute_location_name("a_position")
                     .unwrap();
                 webgl_renderer
                     .upload_buffer(

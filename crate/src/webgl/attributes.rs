@@ -2,6 +2,7 @@ use super::{BufferDataImpl, BufferTarget, DataType, Id, WebGlCommon, WebGlRender
 use crate::errors::{Error, NativeError};
 use web_sys::WebGlProgram;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
+use std::collections::hash_map::Entry;
 
 //ATTRIBUTES
 #[derive(Debug)]
@@ -69,45 +70,72 @@ impl_context! {
 //The attribute lookups are cached at shader compilation (see shader.rs)
 //However, they can also be used by direct u32, before the shader
 impl<T: WebGlCommon> WebGlRenderer<T> {
-    pub fn get_attribute_location_value(&self, name: &str) -> Result<u32, Error> {
+
+    pub fn cache_attribute_name(&mut self, program_id: Id, name:&str) -> Result<(u32, bool), Error> {
+        let program_info = self
+            .program_lookup
+            .get_mut(program_id)
+            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+
+
+        let entry = program_info.attribute_lookup.entry(name.to_string());
+
+        match entry {
+            Entry::Occupied(entry) => {
+                //#[cfg(feature = "debug_log")]
+                //log::info!("skipping attribute cache for [{}] (already exists)", &name);
+
+                Ok((entry.get().clone(), false))
+            }
+            Entry::Vacant(entry) => {
+
+
+                let loc = self
+                    .gl
+                    .awsm_get_attribute_location(&program_info.program, &name)?;
+                entry.insert(loc.clone());
+
+                #[cfg(feature = "debug_log")]
+                log::info!("caching attribute [{}] at location [{}]", &name, loc);
+
+                Ok((loc, true))
+            }
+        }
+    }
+
+    pub fn get_attribute_location_name(&mut self, name: &str) -> Result<u32, Error> {
+
         let program_id = self
             .current_program_id
             .ok_or(Error::from(NativeError::MissingShaderProgram))?;
-        let program_info = self
-            .program_lookup
-            .get(program_id)
-            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
-        program_info
-            .attribute_lookup
-            .get(name)
-            .map(|v| *v)
-            .ok_or_else(|| Error::from(NativeError::AttributeLocation(Some(name.to_string()))))
+        self.cache_attribute_name(program_id, name)
+            .map(|(loc, _cached)| loc)
     }
 
     pub fn activate_attribute_loc(&self, target_loc: u32, opts: &AttributeOptions) {
         self.gl.awsm_activate_attribute(target_loc, &opts);
     }
     //convenience helpers
-    pub fn activate_attribute(
-        &self,
+    pub fn activate_attribute_name(
+        &mut self,
         target_name: &str,
         opts: &AttributeOptions,
     ) -> Result<(), Error> {
-        let loc = self.get_attribute_location_value(&target_name)?;
+        let loc = self.get_attribute_location_name(&target_name)?;
         self.gl.awsm_activate_attribute(loc, &opts);
         Ok(())
     }
 
-    pub fn activate_buffer_for_attribute(
-        &self,
+    pub fn activate_buffer_for_attribute_name(
+        &mut self,
         buffer_id: Id,
         buffer_target: BufferTarget,
         attribute_name: &str,
         opts: &AttributeOptions,
     ) -> Result<(), Error> {
         self.bind_buffer(buffer_id, buffer_target)?;
-        self.activate_attribute(&attribute_name, &opts)?;
+        self.activate_attribute_name(&attribute_name, &opts)?;
         Ok(())
     }
     pub fn activate_buffer_for_attribute_loc(
@@ -122,15 +150,15 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         Ok(())
     }
 
-    pub fn upload_buffer_to_attribute<B: BufferDataImpl>(
-        &self,
+    pub fn upload_buffer_to_attribute_name<B: BufferDataImpl>(
+        &mut self,
         id: Id,
         data: B,
         attribute_name: &str,
         opts: &AttributeOptions,
     ) -> Result<(), Error> {
         self.upload_buffer(id, data)?;
-        self.activate_attribute(&attribute_name, &opts)?;
+        self.activate_attribute_name(&attribute_name, &opts)?;
         Ok(())
     }
     pub fn upload_buffer_to_attribute_loc<B: BufferDataImpl>(

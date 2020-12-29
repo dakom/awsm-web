@@ -2,12 +2,14 @@ use super::{
     DataType, Id, PixelFormat, TextureCubeFace, TextureMagFilter, TextureMinFilter,
     TextureParameterName, TextureTarget, TextureUnit, TextureWrapMode, TextureWrapTarget,
     WebGlCommon, WebGlRenderer, WebGlSpecific,
+    ProgramQuery,
 };
 use crate::errors::{Error, NativeError};
 use web_sys::{
     HtmlCanvasElement, HtmlImageElement, HtmlVideoElement, ImageBitmap, ImageData, WebGlTexture,
 };
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
+use std::collections::hash_map::Entry;
 
 pub enum WebGlTextureSource<'a> {
     ArrayBufferView(&'a js_sys::Object, u32, u32, u32), //width, height, depth
@@ -806,6 +808,99 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         Ok(id)
     }
 
+    pub fn get_texture_sampler_names(&self, program_id: Id) -> Result<Vec<String>, Error> {
+
+        let program_info = self
+            .program_lookup
+            .get(program_id)
+            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+
+        let mut texture_samplers: Vec<String> = Vec::new();
+        let max: u32 = 
+            self
+                .gl
+                .awsm_get_program_parameter_u32(&program_info.program, ProgramQuery::ActiveUniforms)
+                .unwrap_or(0);
+
+        if max <= 0 {
+            return Ok(texture_samplers);
+        }
+
+        for i in 0..max {
+
+            let (name, type_, size) = 
+                self
+                    .gl
+                    .awsm_get_active_uniform(&program_info.program, i)
+                    .map(|info| (info.name(), info.type_(), info.size()))?;
+            
+
+
+            for name in super::shader::parse_uniform_names(&name, size as usize) {
+                match type_ {
+                    //Just the sampler types from UniformDataType
+                    //matching on enums with casting seems to be a pain point
+                    //(or I missed something in Rust)
+                    0x8B5E | 0x8B60 | 0x8B5F | 0x8B62 | 0x8DC5 | 0x8DC1 | 0x8DC4 | 0x8DCA
+                    | 0x8DCB | 0x8DCC | 0x8DCF | 0x8DD2 | 0x8DD3 | 0x8DD4 | 0x8DD7 => {
+                        texture_samplers.push(name)
+                    }
+                    _ => {}
+                };
+            }
+        }
+
+        Ok(texture_samplers)
+    }
+
+    pub fn cache_sampler_index_name(&mut self, program_id: Id, name:&str) -> Result<(u32, bool), Error> {
+        let (index, fresh) = {
+            let program_info = self
+                .program_lookup
+                .get_mut(program_id)
+                .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+
+            //Need to get the current max via a mutable borrow...
+            let index = {
+                program_info.texture_sampler_slot_lookup.len() as u32
+            };
+
+            let entry = program_info.texture_sampler_slot_lookup.entry(name.to_string());
+
+            match entry {
+                Entry::Occupied(entry) => {
+                    //#[cfg(feature = "debug_log")]
+                    //log::info!("skipping sampler index cache for [{}] (already exists)", &name);
+                    (entry.get().clone(), false)
+                }
+                Entry::Vacant(entry) => {
+                    #[cfg(feature = "debug_log")]
+                    log::info!("caching sampler index for [{}]", &name);
+
+                    entry.insert(index);
+
+                    (index, true)
+                }
+            }
+        };
+
+        if fresh {
+            self.activate_program(program_id)?;
+            self.upload_uniform_ival_name(&name, index as i32)?;
+        }
+
+        Ok((index, fresh))
+    }
+
+    pub fn get_sampler_index_name(&mut self, name: &str) -> Result<u32, Error> {
+        let program_id = self
+            .current_program_id
+            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+
+        self.cache_sampler_index_name(program_id, name)
+            .map(|(loc, _cached)| loc)
+    }
+
     pub fn get_texture(&self, texture_id:Id) -> Result<&WebGlTexture, Error> {
         self
             .texture_lookup
@@ -901,29 +996,14 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         )
     }
 
-    pub fn activate_texture_for_sampler(
+    pub fn activate_texture_for_sampler_name(
         &mut self,
         texture_id: Id,
         sampler_name: &str,
     ) -> Result<(), Error> {
-        let sampler_slot = {
-            let program_id = self
-                .current_program_id
-                .ok_or(Error::from(NativeError::MissingShaderProgram))?;
-            let program_info = self
-                .program_lookup
-                .get_mut(program_id)
-                .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
-            let sampler_slot = program_info
-                .texture_sampler_slot_lookup
-                .get(sampler_name)
-                .ok_or(Error::from(NativeError::MissingTextureSampler(Some(
-                    sampler_name.to_string(),
-                ))))?;
 
-            *sampler_slot
-        };
+        let sampler_slot = self.get_sampler_index_name(sampler_name)?;
 
         self.activate_texture_for_sampler_index(texture_id, sampler_slot)?;
         Ok(())

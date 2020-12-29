@@ -50,7 +50,7 @@ macro_rules! impl_renderer {
                 }
             }
 
-            pub fn assign_vertex_array(&self, vao_id:Id, element_buffer_id:Option<Id>, configs:&[VertexArray]) -> Result<(), Error> {
+            pub fn assign_vertex_array(&mut self, vao_id:Id, element_buffer_id:Option<Id>, configs:&[VertexArray]) -> Result<(), Error> {
                 let result = if let Some(vao) = self.vao_lookup.get(vao_id) {
                     self._bind_vertex_array(Some(vao_id), Some(&vao))?;
 
@@ -63,7 +63,7 @@ macro_rules! impl_renderer {
                         self._bind_buffer_nocheck(config.buffer_id, BufferTarget::ArrayBuffer)?;
                         match config.attribute {
                             NameOrLoc::Name(name) => {
-                                self.activate_attribute(&name, &config.opts)?;
+                                self.activate_attribute_name(&name, &config.opts)?;
                             },
                             NameOrLoc::Loc(loc) => {
                                 self.activate_attribute_loc(loc, &config.opts);

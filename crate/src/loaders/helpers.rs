@@ -1,5 +1,4 @@
 // Thanks for the help Pauan!
-use discard::DiscardOnDrop;
 use wasm_bindgen_futures::spawn_local;
 use std::{
     future::Future,

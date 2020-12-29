@@ -101,7 +101,7 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                     reposition(&mut state_obj, width, height);
 
-                    webgl_renderer.upload_uniform_fval("u_lut_size", lut.size as f32)?;
+                    webgl_renderer.upload_uniform_fval_name("u_lut_size", lut.size as f32)?;
                     let data_obj: js_sys::Object = TypedData::new(&lut.flatten_data()).into();
 
                     webgl_renderer.assign_texture(
@@ -204,10 +204,10 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 //enable texture
                 webgl_renderer
-                    .activate_texture_for_sampler(diffuse_texture_id.unwrap(), "u_diffuse_sampler")
+                    .activate_texture_for_sampler_name(diffuse_texture_id.unwrap(), "u_diffuse_sampler")
                     .unwrap();
                 webgl_renderer
-                    .activate_texture_for_sampler(lut_texture_id.unwrap(), "u_lut_sampler")
+                    .activate_texture_for_sampler_name(lut_texture_id.unwrap(), "u_lut_sampler")
                     .unwrap();
 
                 //Build our matrices (must cast to f32)
@@ -230,15 +230,15 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 //Upload them to the GPU
                 webgl_renderer
-                    .upload_uniform_mat_4("u_size", &scaling_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_size", &scaling_mat.as_slice())
                     .unwrap();
                 webgl_renderer
-                    .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_modelViewProjection", &mvp_mat.as_slice())
                     .unwrap();
 
                 //set uniform for toggle
                 webgl_renderer
-                    .upload_uniform_uval("u_lut_enabled", lut_enabled as u32)
+                    .upload_uniform_uval_name("u_lut_enabled", lut_enabled as u32)
                     .unwrap();
 
                 //draw!

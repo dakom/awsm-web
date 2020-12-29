@@ -205,14 +205,14 @@ pub fn draw_positions<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, camera_ma
 
         //Upload them to the GPU
         renderer
-            .upload_uniform_mat_4("u_size", &scaling_mat.as_slice())
+            .upload_uniform_mat_4_name("u_size", &scaling_mat.as_slice())
             .unwrap();
         renderer
-            .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
+            .upload_uniform_mat_4_name("u_modelViewProjection", &mvp_mat.as_slice())
             .unwrap();
 
         renderer
-            .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
+            .upload_uniform_mat_4_name("u_modelViewProjection", &mvp_mat.as_slice())
             .unwrap();
        
         let color = if indexed_color {
@@ -228,7 +228,7 @@ pub fn draw_positions<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, camera_ma
 
         let color_values = color.to_vec_f32();
         renderer
-            .upload_uniform_fvec_4("u_color", &color_values)
+            .upload_uniform_fvec_4_name("u_color", &color_values)
             .unwrap();
 
         //draw!

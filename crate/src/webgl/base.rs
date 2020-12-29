@@ -60,8 +60,6 @@ pub struct WebGlRenderer<T: WebGlCommon> {
 
     pub(super) extension_lookup: FxHashMap<String, js_sys::Object>,
 
-    pub(super) ubo_global_loc_lookup: Vec<String>,
-
     pub(super) current_vao_id: Cell<Option<Id>>,
     pub(super) vao_lookup: BeachMap<DefaultVersion, WebGlVertexArrayObject>,
 
@@ -139,8 +137,6 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
 
             current_vao_id: Cell::new(None),
             vao_lookup: BeachMap::default(),
-
-            ubo_global_loc_lookup: Vec::new(),
 
             toggle_flags: ToggleFlags::default(),
 

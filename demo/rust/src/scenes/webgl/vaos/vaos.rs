@@ -154,10 +154,10 @@ pub fn start(
 
                 //Upload them to the GPU
                 webgl_renderer
-                    .upload_uniform_mat_4("u_size", &scaling_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_size", &scaling_mat.as_slice())
                     .unwrap();
                 webgl_renderer
-                    .upload_uniform_mat_4("u_modelViewProjection", &mvp_mat.as_slice())
+                    .upload_uniform_mat_4_name("u_modelViewProjection", &mvp_mat.as_slice())
                     .unwrap();
 
                 //activate buffers
