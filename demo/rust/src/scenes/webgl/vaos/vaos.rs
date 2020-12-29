@@ -55,7 +55,7 @@ pub fn start(
                 let _webgl_renderer_clone = Rc::clone(&webgl_renderer);
 
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
-
+                
                 if let Ok(webgl_renderer) = webgl_renderer.as_webgl1() {
                     webgl_renderer
                         .register_extension_vertex_array()

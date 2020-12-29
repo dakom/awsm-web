@@ -66,6 +66,13 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 let mut webgl_renderer = webgl_renderer.borrow_mut();
 
+                //simple test that the global registery works
+                //camera will be bound at 1 (due to being registered)
+                //others will be after 2 (due to not being registered)
+                webgl_renderer.hardcoded_ubo_locations.insert("dog".to_string(), 0);
+                webgl_renderer.hardcoded_ubo_locations.insert("camera".to_string(), 1);
+                webgl_renderer.hardcoded_ubo_locations.insert("chair".to_string(), 2);
+
                 let shaders = vec![
                     webgl_renderer.compile_shader(include_str!("shaders/ubos-vertex.glsl"), ShaderType::Vertex).unwrap(),
                     webgl_renderer.compile_shader(include_str!("shaders/ubos-fragment.glsl"), ShaderType::Fragment).unwrap(),

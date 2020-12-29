@@ -1,7 +1,7 @@
 use super::funcs::FuncSettings;
 use super::misc::MiscSettings;
 use super::toggles::ToggleFlags;
-use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon, WebGlVersion };
+use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon, WebGlVersion, BufferSlot};
 use super::viewport::ResizeStrategy;
 use crate::errors::{Error, NativeError};
 use beach_map::{BeachMap, DefaultVersion};
@@ -33,6 +33,9 @@ pub struct WebGlRenderer<T: WebGlCommon> {
 
     pub hardcoded_attribute_locations: FxHashMap<String, u32>,
 
+    //only in webgl2
+    pub hardcoded_ubo_locations: FxHashMap<String, BufferSlot>,
+
     //really just local to the module
     pub(super) last_resize_strategy: Option<ResizeStrategy>, 
     pub(super) viewport: Option<(u32, u32, u32, u32)>,
@@ -62,6 +65,7 @@ pub struct WebGlRenderer<T: WebGlCommon> {
 
     pub(super) current_vao_id: Cell<Option<Id>>,
     pub(super) vao_lookup: BeachMap<DefaultVersion, WebGlVertexArrayObject>,
+
 
     pub(super) toggle_flags: ToggleFlags,
 
@@ -108,6 +112,7 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
             canvas,
             version,
             hardcoded_attribute_locations: FxHashMap::default(),
+            hardcoded_ubo_locations: FxHashMap::default(),
 
             last_resize_strategy: None,
             viewport: None,
@@ -137,7 +142,7 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
 
             current_vao_id: Cell::new(None),
             vao_lookup: BeachMap::default(),
-
+            
             toggle_flags: ToggleFlags::default(),
 
             func_settings: FuncSettings {

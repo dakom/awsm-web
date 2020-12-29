@@ -13,7 +13,9 @@ awsm_web is primarily used as a building block for other crates in the [awsm](ht
 
 The approach with this library is similar in spirit to [gloo](https://github.com/rustwasm/gloo) - that is to say, it bridges the gap between the auto-generated WebIDL-powered bindings web-sys provides, and the type of code we'd typically consider a real starting point in web apps.
 
-The goal is to keep it very low level and low-cost abstraction that is _almost_ universal. However, _almost_ universal is not without opinions. For example, the webgl wrapper does a ton of up-front caching and stores local state to avoid making gl calls unnecessarily - something most projects would do, but not all (e.g. if all locations are hardcoded). 
+The goal is to keep it very low level and low-cost abstraction that is _almost_ universal. However, _almost_ universal is not without opinions. For example, the webgl wrapper provides a lazy caching mechanism for all string lookups (including ubo offsets) and stores local state to avoid making gl calls unnecessarily.
+
+_note: despite the lazy caching, it's best to use hardcoded values where possible - or at least to populate the global registry in advance_
 
 ## Features
 

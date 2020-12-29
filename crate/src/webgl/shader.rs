@@ -17,6 +17,7 @@ pub struct ProgramInfo {
 
     //only needed for webgl2
     pub uniform_buffer_lookup: FxHashMap<String, UniformBufferLookup>,
+    pub non_global_ubo_count: u32, 
 }
 
 
@@ -28,6 +29,7 @@ impl ProgramInfo {
             uniform_lookup: FxHashMap::default(),
             texture_sampler_slot_lookup: FxHashMap::default(),
             uniform_buffer_lookup: FxHashMap::default(),
+            non_global_ubo_count: 0, 
         }
     }
 }

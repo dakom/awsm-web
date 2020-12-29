@@ -143,12 +143,31 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
             //Need to get the current max via a mutable borrow...
             let buffer_slot = {
-                let program_info = self
-                    .program_lookup
-                    .get(program_id)
-                    .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+                match self.hardcoded_ubo_locations.get(name) {
+                    Some(slot) => *slot,
+                    None => {
+                        let program_info = self
+                            .program_lookup
+                            .get_mut(program_id)
+                            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
-                program_info.uniform_buffer_lookup.len() as u32
+                        let hardcoded_max = 
+                            self.hardcoded_ubo_locations
+                                .values()
+                                .fold(0, |acc, curr| {
+                                    let curr = *curr;
+                                    if curr > acc {
+                                        curr
+                                    } else {
+                                        acc
+                                    }
+                                });
+
+                        program_info.non_global_ubo_count += 1;
+
+                        (hardcoded_max + program_info.non_global_ubo_count) as u32
+                    }
+                }
             };
 
             let block_index = {
@@ -176,8 +195,8 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
             #[cfg(feature = "debug_log")]
             log::info!(
-                "caching uniform buffer [{}] at buffer index {} and slot {}",
-                &name, block_index, buffer_slot 
+                "caching uniform buffer [{}] at slot {}, index {}",
+                &name, buffer_slot, block_index
             );
             
             Ok((block_index, buffer_slot, true))
