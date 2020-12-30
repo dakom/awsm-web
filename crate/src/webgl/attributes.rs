@@ -4,6 +4,8 @@ use web_sys::WebGlProgram;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 use std::collections::hash_map::Entry;
 
+pub type AttributeLocation = u32;
+
 //ATTRIBUTES
 #[derive(Debug)]
 pub struct AttributeOptions {
@@ -103,7 +105,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         }
     }
 
-    pub fn get_attribute_location_name(&mut self, name: &str) -> Result<u32, Error> {
+    pub fn get_attribute_location_name(&mut self, name: &str) -> Result<AttributeLocation, Error> {
 
         let program_id = self
             .current_program_id
@@ -113,7 +115,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
             .map(|(loc, _cached)| loc)
     }
 
-    pub fn activate_attribute_loc(&self, target_loc: u32, opts: &AttributeOptions) {
+    pub fn activate_attribute_loc(&self, target_loc: AttributeLocation, opts: &AttributeOptions) {
         self.gl.awsm_activate_attribute(target_loc, &opts);
     }
     //convenience helpers
@@ -142,7 +144,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         &self,
         buffer_id: Id,
         buffer_target: BufferTarget,
-        attribute_loc: u32,
+        attribute_loc: AttributeLocation,
         opts: &AttributeOptions,
     ) -> Result<(), Error> {
         self.bind_buffer(buffer_id, buffer_target)?;
@@ -165,7 +167,7 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         &self,
         id: Id,
         data: B,
-        attribute_loc: u32,
+        attribute_loc: AttributeLocation,
         opts: &AttributeOptions,
     ) -> Result<(), Error> {
         self.upload_buffer(id, data)?;

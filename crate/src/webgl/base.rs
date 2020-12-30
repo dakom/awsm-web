@@ -1,7 +1,7 @@
 use super::funcs::FuncSettings;
 use super::misc::MiscSettings;
 use super::toggles::ToggleFlags;
-use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon, WebGlVersion, BufferSlot};
+use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon, WebGlVersion, BufferLocation, AttributeLocation};
 use super::viewport::ResizeStrategy;
 use crate::errors::{Error, NativeError};
 use beach_map::{BeachMap, DefaultVersion};
@@ -31,10 +31,10 @@ pub struct WebGlRenderer<T: WebGlCommon> {
 
     pub version: WebGlVersion,
 
-    pub hardcoded_attribute_locations: FxHashMap<String, u32>,
+    pub hardcoded_attribute_locations: FxHashMap<String, AttributeLocation>,
 
     //only in webgl2
-    pub hardcoded_ubo_locations: FxHashMap<String, BufferSlot>,
+    pub hardcoded_ubo_locations: FxHashMap<String, BufferLocation>,
 
     //really just local to the module
     pub(super) last_resize_strategy: Option<ResizeStrategy>, 

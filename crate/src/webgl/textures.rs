@@ -6,7 +6,7 @@ use super::{
 };
 use crate::errors::{Error, NativeError};
 use web_sys::{
-    HtmlCanvasElement, HtmlImageElement, HtmlVideoElement, ImageBitmap, ImageData, WebGlTexture,
+    HtmlCanvasElement, HtmlImageElement, HtmlVideoElement, ImageBitmap, ImageData, WebGlTexture, WebGlUniformLocation
 };
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 use std::collections::hash_map::Entry;
@@ -860,7 +860,6 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
                 .get_mut(program_id)
                 .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
-            //Need to get the current max via a mutable borrow...
             let index = {
                 program_info.texture_sampler_slot_lookup.len() as u32
             };
@@ -885,11 +884,21 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         };
 
         if fresh {
-            self.activate_program(program_id)?;
-            self.upload_uniform_ival_name(&name, index as i32)?;
+            self.assign_texture_slot_to_uniform_name(program_id, &name, index as i32)?;
         }
 
         Ok((index, fresh))
+    }
+
+    pub fn assign_texture_slot_to_uniform_name(&mut self, program_id: Id, uniform_name:&str, texture_slot:i32) -> Result<(), Error> {
+        self.activate_program(program_id)?;
+        self.upload_uniform_ival_name(&uniform_name, texture_slot)
+    }
+
+    pub fn assign_texture_slot_to_uniform_loc(&mut self, program_id: Id, uniform_loc:&WebGlUniformLocation, texture_slot:i32) -> Result<(), Error> {
+        self.activate_program(program_id)?;
+        self.upload_uniform_ival_loc(uniform_loc, texture_slot);
+        Ok(())
     }
 
     pub fn get_sampler_index_name(&mut self, name: &str) -> Result<u32, Error> {

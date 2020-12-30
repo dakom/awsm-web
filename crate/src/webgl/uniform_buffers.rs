@@ -10,13 +10,13 @@ use rustc_hash::FxHashMap;
 use std::collections::hash_map::Entry;
 pub struct UniformBufferLookup {
     pub block_index: u32,
-    pub buffer_slot:u32,
+    pub buffer_location:u32,
     pub offsets: FxHashMap<String, u32>
 }
 
 pub type UniformIndex = u32;
 pub type BlockOffset = u32;
-pub type BufferSlot = u32;
+pub type BufferLocation = u32;
 impl WebGlRenderer<WebGl2RenderingContext> {
 
     //Just used for debugging
@@ -108,8 +108,8 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         }
 
     }
-    pub fn cache_uniform_buffer_name(&mut self, program_id: Id, name:&str) -> Result<(BlockOffset, BufferSlot, bool), Error> {
-        let (block_index, buffer_slot, fresh) = {
+    pub fn cache_uniform_buffer_name(&mut self, program_id: Id, name:&str) -> Result<(BlockOffset, BufferLocation, bool), Error> {
+        let (block_index, buffer_location, fresh) = {
             let program_info = self
                 .program_lookup
                 .get_mut(program_id)
@@ -123,13 +123,13 @@ impl WebGlRenderer<WebGl2RenderingContext> {
                     //#[cfg(feature = "debug_log")]
                     //log::info!("skipping uniform buffer cache for [{}] (already exists)", &name);
                     let lookup = entry.get();
-                    (lookup.block_index.clone(), lookup.buffer_slot.clone(), false)
+                    (lookup.block_index.clone(), lookup.buffer_location.clone(), false)
                 }
                 Entry::Vacant(entry) => {
                     //placeholder values
                     let lookup = UniformBufferLookup {
                         block_index: 0,
-                        buffer_slot: 0,
+                        buffer_location: 0,
                         offsets: FxHashMap::default()
                     };
 
@@ -143,9 +143,9 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         if fresh {
 
             //Need to get the current max via a mutable borrow...
-            let buffer_slot = {
+            let buffer_location = {
                 match self.hardcoded_ubo_locations.get(name) {
-                    Some(slot) => *slot,
+                    Some(location) => *location,
                     None => {
                         let program_info = self
                             .program_lookup
@@ -179,7 +179,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
                 let block_index = self.gl.get_uniform_block_index(&program_info.program, &name);
 
-                self.gl.uniform_block_binding(&program_info.program, block_index, buffer_slot);
+                self.gl.uniform_block_binding(&program_info.program, block_index, buffer_location);
 
                 block_index
             };
@@ -192,17 +192,17 @@ impl WebGlRenderer<WebGl2RenderingContext> {
                 .unwrap();
 
             lookup.block_index = block_index;
-            lookup.buffer_slot = buffer_slot;
+            lookup.buffer_location = buffer_location;
 
             #[cfg(feature = "debug_log")]
             log::info!(
-                "caching uniform buffer [{}] at slot {}, index {}",
-                &name, buffer_slot, block_index
+                "caching uniform buffer [{}] at location {}, index {}",
+                &name, buffer_location, block_index
             );
             
-            Ok((block_index, buffer_slot, true))
+            Ok((block_index, buffer_location, true))
         } else {
-            Ok((block_index, buffer_slot, false))
+            Ok((block_index, buffer_location, false))
         }
 
     }
@@ -260,13 +260,13 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         }
     }
 
-    pub fn get_uniform_buffer_slot_name(&mut self, name: &str) -> Result<BufferSlot, Error> {
+    pub fn get_uniform_buffer_location_name(&mut self, name: &str) -> Result<BufferLocation, Error> {
         let program_id = self
             .current_program_id
             .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
         self.cache_uniform_buffer_name(program_id, name)
-            .map(|(_offset, slot, _cached)| slot)
+            .map(|(_offset, location, _cached)| location)
     }
 
     pub fn get_uniform_buffer_block_offset_name(
@@ -284,28 +284,58 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
     }
 
+    pub fn activate_uniform_buffer_loc(&self, id: Id, location:BufferLocation) -> Result<(), Error> {
+        self.bind_buffer_base(id, location, BufferTarget::UniformBuffer)
+    }
+
     pub fn activate_uniform_buffer_name(&mut self, id: Id, name: &str) -> Result<(), Error> {
-        let slot = self.get_uniform_buffer_slot_name(&name)?;
-        self.bind_buffer_base(id, slot, BufferTarget::UniformBuffer)
+        let location = self.get_uniform_buffer_location_name(&name)?;
+        self.activate_uniform_buffer_loc(id, location)
     }
 
     ///upload buffer data and set to uniform buffer
-    pub fn upload_buffer_to_uniform_buffer_name<B: BufferDataImpl>(
+    pub fn upload_buffer_to_uniform_buffer_loc<B: BufferDataImpl>(
         &mut self,
-        name: &str,
+        location: BufferLocation,
         id: Id,
         buffer_data: B,
     ) -> Result<(), Error> {
         match buffer_data.get_target() {
             BufferTarget::UniformBuffer => {
                 self.upload_buffer(id, buffer_data)?;
-                self.activate_uniform_buffer_name(id, name)
+                self.activate_uniform_buffer_loc(id, location)
             }
             _ => Err(Error::from(NativeError::UniformBufferTarget)),
         }
     }
 
+    pub fn upload_buffer_to_uniform_buffer_name<B: BufferDataImpl>(
+        &mut self,
+        name: &str,
+        id: Id,
+        buffer_data: B,
+    ) -> Result<(), Error> {
+        let location = self.get_uniform_buffer_location_name(&name)?;
+        self.upload_buffer_to_uniform_buffer_loc(location, id, buffer_data)
+    }
+
     ///upload buffer data from sub slice and set to uniform buffer
+    pub fn upload_buffer_sub_to_uniform_buffer_loc<B: BufferSubDataImpl>(
+        &mut self,
+        location: BufferLocation,
+        block_offset: BlockOffset,
+        id: Id,
+        buffer_data: B,
+    ) -> Result<(), Error> {
+        match buffer_data.get_target() {
+            BufferTarget::UniformBuffer => {
+                self.upload_buffer_sub(id, block_offset, buffer_data)?;
+                self.activate_uniform_buffer_loc(id, location)
+            }
+            _ => Err(Error::from(NativeError::UniformBufferTarget)),
+        }
+    }
+
     pub fn upload_buffer_sub_to_uniform_buffer_name<B: BufferSubDataImpl>(
         &mut self,
         uniform_name: &str,
@@ -313,16 +343,25 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         id: Id,
         buffer_data: B,
     ) -> Result<(), Error> {
-        match buffer_data.get_target() {
-            BufferTarget::UniformBuffer => {
-                let dest_byte_offset = self.get_uniform_buffer_block_offset_name(uniform_name, block_name)?;
-                self.upload_buffer_sub(id, dest_byte_offset, buffer_data)?;
-                self.activate_uniform_buffer_name(id, uniform_name)
-            }
-            _ => Err(Error::from(NativeError::UniformBufferTarget)),
-        }
+        let location = self.get_uniform_buffer_location_name(&uniform_name)?;
+        let block_offset = self.get_uniform_buffer_block_offset_name(uniform_name, block_name)?;
+        self.upload_buffer_sub_to_uniform_buffer_loc(location, block_offset, id, buffer_data)
     }
+
     ///convenience function
+    pub fn upload_buffer_to_uniform_buffer_f32_loc(
+        &mut self,
+        location: BufferLocation,
+        id: Id,
+        values: &[f32],
+        buffer_usage: BufferUsage,
+    ) -> Result<(), Error> {
+        self.upload_buffer_to_uniform_buffer_loc(
+            location,
+            id,
+            BufferData::new(values, BufferTarget::UniformBuffer, buffer_usage),
+        )
+    }
     pub fn upload_buffer_to_uniform_buffer_f32_name(
         &mut self,
         name: &str,
@@ -338,6 +377,19 @@ impl WebGlRenderer<WebGl2RenderingContext> {
     }
 
     ///convenience function
+    pub fn upload_buffer_to_uniform_buffer_u8_loc(
+        &mut self,
+        location: BufferLocation,
+        id: Id,
+        values: &[u8],
+        buffer_usage: BufferUsage,
+    ) -> Result<(), Error> {
+        self.upload_buffer_to_uniform_buffer_loc(
+            location,
+            id,
+            BufferData::new(values, BufferTarget::UniformBuffer, buffer_usage),
+        )
+    }
     pub fn upload_buffer_to_uniform_buffer_u8_name(
         &mut self,
         name: &str,
@@ -352,6 +404,21 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         )
     }
 
+    pub fn upload_buffer_sub_to_uniform_buffer_f32_loc(
+        &mut self,
+        location: BufferLocation,
+        block_offset: BlockOffset,
+        id: Id,
+        values: &[f32],
+    ) -> Result<(), Error> {
+        self.upload_buffer_sub_to_uniform_buffer_loc(
+            location,
+            block_offset,
+            id,
+            BufferSubData::new(values, BufferTarget::UniformBuffer),
+        )
+    }
+
     pub fn upload_buffer_sub_to_uniform_buffer_f32_name(
         &mut self,
         uniform_name: &str,
@@ -362,6 +429,21 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         self.upload_buffer_sub_to_uniform_buffer_name(
             uniform_name,
             block_name,
+            id,
+            BufferSubData::new(values, BufferTarget::UniformBuffer),
+        )
+    }
+
+    pub fn upload_buffer_sub_to_uniform_buffer_u8_loc(
+        &mut self,
+        location: BufferLocation,
+        block_offset: BlockOffset,
+        id: Id,
+        values: &[u8],
+    ) -> Result<(), Error> {
+        self.upload_buffer_sub_to_uniform_buffer_loc(
+            location,
+            block_offset,
             id,
             BufferSubData::new(values, BufferTarget::UniformBuffer),
         )

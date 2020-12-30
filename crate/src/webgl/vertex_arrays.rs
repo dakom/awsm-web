@@ -1,11 +1,11 @@
-use super::{AttributeOptions, BufferTarget, Id, WebGlRenderer};
+use super::{AttributeOptions, BufferTarget, Id, WebGlRenderer, AttributeLocation};
 use crate::errors::{Error, NativeError};
 use web_sys::WebGlVertexArrayObject;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 #[derive(Debug)]
-pub struct VertexArray {
-    pub attribute: NameOrLoc,
+pub struct VertexArray<'a> {
+    pub attribute: NameOrLoc<'a>,
     pub buffer_id: Id,
     pub opts: AttributeOptions,
 }
@@ -14,13 +14,13 @@ pub struct VertexArray {
 //However - it can't reliably be used for vao's
 //In a setup where vao's are loaded separately from shaders
 #[derive(Debug)]
-pub enum NameOrLoc {
-    Name(&'static str),
-    Loc(u32)
+pub enum NameOrLoc<'a> {
+    Name(&'a str),
+    Loc(AttributeLocation)
 }
 
-impl VertexArray {
-    pub fn new (attribute: NameOrLoc, buffer_id: Id, opts: AttributeOptions) -> Self {
+impl <'a> VertexArray<'a> {
+    pub fn new (attribute: NameOrLoc<'a>, buffer_id: Id, opts: AttributeOptions) -> Self {
         Self {
             attribute,
             buffer_id,
