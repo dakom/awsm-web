@@ -23,6 +23,8 @@ pub struct AttributeOptions {
     // So we're allowing the u64 type for larger values and catching accidental floats
     // It's cast to f64 to uploading (which I guess will chop the last 12 bits)
     pub offset: u64,
+    //only for webgl2
+    pub is_int_array: bool,
 }
 
 impl AttributeOptions {
@@ -33,6 +35,17 @@ impl AttributeOptions {
             normalized: false,
             stride: 0,
             offset: 0,
+            is_int_array: false
+        }
+    }
+    pub fn new_int(size: u8, data_type: DataType) -> AttributeOptions {
+        AttributeOptions {
+            size,
+            data_type,
+            normalized: false,
+            stride: 0,
+            offset: 0,
+            is_int_array: true, 
         }
     }
 }
@@ -54,10 +67,7 @@ macro_rules! impl_context {
                     .ok_or(Error::from(NativeError::AttributeLocation(Some(name.to_owned()))))
             }
 
-            fn awsm_activate_attribute(&self, loc:u32, opts:&AttributeOptions) {
-                self.vertex_attrib_pointer_with_f64(loc, opts.size as i32, opts.data_type as u32, opts.normalized, opts.stride as i32, opts.offset as f64);
-                self.enable_vertex_attrib_array(loc);
-            }
+
 
             $($defs)*
         })+
@@ -65,8 +75,23 @@ macro_rules! impl_context {
 }
 
 impl_context! {
-    WebGlRenderingContext{}
-    WebGl2RenderingContext{}
+    WebGlRenderingContext{
+        //WebGl1 is always float
+        fn awsm_activate_attribute(&self, loc:u32, opts:&AttributeOptions) {
+            self.vertex_attrib_pointer_with_f64(loc, opts.size as i32, opts.data_type as u32, opts.normalized, opts.stride as i32, opts.offset as f64);
+            self.enable_vertex_attrib_array(loc);
+        }
+    }
+    WebGl2RenderingContext{
+        fn awsm_activate_attribute(&self, loc:u32, opts:&AttributeOptions) {
+            if opts.is_int_array {
+                self.vertex_attrib_i_pointer_with_f64(loc, opts.size as i32, opts.data_type as u32, opts.stride as i32, opts.offset as f64);
+            } else {
+                self.vertex_attrib_pointer_with_f64(loc, opts.size as i32, opts.data_type as u32, opts.normalized, opts.stride as i32, opts.offset as f64);
+            }
+            self.enable_vertex_attrib_array(loc);
+        }
+    }
 }
 
 //The attribute lookups are cached at shader compilation (see shader.rs)

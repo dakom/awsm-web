@@ -75,7 +75,7 @@ macro_rules! impl_renderer {
                     Err(Error::from(NativeError::VertexArrayMissing))
                 };
 
-                //relase it for the next call that might use elements
+                //release it for the next call that might use elements
                 self.release_vertex_array()?;
 
                 result

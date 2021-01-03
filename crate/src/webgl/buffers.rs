@@ -3,16 +3,47 @@ use crate::errors::{Error, NativeError};
 use std::marker::PhantomData;
 use web_sys::WebGlBuffer;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
+use wasm_bindgen::{prelude::*, JsCast};
+use js_sys::WebAssembly;
+use std::convert::TryInto;
 /*
  * The direct uniform uploads are written as traits on this newtype wrapper
  * in order to allow working either f32 or u8
+ * See: https://users.rust-lang.org/t/different-impls-for-types-of-slices-and-arrays*
+ * Also added i32 and u32 since integer attributes are supported in WebGL2
  */
 
-//See: https://users.rust-lang.org/t/different-impls-for-types-of-slices-and-arrays
-//
-//
 
 pub trait PartialWebGlBuffer {
+    fn awsm_upload_buffer_vi32<T: AsRef<[i32]>>(
+        &self,
+        target: BufferTarget,
+        usage: BufferUsage,
+        data: T,
+    );
+    fn awsm_upload_buffer_vi32_sub<T: AsRef<[i32]>>(
+        &self,
+        target: BufferTarget,
+        dest_byte_offset: u32,
+        src_offset: u32,
+        length: u32,
+        data: T,
+    ) -> Result<(), Error>;
+    fn awsm_upload_buffer_vu32<T: AsRef<[u32]>>(
+        &self,
+        target: BufferTarget,
+        usage: BufferUsage,
+        data: T,
+    );
+    fn awsm_upload_buffer_vu32_sub<T: AsRef<[u32]>>(
+        &self,
+        target: BufferTarget,
+        dest_byte_offset: u32,
+        src_offset: u32,
+        length: u32,
+        data: T,
+    ) -> Result<(), Error>;
+
     fn awsm_upload_buffer_vf32<T: AsRef<[f32]>>(
         &self,
         target: BufferTarget,
@@ -51,13 +82,6 @@ pub trait PartialWebGlBuffer {
 macro_rules! impl_context {
     ($($type:ty { $($defs:tt)* })+) => {
         $(impl PartialWebGlBuffer for $type {
-            fn awsm_upload_buffer_vf32<T: AsRef<[f32]>>(&self, target:BufferTarget, usage: BufferUsage, data:T) {
-                unsafe {
-                    let typed_array = js_sys::Float32Array::view(data.as_ref());
-                    self.buffer_data_with_array_buffer_view(target as u32, &typed_array, usage as u32);
-                }
-            }
-
             fn awsm_upload_buffer_vu8<T: AsRef<[u8]>>(&self, target:BufferTarget, usage: BufferUsage, data:T) {
                 let values = data.as_ref();
                 self.buffer_data_with_u8_array(target as u32, &values, usage as u32);
@@ -86,6 +110,48 @@ macro_rules! impl_context {
 
 impl_context! {
     WebGlRenderingContext{
+        fn awsm_upload_buffer_vi32<T: AsRef<[i32]>>(&self, target:BufferTarget, usage: BufferUsage, data:T) {
+            unsafe {
+                let typed_array = js_sys::Int32Array::view(data.as_ref());
+                self.buffer_data_with_array_buffer_view(target as u32, &typed_array, usage as u32);
+            }
+        }
+        fn awsm_upload_buffer_vu32<T: AsRef<[u32]>>(&self, target:BufferTarget, usage: BufferUsage, data:T) {
+            unsafe {
+                let typed_array = js_sys::Uint32Array::view(data.as_ref());
+                self.buffer_data_with_array_buffer_view(target as u32, &typed_array, usage as u32);
+            }
+        }
+
+        fn awsm_upload_buffer_vf32<T: AsRef<[f32]>>(&self, target:BufferTarget, usage: BufferUsage, data:T) {
+            unsafe {
+                let typed_array = js_sys::Float32Array::view(data.as_ref());
+                self.buffer_data_with_array_buffer_view(target as u32, &typed_array, usage as u32);
+            }
+        }
+
+        fn awsm_upload_buffer_vi32_sub<T: AsRef<[i32]>>(&self, target:BufferTarget, dest_byte_offset:u32, src_offset:u32, _length: u32, data:T) -> Result<(), Error> {
+            if src_offset != 0 {
+                Err(Error::from(NativeError::WebGlBufferSourceOneNonZero))
+            } else {
+                unsafe {
+                    let typed_array = js_sys::Int32Array::view(data.as_ref());
+                    self.buffer_sub_data_with_f64_and_array_buffer_view(target as u32, dest_byte_offset as f64, &typed_array);
+                }
+                Ok(())
+            }
+        }
+        fn awsm_upload_buffer_vu32_sub<T: AsRef<[u32]>>(&self, target:BufferTarget, dest_byte_offset:u32, src_offset:u32, _length: u32, data:T) -> Result<(), Error> {
+            if src_offset != 0 {
+                Err(Error::from(NativeError::WebGlBufferSourceOneNonZero))
+            } else {
+                unsafe {
+                    let typed_array = js_sys::Uint32Array::view(data.as_ref());
+                    self.buffer_sub_data_with_f64_and_array_buffer_view(target as u32, dest_byte_offset as f64, &typed_array);
+                }
+                Ok(())
+            }
+        }
         fn awsm_upload_buffer_vf32_sub<T: AsRef<[f32]>>(&self, target:BufferTarget, dest_byte_offset:u32, src_offset:u32, _length: u32, data:T) -> Result<(), Error> {
             if src_offset != 0 {
                 Err(Error::from(NativeError::WebGlBufferSourceOneNonZero))
@@ -109,7 +175,87 @@ impl_context! {
         }
     }
     WebGl2RenderingContext{
+        fn awsm_upload_buffer_vu8_sub<T: AsRef<[u8]>>(&self, target:BufferTarget, dest_byte_offset:u32, src_offset:u32, length: u32, data:T) -> Result<(), Error> {
+            self.buffer_sub_data_with_f64_and_u8_array_and_src_offset_and_length(
+                target as u32,
+                dest_byte_offset as f64,
+                &data.as_ref(),
+                src_offset,
+                length
+            );
+            Ok(())
+        }
+        /*
+         * It's possible that all the uploading can be more efficient
+         * e.g. by avoiding the TypedArray wrappers
+         * See: https://github.com/rustwasm/wasm-bindgen/issues/1615#issuecomment-521072703
+         *
+         * If that's the case, then the regular buffer uploads should actually
+         * use sub_* under the hood
+         *
+         *
+         * However I had gotten stuck... this doesn't work because
+         * buf is an ArrayBuffer, not an ArrayBufferView:
+            let buf = wasm_bindgen::memory()
+                        .unchecked_ref::<WebAssembly::Memory>()
+                        .buffer()
+                        .unchecked_into::<js_sys::ArrayBuffer>();
 
+            self.buffer_sub_data_with_i32_and_array_buffer_view_and_src_offset_and_length(
+                target as u32,
+                0,
+                &buf,
+                data.as_ref().as_ptr() as u32,
+                data.as_ref().len() as u32,
+            );
+        */
+        //See comments up at the top of the file... might be able to avoid the TypedArray wrappers
+        //in ALL cases, not just u8
+        fn awsm_upload_buffer_vi32<T: AsRef<[i32]>>(&self, target:BufferTarget, usage: BufferUsage, data:T) {
+            unsafe {
+                let typed_array = js_sys::Int32Array::view(data.as_ref());
+                self.buffer_data_with_array_buffer_view(target as u32, &typed_array, usage as u32);
+            }
+        }
+        fn awsm_upload_buffer_vu32<T: AsRef<[u32]>>(&self, target:BufferTarget, usage: BufferUsage, data:T) {
+            unsafe {
+                let typed_array = js_sys::Uint32Array::view(data.as_ref());
+                self.buffer_data_with_array_buffer_view(target as u32, &typed_array, usage as u32);
+            }
+        }
+
+        fn awsm_upload_buffer_vi32_sub<T: AsRef<[i32]>>(&self, target:BufferTarget, dest_byte_offset:u32, src_offset:u32, length: u32, data:T) -> Result<(), Error> {
+            unsafe {
+                let typed_array = js_sys::Int32Array::view(data.as_ref());
+                self.buffer_sub_data_with_f64_and_array_buffer_view_and_src_offset_and_length(
+                    target as u32,
+                    dest_byte_offset as f64,
+                    &typed_array,
+                    src_offset,
+                    length 
+                );
+            }
+            Ok(())
+        }
+        fn awsm_upload_buffer_vu32_sub<T: AsRef<[u32]>>(&self, target:BufferTarget, dest_byte_offset:u32, src_offset:u32, length: u32, data:T) -> Result<(), Error> {
+            unsafe {
+                let typed_array = js_sys::Uint32Array::view(data.as_ref());
+                self.buffer_sub_data_with_f64_and_array_buffer_view_and_src_offset_and_length(
+                    target as u32,
+                    dest_byte_offset as f64,
+                    &typed_array,
+                    src_offset,
+                    length 
+                );
+            }
+            Ok(())
+        }
+        fn awsm_upload_buffer_vf32<T: AsRef<[f32]>>(&self, target:BufferTarget, usage: BufferUsage, data:T) {
+            unsafe {
+                let typed_array = js_sys::Float32Array::view(data.as_ref());
+                self.buffer_data_with_array_buffer_view(target as u32, &typed_array, usage as u32);
+            }
+        }
         fn awsm_upload_buffer_vf32_sub<T: AsRef<[f32]>>(&self, target:BufferTarget, dest_byte_offset:u32, src_offset:u32, length: u32, data:T) -> Result<(), Error> {
             unsafe {
                 let typed_array = js_sys::Float32Array::view(data.as_ref());
@@ -121,32 +267,7 @@ impl_context! {
                     length 
                 );
 
-               /* 
-                //https://github.com/rustwasm/wasm-bindgen/issues/1615#issuecomment-521072703
-                info!("{} {}", src_offset, length);
-
-                let buf = wasm_bindgen::memory();
-                let mem = buf.unchecked_ref::<js_sys::WebAssembly::Memory>();
-                self.buffer_sub_data_with_f64_and_array_buffer_view_and_src_offset_and_length(
-                    target as u32,
-                    dest_byte_offset as f64,
-                    &mem.buffer().into(),
-                    (data.as_ref().as_ptr() as u32) + (src_offset * 8),
-                    length * 8
-                    //length * 8
-                );
-                */
             }
-            Ok(())
-        }
-        fn awsm_upload_buffer_vu8_sub<T: AsRef<[u8]>>(&self, target:BufferTarget, dest_byte_offset:u32, src_offset:u32, length: u32, data:T) -> Result<(), Error> {
-            self.buffer_sub_data_with_f64_and_u8_array_and_src_offset_and_length(
-                target as u32,
-                dest_byte_offset as f64,
-                &data.as_ref(),
-                src_offset,
-                length
-            );
             Ok(())
         }
     }
@@ -177,6 +298,30 @@ pub trait BufferDataImpl {
 }
 
 //see example: https://github.com/rustwasm/wasm-bindgen/blob/master/examples/webgl/src/lib.rs#L42
+impl<T: AsRef<[i32]>> BufferDataImpl for BufferData<T, i32> {
+    fn upload_buffer<G: PartialWebGlBuffer>(&self, gl: &G) {
+        gl.awsm_upload_buffer_vi32(self.target, self.usage, &self.values)
+    }
+
+    fn get_target(&self) -> BufferTarget {
+        self.target
+    }
+    fn get_usage(&self) -> BufferUsage {
+        self.usage
+    }
+}
+impl<T: AsRef<[u32]>> BufferDataImpl for BufferData<T, u32> {
+    fn upload_buffer<G: PartialWebGlBuffer>(&self, gl: &G) {
+        gl.awsm_upload_buffer_vu32(self.target, self.usage, &self.values)
+    }
+
+    fn get_target(&self) -> BufferTarget {
+        self.target
+    }
+    fn get_usage(&self) -> BufferUsage {
+        self.usage
+    }
+}
 impl<T: AsRef<[f32]>> BufferDataImpl for BufferData<T, f32> {
     fn upload_buffer<G: PartialWebGlBuffer>(&self, gl: &G) {
         gl.awsm_upload_buffer_vf32(self.target, self.usage, &self.values)
@@ -243,6 +388,42 @@ pub trait BufferSubDataImpl {
 }
 
 //see example: https://github.com/rustwasm/wasm-bindgen/blob/master/examples/webgl/src/lib.rs#L42
+impl<T: AsRef<[i32]>> BufferSubDataImpl for BufferSubData<T, i32> {
+    fn upload_buffer<G: PartialWebGlBuffer>(
+        &self,
+        gl: &G,
+        dest_byte_offset: u32,
+    ) -> Result<(), Error> {
+        gl.awsm_upload_buffer_vi32_sub(
+            self.target,
+            dest_byte_offset,
+            self.offset,
+            self.length,
+            &self.values,
+        )
+    }
+    fn get_target(&self) -> BufferTarget {
+        self.target
+    }
+}
+impl<T: AsRef<[u32]>> BufferSubDataImpl for BufferSubData<T, u32> {
+    fn upload_buffer<G: PartialWebGlBuffer>(
+        &self,
+        gl: &G,
+        dest_byte_offset: u32,
+    ) -> Result<(), Error> {
+        gl.awsm_upload_buffer_vu32_sub(
+            self.target,
+            dest_byte_offset,
+            self.offset,
+            self.length,
+            &self.values,
+        )
+    }
+    fn get_target(&self) -> BufferTarget {
+        self.target
+    }
+}
 impl<T: AsRef<[f32]>> BufferSubDataImpl for BufferSubData<T, f32> {
     fn upload_buffer<G: PartialWebGlBuffer>(
         &self,
