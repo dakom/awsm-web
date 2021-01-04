@@ -42,6 +42,7 @@ pub enum NativeError {
     UniformBufferParameter,
     UniformBufferMissing(Option<String>),
     UniformBufferOffsetMissing(Option<(String, String)>),
+    UniformBufferBlockIndexMissing(Option<String>),
     UniformBufferTarget,
     VertexArrayMissing,
     VertexArrayCreate,
@@ -137,6 +138,7 @@ impl NativeError {
             NativeError::UniformSize => "uniform data is not large enough",
             NativeError::UniformBufferName => "couldn't get uniform block name",
             NativeError::UniformBufferParameter => "couldn't get uniform block parameter",
+            NativeError::UniformBufferBlockIndexMissing(_optional_name) => "uniform buffer block index is missing",
             NativeError::UniformBufferMissing(_optional_name) => "uniform buffer is missing",
             NativeError::UniformBufferOffsetMissing(_optional_name) => {
                 "uniform buffer offset is missing"
@@ -176,6 +178,10 @@ impl NativeError {
             NativeError::UniformIndex(optional_name) => match optional_name {
                 None => self.default_str().to_string(),
                 Some(name) => format!("couldn't get uniform index named {}", name.as_str()),
+            },
+            NativeError::UniformBufferBlockIndexMissing(optional_name) => match optional_name {
+                None => self.default_str().to_string(),
+                Some(name) => format!("couldn't get uniform buffer block index named {}", name.as_str()),
             },
             NativeError::UniformBufferMissing(optional_name) => match optional_name {
                 None => self.default_str().to_string(),

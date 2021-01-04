@@ -2,20 +2,21 @@ use super::{
     BufferData, BufferDataImpl, BufferSubData, 
     BufferSubDataImpl, BufferTarget, BufferUsage, Id, WebGlRenderer,
     UniformBlockActiveQuery, ProgramQuery, UniformBlockQuery,
-    shader::PartialWebGlShaders
+    shader::PartialWebGlShaders,
+    WebGlSpecific
 };
 use crate::errors::{Error, NativeError};
 use web_sys::WebGl2RenderingContext;
 use rustc_hash::FxHashMap;
 use std::collections::hash_map::Entry;
-pub struct UniformBufferLookup {
+pub struct UniformBufferActivation {
     pub block_index: u32,
-    pub buffer_location:u32,
     pub offsets: FxHashMap<String, u32>
 }
 
 pub type UniformIndex = u32;
 pub type BlockOffset = u32;
+pub type BlockIndex = u32;
 pub type BufferLocation = u32;
 impl WebGlRenderer<WebGl2RenderingContext> {
 
@@ -108,101 +109,122 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         }
 
     }
-    pub fn cache_uniform_buffer_name(&mut self, program_id: Id, name:&str) -> Result<(BlockOffset, BufferLocation, bool), Error> {
-        let (block_index, buffer_location, fresh) = {
+    pub fn cache_uniform_buffer_location(&mut self, program_id: Id, name:&str) -> Result<(BufferLocation, bool), Error> {
+        let location = {
             let program_info = self
                 .program_lookup
                 .get_mut(program_id)
                 .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
 
-            let entry = program_info.uniform_buffer_lookup.entry(name.to_string());
-
-            match entry {
-                Entry::Occupied(entry) => {
-                    //#[cfg(feature = "debug_log")]
-                    //log::info!("skipping uniform buffer cache for [{}] (already exists)", &name);
-                    let lookup = entry.get();
-                    (lookup.block_index.clone(), lookup.buffer_location.clone(), false)
-                }
-                Entry::Vacant(entry) => {
-                    //placeholder values
-                    let lookup = UniformBufferLookup {
-                        block_index: 0,
-                        buffer_location: 0,
-                        offsets: FxHashMap::default()
-                    };
-
-                    entry.insert(lookup);
-
-                    (0, 0, true)
-                }
-            }
+            program_info.uniform_buffer_lookup_location.get(name)
         };
 
-        if fresh {
+        match location {
+            None => {
+                let location = {
+                    match self.hardcoded_ubo_locations.get(name) {
+                        Some(location) => *location,
+                        None => {
+                            let program_info = self
+                                .program_lookup
+                                .get_mut(program_id)
+                                .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
-            //Need to get the current max via a mutable borrow...
-            let buffer_location = {
-                match self.hardcoded_ubo_locations.get(name) {
-                    Some(location) => *location,
-                    None => {
-                        let program_info = self
-                            .program_lookup
-                            .get_mut(program_id)
-                            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+                            let hardcoded_max = 
+                                self.hardcoded_ubo_locations
+                                    .values()
+                                    .fold(0, |acc, curr| {
+                                        let curr = *curr;
+                                        if curr > acc {
+                                            curr
+                                        } else {
+                                            acc
+                                        }
+                                    });
 
-                        let hardcoded_max = 
-                            self.hardcoded_ubo_locations
-                                .values()
-                                .fold(0, |acc, curr| {
-                                    let curr = *curr;
-                                    if curr > acc {
-                                        curr
-                                    } else {
-                                        acc
-                                    }
-                                });
+                            program_info.non_global_ubo_count += 1;
 
-                        program_info.non_global_ubo_count += 1;
-
-                        (hardcoded_max + program_info.non_global_ubo_count) as u32
+                            (hardcoded_max + program_info.non_global_ubo_count) as u32
+                        }
                     }
-                }
-            };
+                };
 
-            let block_index = {
-                let program_info = self
+                self
                     .program_lookup
-                    .get(program_id)
-                    .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+                    .get_mut(program_id)
+                    .ok_or(Error::from(NativeError::MissingShaderProgram))?
+                    .uniform_buffer_lookup_location.insert(name.to_string(), location);
 
-                let block_index = self.gl.get_uniform_block_index(&program_info.program, &name);
 
-                self.gl.uniform_block_binding(&program_info.program, block_index, buffer_location);
+                #[cfg(feature = "debug_log")]
+                log::info!(
+                    "caching uniform buffer [{}] at location {}",
+                    &name, location
+                );
+            
+                Ok((location, true))
+            }, 
+            Some(location) => {
+                Ok((*location, false))
+            }
+        }
 
-                block_index
-            };
+    }
+    pub fn cache_uniform_buffer_block_index(&mut self, program_id: Id, name:&str) -> Result<(BlockIndex, bool), Error> {
+        let (location, _) = self.cache_uniform_buffer_location(program_id, name)?;
 
-            let mut lookup:&mut UniformBufferLookup = self
+        let block_index = {
+            let program_info = self
                 .program_lookup
                 .get_mut(program_id)
-                .ok_or(Error::from(NativeError::MissingShaderProgram))?
-                .uniform_buffer_lookup.get_mut(name)
-                .unwrap();
+                .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
-            lookup.block_index = block_index;
-            lookup.buffer_location = buffer_location;
 
-            #[cfg(feature = "debug_log")]
-            log::info!(
-                "caching uniform buffer [{}] at location {}, index {}",
-                &name, buffer_location, block_index
-            );
+            program_info.uniform_buffer_lookup_activation
+                .get(&location)
+                .map(|activation| {
+                    activation.block_index
+                })
+        };
+
+        match block_index {
+            None => {
+
+                let block_index = {
+                    let program_info = self
+                        .program_lookup
+                        .get(program_id)
+                        .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+
+                    let block_index = self.gl.get_uniform_block_index(&program_info.program, &name);
+
+                    if block_index == (WebGlSpecific::InvalidIndex as u32) {
+                        return Err(Error::from(NativeError::UniformBufferBlockIndexMissing(Some(name.to_string()))));
+                    }
+
+
+                    block_index
+                };
+
+                self
+                    .program_lookup
+                    .get_mut(program_id)
+                    .ok_or(Error::from(NativeError::MissingShaderProgram))?
+                    .uniform_buffer_lookup_activation.insert(location, UniformBufferActivation{
+                        block_index,
+                        offsets: FxHashMap::default()
+                    });
+
+                #[cfg(feature = "debug_log")]
+                log::info!(
+                    "caching uniform buffer block offset for {} at index {}",
+                    &name, block_index
+                );
             
-            Ok((block_index, buffer_location, true))
-        } else {
-            Ok((block_index, buffer_location, false))
+                Ok((block_index, true))
+            },
+            Some(block_index) => Ok((block_index, false))
         }
 
     }
@@ -210,15 +232,16 @@ impl WebGlRenderer<WebGl2RenderingContext> {
     pub fn cache_uniform_buffer_block_offset_name(&mut self, program_id: Id, uniform_name:&str, block_name:&str) -> Result<(BlockOffset, bool), Error> {
 
 
-        self.cache_uniform_buffer_name(program_id, uniform_name)?;
+        let (location, _) = self.cache_uniform_buffer_location(program_id, uniform_name)?;
+        let (block_index, _) = self.cache_uniform_buffer_block_index(program_id, uniform_name)?;
 
         let offset:Option<u32> = {
             self
                 .program_lookup
                 .get(program_id)
                 .ok_or(Error::from(NativeError::MissingShaderProgram))?
-                .uniform_buffer_lookup
-                .get(uniform_name)
+                .uniform_buffer_lookup_activation
+                .get(&location)
                 .ok_or(Error::from(NativeError::UniformBufferMissing(Some(uniform_name.to_string()))))?
                 .offsets
                 .get(block_name)
@@ -241,8 +264,8 @@ impl WebGlRenderer<WebGl2RenderingContext> {
                 .program_lookup
                 .get_mut(program_id)
                 .ok_or(Error::from(NativeError::MissingShaderProgram))?
-                .uniform_buffer_lookup
-                .get_mut(uniform_name)
+                .uniform_buffer_lookup_activation
+                .get_mut(&location)
                 .ok_or(Error::from(NativeError::UniformBufferMissing(Some(uniform_name.to_string()))))?
                 .offsets;
 
@@ -260,16 +283,24 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         }
     }
 
-    pub fn get_uniform_buffer_location_name(&mut self, name: &str) -> Result<BufferLocation, Error> {
+    pub fn get_current_uniform_buffer_location_name(&mut self, name: &str) -> Result<BufferLocation, Error> {
         let program_id = self
             .current_program_id
             .ok_or(Error::from(NativeError::MissingShaderProgram))?;
 
-        self.cache_uniform_buffer_name(program_id, name)
-            .map(|(_offset, location, _cached)| location)
+        self.cache_uniform_buffer_location(program_id, name)
+            .map(|(location, _cached)| location)
+    }
+    pub fn get_current_uniform_buffer_block_index_name(&mut self, name: &str) -> Result<BlockIndex, Error> {
+        let program_id = self
+            .current_program_id
+            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+
+        self.cache_uniform_buffer_block_index(program_id, name)
+            .map(|(index, _cached)| index)
     }
 
-    pub fn get_uniform_buffer_block_offset_name(
+    pub fn get_current_uniform_buffer_block_offset_name(
         &mut self,
         uniform_name: &str,
         block_name: &str,
@@ -284,181 +315,116 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
     }
 
-    pub fn activate_uniform_buffer_loc(&self, id: Id, location:BufferLocation) -> Result<(), Error> {
-        self.bind_buffer_base(id, location, BufferTarget::UniformBuffer)
+    pub fn init_current_uniform_buffer_name(&mut self, name:&str) -> Result<(), Error> {
+        let location = self.get_current_uniform_buffer_location_name(name)?;
+        let block_index = self.get_current_uniform_buffer_block_index_name(name)?;
+        self.init_current_uniform_buffer_loc(block_index, location)
+    }
+    pub fn init_current_uniform_buffer_loc(&mut self, block_index: BlockIndex, location: BufferLocation) -> Result<(), Error> {
+        let program_id = self
+            .current_program_id
+            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+        let program_info = self
+            .program_lookup
+            .get(program_id)
+            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+
+        self.gl.uniform_block_binding(&program_info.program, block_index, location);
+
+        Ok(())
+    }
+    
+    pub fn bind_uniform_buffer_loc(&mut self, id: Id, location:BufferLocation) {
+        self.bind_buffer_base(id, location, BufferTarget::UniformBuffer);
     }
 
+    pub fn bind_current_uniform_buffer_name(&mut self, id: Id, name:&str) -> Result<(), Error> {
+        let location = self.get_current_uniform_buffer_location_name(name)?;
+        self.bind_buffer_base(id, location, BufferTarget::UniformBuffer);
+        Ok(())
+    }
+    /*
     pub fn activate_uniform_buffer_name(&mut self, id: Id, name: &str) -> Result<(), Error> {
         let location = self.get_uniform_buffer_location_name(&name)?;
         self.activate_uniform_buffer_loc(id, location)
     }
+    */
 
-    ///upload buffer data and set to uniform buffer
-    pub fn upload_buffer_to_uniform_buffer_loc<B: BufferDataImpl>(
+    ///upload buffer data
+    pub fn upload_uniform_buffer<B: BufferDataImpl>(
         &mut self,
-        location: BufferLocation,
         id: Id,
         buffer_data: B,
     ) -> Result<(), Error> {
         match buffer_data.get_target() {
             BufferTarget::UniformBuffer => {
-                self.upload_buffer(id, buffer_data)?;
-                self.activate_uniform_buffer_loc(id, location)
+                self.upload_buffer(id, buffer_data)
             }
             _ => Err(Error::from(NativeError::UniformBufferTarget)),
         }
     }
 
-    pub fn upload_buffer_to_uniform_buffer_name<B: BufferDataImpl>(
+    ///upload buffer data from sub slice
+    pub fn upload_sub_uniform_buffer<B: BufferSubDataImpl>(
         &mut self,
-        name: &str,
-        id: Id,
-        buffer_data: B,
-    ) -> Result<(), Error> {
-        let location = self.get_uniform_buffer_location_name(&name)?;
-        self.upload_buffer_to_uniform_buffer_loc(location, id, buffer_data)
-    }
-
-    ///upload buffer data from sub slice and set to uniform buffer
-    pub fn upload_buffer_sub_to_uniform_buffer_loc<B: BufferSubDataImpl>(
-        &mut self,
-        location: BufferLocation,
         block_offset: BlockOffset,
         id: Id,
         buffer_data: B,
     ) -> Result<(), Error> {
         match buffer_data.get_target() {
             BufferTarget::UniformBuffer => {
-                self.upload_buffer_sub(id, block_offset, buffer_data)?;
-                self.activate_uniform_buffer_loc(id, location)
+                self.upload_buffer_sub(id, block_offset, buffer_data)
             }
             _ => Err(Error::from(NativeError::UniformBufferTarget)),
         }
     }
 
-    pub fn upload_buffer_sub_to_uniform_buffer_name<B: BufferSubDataImpl>(
-        &mut self,
-        uniform_name: &str,
-        block_name: &str,
-        id: Id,
-        buffer_data: B,
-    ) -> Result<(), Error> {
-        let location = self.get_uniform_buffer_location_name(&uniform_name)?;
-        let block_offset = self.get_uniform_buffer_block_offset_name(uniform_name, block_name)?;
-        self.upload_buffer_sub_to_uniform_buffer_loc(location, block_offset, id, buffer_data)
-    }
-
     ///convenience function
-    pub fn upload_buffer_to_uniform_buffer_f32_loc(
+    pub fn upload_uniform_buffer_f32(
         &mut self,
-        location: BufferLocation,
         id: Id,
         values: &[f32],
         buffer_usage: BufferUsage,
     ) -> Result<(), Error> {
-        self.upload_buffer_to_uniform_buffer_loc(
-            location,
+        self.upload_uniform_buffer(
             id,
             BufferData::new(values, BufferTarget::UniformBuffer, buffer_usage),
         )
     }
-    pub fn upload_buffer_to_uniform_buffer_f32_name(
-        &mut self,
-        name: &str,
-        id: Id,
-        values: &[f32],
-        buffer_usage: BufferUsage,
-    ) -> Result<(), Error> {
-        self.upload_buffer_to_uniform_buffer_name(
-            name,
-            id,
-            BufferData::new(values, BufferTarget::UniformBuffer, buffer_usage),
-        )
-    }
-
     ///convenience function
-    pub fn upload_buffer_to_uniform_buffer_u8_loc(
+    pub fn upload_uniform_buffer_u8_loc(
         &mut self,
-        location: BufferLocation,
         id: Id,
         values: &[u8],
         buffer_usage: BufferUsage,
     ) -> Result<(), Error> {
-        self.upload_buffer_to_uniform_buffer_loc(
-            location,
-            id,
-            BufferData::new(values, BufferTarget::UniformBuffer, buffer_usage),
-        )
-    }
-    pub fn upload_buffer_to_uniform_buffer_u8_name(
-        &mut self,
-        name: &str,
-        id: Id,
-        values: &[u8],
-        buffer_usage: BufferUsage,
-    ) -> Result<(), Error> {
-        self.upload_buffer_to_uniform_buffer_name(
-            name,
+        self.upload_uniform_buffer(
             id,
             BufferData::new(values, BufferTarget::UniformBuffer, buffer_usage),
         )
     }
 
-    pub fn upload_buffer_sub_to_uniform_buffer_f32_loc(
+    pub fn upload_sub_uniform_buffer_f32(
         &mut self,
-        location: BufferLocation,
         block_offset: BlockOffset,
         id: Id,
         values: &[f32],
     ) -> Result<(), Error> {
-        self.upload_buffer_sub_to_uniform_buffer_loc(
-            location,
+        self.upload_sub_uniform_buffer(
             block_offset,
             id,
             BufferSubData::new(values, BufferTarget::UniformBuffer),
         )
     }
 
-    pub fn upload_buffer_sub_to_uniform_buffer_f32_name(
+    pub fn upload_sub_uniform_buffer_u8(
         &mut self,
-        uniform_name: &str,
-        block_name: &str,
-        id: Id,
-        values: &[f32],
-    ) -> Result<(), Error> {
-        self.upload_buffer_sub_to_uniform_buffer_name(
-            uniform_name,
-            block_name,
-            id,
-            BufferSubData::new(values, BufferTarget::UniformBuffer),
-        )
-    }
-
-    pub fn upload_buffer_sub_to_uniform_buffer_u8_loc(
-        &mut self,
-        location: BufferLocation,
         block_offset: BlockOffset,
         id: Id,
         values: &[u8],
     ) -> Result<(), Error> {
-        self.upload_buffer_sub_to_uniform_buffer_loc(
-            location,
+        self.upload_sub_uniform_buffer(
             block_offset,
-            id,
-            BufferSubData::new(values, BufferTarget::UniformBuffer),
-        )
-    }
-
-    pub fn upload_buffer_sub_to_uniform_buffer_u8_name(
-        &mut self,
-        uniform_name: &str,
-        block_name: &str,
-        id: Id,
-        values: &[u8],
-    ) -> Result<(), Error> {
-        self.upload_buffer_sub_to_uniform_buffer_name(
-            uniform_name,
-            block_name,
             id,
             BufferSubData::new(values, BufferTarget::UniformBuffer),
         )

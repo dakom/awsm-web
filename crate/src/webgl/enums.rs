@@ -189,23 +189,29 @@ pub enum PixelFormat {
 
     //WebGL2 only
     R8 = 0x8229,
-    Rg8 = 0x822B,
-    R16f = 0x822D,
-    R32f = 0x822E,
-    RG16f = 0x822F,
-    RG32f = 0x8230,
-    R8i = 0x8231,
     R8ui = 0x8232,
-    R16i = 0x8233,
-    R16ui = 0x8234,
-    R32i = 0x8235,
-    R32ui = 0x8236,
-    RG8i = 0x8237,
-    RG8ui = 0x8238,
-    RG16i = 0x8239,
-    RG16ui = 0x823A,
-    RG32i = 0x823B,
-    RG32ui = 0x823C,
+    R8i= 0x8231,
+    R16ui= 0x8234,
+    R16i= 0x8233,
+    R32ui= 0x8236,
+    R32i= 0x8235,
+    Rg8= 0x822B,
+    Rg8ui= 0x8238,
+    Rg8i= 0x8237,
+    Rg16ui= 0x823A,
+    Rg16i= 0x8239,
+    Rg32ui= 0x823C,
+    Rg32i= 0x823B,
+    Rgb8=0x8051,
+    Rgba8= 0x8058,
+    Rgb10a2= 0x8059,
+    Rgba8ui= 0x8D7C,
+    Rba8i= 0x8D8F,
+    Rgb10a2ui = 0x906F,
+    Rgba16ui= 0x8D76,
+    Rgba16i= 0x8D89,
+    Rgba32i= 0x8D82,
+    Rgba32ui= 0x8D70,
     Srgb = 0x8C40,
     Srgb8 = 0x8C41,
     Srgb8Alpha8 = 0x8C43,
@@ -213,6 +219,15 @@ pub enum PixelFormat {
     Rgb32f = 0x8815,
     Rgba16f = 0x881A,
     Rgb16f = 0x881B,
+
+
+    //Just for when setting full options - data format
+    Red = 0x1903,
+    Rg = 0x8227,
+    RedInteger = 0x8D94,
+    RgInteger = 0x8228,
+    RgbInteger = 0x8D98,
+    RgbaInteger = 0x8D99,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -329,6 +344,9 @@ pub enum WebGlSpecific {
     ContextLost = 0x9242,
     UnpackColorspaceConversion = 0x9243,
     BrowserDefault = 0x9244,
+    UnpackAlignment = 0x0CF5,
+    PackAlignment = 0x0D05,
+    InvalidIndex = 0xFFFFFFFF,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

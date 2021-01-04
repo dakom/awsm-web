@@ -7,7 +7,7 @@ use crate::errors::{Error, NativeError};
 use rustc_hash::FxHashMap;
 use web_sys::{WebGl2RenderingContext, WebGlActiveInfo, WebGlRenderingContext};
 use web_sys::{WebGlProgram, WebGlShader, WebGlUniformLocation};
-use crate::webgl::uniform_buffers::UniformBufferLookup;
+use crate::webgl::uniform_buffers::UniformBufferActivation;
 
 pub struct ProgramInfo {
     pub program: WebGlProgram,
@@ -16,7 +16,8 @@ pub struct ProgramInfo {
     pub texture_sampler_slot_lookup: FxHashMap<String, u32>,
 
     //only needed for webgl2
-    pub uniform_buffer_lookup: FxHashMap<String, UniformBufferLookup>,
+    pub uniform_buffer_lookup_location: FxHashMap<String, u32>,
+    pub uniform_buffer_lookup_activation: FxHashMap<u32, UniformBufferActivation>,
     pub non_global_ubo_count: u32, 
 }
 
@@ -28,7 +29,8 @@ impl ProgramInfo {
             attribute_lookup: FxHashMap::default(),
             uniform_lookup: FxHashMap::default(),
             texture_sampler_slot_lookup: FxHashMap::default(),
-            uniform_buffer_lookup: FxHashMap::default(),
+            uniform_buffer_lookup_location: FxHashMap::default(),
+            uniform_buffer_lookup_activation: FxHashMap::default(),
             non_global_ubo_count: 0, 
         }
     }

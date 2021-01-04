@@ -61,6 +61,7 @@ pub struct TextureOptions {
 
 pub trait PartialWebGlTextures {
     fn awsm_create_texture(&self) -> Result<WebGlTexture, Error>;
+    fn awsm_delete_texture(&self, texture:&WebGlTexture);
 
     fn awsm_texture_set_wrap(
         &self,
@@ -135,6 +136,9 @@ macro_rules! impl_context {
 
             fn awsm_create_texture(&self) -> Result<WebGlTexture, Error> {
                 self.create_texture().ok_or(Error::from(NativeError::NoCreateTexture))
+            }
+            fn awsm_delete_texture(&self, texture:&WebGlTexture) {
+                self.delete_texture(Some(texture));
             }
 
             fn awsm_texture_set_wrap(&self, bind_target: TextureTarget, wrap_target:TextureWrapTarget, wrap_mode: TextureWrapMode) {
@@ -808,6 +812,23 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         Ok(id)
     }
 
+    pub fn delete_texture(&mut self, id:Id) -> Result<(), Error> {
+
+        if Some(id) == self.current_texture_id {
+            self.current_texture_id = None;
+        }
+
+        let info = self
+            .texture_lookup
+            .get(id)
+            .ok_or(Error::from(NativeError::MissingTexture))?;
+
+        self.gl.awsm_delete_texture(&info.texture);
+        self.texture_lookup.remove(id);
+
+        Ok(())
+    }
+
     pub fn get_texture_sampler_names(&self, program_id: Id) -> Result<Vec<String>, Error> {
 
         let program_info = self
@@ -1012,6 +1033,7 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
 
 
+        //Will assign the slot of necessary too
         let sampler_slot = self.get_sampler_index_name(sampler_name)?;
 
         self.activate_texture_for_sampler_index(texture_id, sampler_slot)?;

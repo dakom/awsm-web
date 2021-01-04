@@ -154,8 +154,8 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         Ok(id)
     }
 
-    pub fn delete_framebuffer(&self, framebuffer_id: Id) -> Result<(), Error> {
-        if Some(framebuffer_id) == self.current_framebuffer_id.get() {
+    pub fn delete_framebuffer(&mut self, id: Id) -> Result<(), Error> {
+        if Some(id) == self.current_framebuffer_id.get() {
             if let Some(target) = self.current_framebuffer_target.get() {
                 self.gl.awsm_release_framebuffer(target);
             }
@@ -165,11 +165,12 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
 
         let framebuffer = self
             .framebuffer_lookup
-            .get(framebuffer_id)
+            .get(id)
             .ok_or(Error::from(NativeError::MissingFrameBuffer))?;
 
         self.gl.awsm_delete_framebuffer(&framebuffer);
 
+        self.framebuffer_lookup.remove(id);
         Ok(())
     }
 

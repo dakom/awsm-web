@@ -76,18 +76,20 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
             .ok_or(Error::from(NativeError::MissingRenderBuffer))
     }
 
-    pub fn delete_renderbuffer(&self, renderbuffer_id: Id) -> Result<(), Error> {
-        if Some(renderbuffer_id) == self.current_renderbuffer_id.get() {
+    pub fn delete_renderbuffer(&mut self, id: Id) -> Result<(), Error> {
+        if Some(id) == self.current_renderbuffer_id.get() {
             self.current_renderbuffer_id.set(None);
             self.gl.awsm_release_renderbuffer();
         }
 
         let renderbuffer = self
             .renderbuffer_lookup
-            .get(renderbuffer_id)
+            .get(id)
             .ok_or(Error::from(NativeError::MissingRenderBuffer))?;
 
         self.gl.awsm_delete_renderbuffer(&renderbuffer);
+
+        self.renderbuffer_lookup.remove(id);
 
         Ok(())
     }
