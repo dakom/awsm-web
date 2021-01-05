@@ -600,6 +600,16 @@ pub enum DrawBuffer {
     Color15 = 0x8CEF,
 }
 
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum Buffer {
+    Color = 0x1800,
+    Depth = 0x1801,
+    Stencil = 0x1802,
+    DepthStencil = 0x84F9,
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
 pub enum FrameBufferTextureTarget {

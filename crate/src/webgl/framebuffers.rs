@@ -61,6 +61,8 @@ macro_rules! impl_context {
             }
 
             fn awsm_framebuffer_texture_2d(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture_target: FrameBufferTextureTarget, texture: &WebGlTexture) {
+
+
                 self.framebuffer_texture_2d(
                     target as u32,
                     attachment as u32,
@@ -215,10 +217,14 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
         }
     }
     
-    pub fn assign_framebuffer_texture_2d(&self, framebuffer_id: Id, texture_id: Id, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture_target: FrameBufferTextureTarget) -> Result<(), Error> {
-        let texture = self.get_texture(texture_id)?;
-        self.bind_framebuffer(framebuffer_id, target)?;
-        self.gl.awsm_framebuffer_texture_2d(target, attachment, texture_target, texture);
+    pub fn assign_framebuffer_texture_2d(&mut self, framebuffer_id: Id, texture_id: Id, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture_target: FrameBufferTextureTarget) -> Result<(), Error> {
+        {
+            let texture = self.get_texture(texture_id)?;
+
+            self.bind_framebuffer(framebuffer_id, target)?;
+            self.gl.awsm_framebuffer_texture_2d(target, attachment, texture_target, texture);
+        }
+        self.texture_target_lookup.insert(texture_target as u32, texture_id);
         Ok(())
     }
 
@@ -239,8 +245,11 @@ impl WebGlRenderer<WebGl2RenderingContext> {
     pub fn blit_framebuffer(&self, src_x0: u32, src_y0: u32, src_x1: u32, src_y1: u32, dst_x0: u32, dst_y0: u32, dst_x1: u32, dst_y1: u32, mask: BufferMask, filter: BlitFilter) {
         self.gl.awsm_blit_framebuffer(src_x0, src_y0, src_x1, src_y1, dst_x0, dst_y0, dst_x1, dst_y1, mask, filter)
     }
-    pub fn framebuffer_texture_layer(&self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture: &WebGlTexture, mipmap_level: u32, layer:u32) {
-        self.gl.awsm_framebuffer_texture_layer(target, attachment, texture, mipmap_level, layer)
+    pub fn framebuffer_texture_layer(&mut self, target: FrameBufferTarget, attachment: FrameBufferAttachment, texture_id:Id, mipmap_level: u32, layer:u32) -> Result<(), Error> {
+        let texture = self.get_texture(texture_id)?;
+        self.gl.awsm_framebuffer_texture_layer(target, attachment, texture, mipmap_level, layer);
+
+        Ok(())
     }
     pub fn invalidate_framebuffer(&self, target: FrameBufferTarget, attachments: &[FrameBufferAttachment]) -> Result<(), Error> {
         self.gl.awsm_invalidate_framebuffer(target, attachments)

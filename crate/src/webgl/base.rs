@@ -57,9 +57,9 @@ pub struct WebGlRenderer<T: WebGlCommon> {
     pub(super) current_buffer_index: Cell<Option<u32>>, //only used for webgl_2
     pub(super) buffer_lookup: BeachMap<DefaultVersion, WebGlBuffer>,
 
-    pub(super) current_texture_id: Option<Id>,
     pub(super) texture_lookup: BeachMap<DefaultVersion, TextureInfo>,
     pub(super) texture_sampler_lookup: Vec<Option<Id>>,
+    pub(super) texture_target_lookup: FxHashMap<u32, Id>, //FrameBufferTarget or TextureTarget
 
     pub(super) extension_lookup: FxHashMap<String, js_sys::Object>,
 
@@ -134,9 +134,9 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
             current_buffer_index: Cell::new(None),
             buffer_lookup: BeachMap::default(),
 
-            current_texture_id: None,
             texture_lookup: BeachMap::default(),
             texture_sampler_lookup,
+            texture_target_lookup: FxHashMap::default(),
 
             extension_lookup: FxHashMap::default(),
 

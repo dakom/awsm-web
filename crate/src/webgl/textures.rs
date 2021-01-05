@@ -62,6 +62,11 @@ pub struct TextureOptions {
 pub trait PartialWebGlTextures {
     fn awsm_create_texture(&self) -> Result<WebGlTexture, Error>;
     fn awsm_delete_texture(&self, texture:&WebGlTexture);
+    fn awsm_bind_texture(&self, bind_target: TextureTarget, texture:&WebGlTexture);
+
+    fn awsm_release_texture_target(&self, bind_target: TextureTarget);
+    //needed to accomodate framebuffer target too
+    fn awsm_release_texture_target_raw(&self, bind_target: u32);
 
     fn awsm_texture_set_wrap(
         &self,
@@ -114,12 +119,7 @@ pub trait PartialWebGlTextures {
         dest: &WebGlTexture,
     ) -> Result<(), Error>;
 
-    fn awsm_activate_texture_for_sampler_index(
-        &self,
-        bind_target: TextureTarget,
-        sampler_index: u32,
-        texture: &WebGlTexture,
-    );
+    fn awsm_activate_texture_sampler_index( &self, sampler_index: u32,);
 
     fn _awsm_assign_texture(
         &self,
@@ -219,9 +219,11 @@ macro_rules! impl_context {
                 self.awsm_assign_texture_mips(bind_target, &opts, set_parameters, &[src], &dest)
             }
 
-
+            //This is the only place where things _really_ happen
             fn awsm_assign_texture_mips(&self, bind_target: TextureTarget, opts:&TextureOptions, set_parameters:Option<impl Fn(&Self) -> ()>, srcs:&[&WebGlTextureSource], dest:&WebGlTexture) -> Result<(), Error> {
-                self.bind_texture(bind_target as u32, Some(dest));
+                
+
+                self.awsm_bind_texture(bind_target, dest);
 
                 set_parameters.map(|f| f(self));
 
@@ -232,11 +234,19 @@ macro_rules! impl_context {
                 Ok(())
             }
 
-            fn awsm_activate_texture_for_sampler_index(&self, bind_target: TextureTarget, sampler_index: u32, texture:&WebGlTexture) {
-
-                self.active_texture((TextureUnit::Texture0 as u32) + sampler_index);
-
+            fn awsm_bind_texture(&self, bind_target: TextureTarget, texture:&WebGlTexture) {
                 self.bind_texture(bind_target as u32, Some(texture));
+            }
+
+            fn awsm_activate_texture_sampler_index(&self, sampler_index: u32) {
+                self.active_texture((TextureUnit::Texture0 as u32) + sampler_index);
+            }
+
+            fn awsm_release_texture_target(&self, bind_target: TextureTarget) {
+                self.bind_texture(bind_target as u32, None);
+            }
+            fn awsm_release_texture_target_raw(&self, bind_target: u32) {
+                self.bind_texture(bind_target, None);
             }
 
 
@@ -814,19 +824,37 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
 
     pub fn delete_texture(&mut self, id:Id) -> Result<(), Error> {
 
-        if Some(id) == self.current_texture_id {
-            self.current_texture_id = None;
-        }
 
         let info = self
             .texture_lookup
             .get(id)
             .ok_or(Error::from(NativeError::MissingTexture))?;
 
+
+        let mut release_targets:Vec<u32> = Vec::new();
+
+        self.texture_target_lookup.retain(|k, v| {
+            if *v == id {
+                release_targets.push(*k);
+                false
+            } else {
+                true
+            }
+        });
+
+        release_targets.into_iter().for_each(|target| {
+            self.gl.awsm_release_texture_target_raw(target);
+        });
+
         self.gl.awsm_delete_texture(&info.texture);
         self.texture_lookup.remove(id);
 
         Ok(())
+    }
+
+    pub fn release_texture_target(&mut self, bind_target: TextureTarget) {
+        self.gl.awsm_release_texture_target(bind_target);
+        self.texture_target_lookup.remove(&(bind_target as u32));
     }
 
     pub fn get_texture_sampler_names(&self, program_id: Id) -> Result<Vec<String>, Error> {
@@ -895,7 +923,7 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
                 }
                 Entry::Vacant(entry) => {
                     #[cfg(feature = "debug_log")]
-                    log::info!("caching sampler index for [{}]", &name);
+                    log::info!("caching sampler index for [{}]: {}", &name, index);
 
                     entry.insert(index);
 
@@ -952,7 +980,7 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
             .ok_or(Error::from(NativeError::MissingTexture))?;
 
         texture_info.bind_target = Some(bind_target);
-        self.current_texture_id = Some(texture_id);
+        self.texture_target_lookup.insert(bind_target as u32, texture_id);
 
         self.gl
             .awsm_assign_simple_texture(bind_target, &opts, &src, &texture_info.texture)
@@ -971,7 +999,7 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
             .ok_or(Error::from(NativeError::MissingTexture))?;
 
         texture_info.bind_target = Some(bind_target);
-        self.current_texture_id = Some(texture_id);
+        self.texture_target_lookup.insert(bind_target as u32, texture_id);
 
         self.gl
             .awsm_assign_simple_texture_mips(bind_target, &opts, &srcs, &texture_info.texture)
@@ -991,7 +1019,7 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
             .ok_or(Error::from(NativeError::MissingTexture))?;
 
         texture_info.bind_target = Some(bind_target);
-        self.current_texture_id = Some(texture_id);
+        self.texture_target_lookup.insert(bind_target as u32, texture_id);
 
         self.gl.awsm_assign_texture(
             bind_target,
@@ -1014,8 +1042,9 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
             .texture_lookup
             .get_mut(texture_id)
             .ok_or(Error::from(NativeError::MissingTexture))?;
+
         texture_info.bind_target = Some(bind_target);
-        self.current_texture_id = Some(texture_id);
+        self.texture_target_lookup.insert(bind_target as u32, texture_id);
 
         self.gl.awsm_assign_texture_mips(
             bind_target,
@@ -1033,48 +1062,62 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
     ) -> Result<(), Error> {
 
 
-        //Will assign the slot of necessary too
+        //Will assign the slot if necessary too
         let sampler_slot = self.get_sampler_index_name(sampler_name)?;
 
-        self.activate_texture_for_sampler_index(texture_id, sampler_slot)?;
+        self.activate_texture_sampler_index(texture_id, sampler_slot)?;
         Ok(())
     }
 
-    pub fn activate_texture_for_sampler_index(
+    pub fn activate_texture_sampler_index(
         &mut self,
         texture_id: Id,
         sampler_index: u32,
     ) -> Result<(), Error> {
-        let entry = self
-            .texture_sampler_lookup
-            .get(sampler_index as usize)
-            .ok_or(Error::from(NativeError::Internal))?;
 
-        let requires_activation = match entry {
-            Some(entry) => {
-                if *entry != texture_id {
-                    true
-                } else {
-                    false
+        let texture_info = self
+            .texture_lookup
+            .get(texture_id)
+            .ok_or(Error::from(NativeError::MissingTexture))?;
+
+
+        //Determine if sampler requires activation
+        let requires_sampler_activation = {
+            let entry = self
+                .texture_sampler_lookup
+                .get(sampler_index as usize)
+                .ok_or(Error::from(NativeError::Internal))?;
+
+            match entry {
+                Some(entry) => {
+                    if *entry != texture_id {
+                        true
+                    } else {
+                        false 
+                    }
                 }
+                None => true,
             }
-            None => true,
         };
 
-        if requires_activation {
+        if requires_sampler_activation {
             self.texture_sampler_lookup[sampler_index as usize] = Some(texture_id);
-            let texture_info = self
-                .texture_lookup
-                .get(texture_id)
-                .ok_or(Error::from(NativeError::MissingTexture))?;
-            let bind_target = texture_info
-                .bind_target
-                .ok_or(Error::from(NativeError::NoTextureTarget))?;
-            self.gl.awsm_activate_texture_for_sampler_index(
-                bind_target,
-                sampler_index,
-                &texture_info.texture,
-            );
+            self.gl.awsm_activate_texture_sampler_index(sampler_index);
+        } 
+
+        //Next, determine if it requires binding
+        let bind_target = texture_info.bind_target.ok_or(Error::from(NativeError::NoTextureTarget))?;
+        let requires_binding = {
+            if requires_sampler_activation {
+                true
+            } else {
+                self.texture_target_lookup.get(&(bind_target as u32)) != Some(&texture_id)
+            }
+        };
+
+        if requires_binding {
+            self.gl.awsm_bind_texture(bind_target, &texture_info.texture);
+            self.texture_target_lookup.insert(bind_target as u32, texture_id);
         }
 
         Ok(())

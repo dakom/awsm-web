@@ -6,7 +6,7 @@ use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
 
 use super::attributes::PartialWebGlAttribute;
 use super::buffers::PartialWebGlBuffer;
-use super::drawing::PartialWebGlDrawing;
+use super::drawing::{PartialWebGlDrawing, PartialWebGl2Drawing};
 use super::enums::WebGlVersion;
 use super::extensions::PartialWebGlExtensions;
 use super::funcs::PartialWebGlFuncs;
@@ -80,7 +80,13 @@ pub trait WebGlCommon:
 {
 }
 
-pub trait WebGl2Extra: PartialWebGl2RenderBuffer + PartialWebGl2ReadPixels + PartialWebGl2FrameBuffer {}
+pub trait WebGl2Extra: 
+    PartialWebGl2RenderBuffer 
+    + PartialWebGl2ReadPixels 
+    + PartialWebGl2FrameBuffer 
+    + PartialWebGl2Drawing
+{
+}
 
 impl WebGlCommon for WebGlRenderingContext {}
 
