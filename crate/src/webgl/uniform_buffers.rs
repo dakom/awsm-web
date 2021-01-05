@@ -283,7 +283,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         }
     }
 
-    pub fn get_current_uniform_buffer_location_name(&mut self, name: &str) -> Result<BufferLocation, Error> {
+    pub fn get_uniform_buffer_location_name(&mut self, name: &str) -> Result<BufferLocation, Error> {
         let program_id = self
             .current_program_id
             .ok_or(Error::from(NativeError::MissingShaderProgram))?;
@@ -291,7 +291,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         self.cache_uniform_buffer_location(program_id, name)
             .map(|(location, _cached)| location)
     }
-    pub fn get_current_uniform_buffer_block_index_name(&mut self, name: &str) -> Result<BlockIndex, Error> {
+    pub fn get_uniform_buffer_block_index_name(&mut self, name: &str) -> Result<BlockIndex, Error> {
         let program_id = self
             .current_program_id
             .ok_or(Error::from(NativeError::MissingShaderProgram))?;
@@ -300,7 +300,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
             .map(|(index, _cached)| index)
     }
 
-    pub fn get_current_uniform_buffer_block_offset_name(
+    pub fn get_uniform_buffer_block_offset_name(
         &mut self,
         uniform_name: &str,
         block_name: &str,
@@ -315,12 +315,13 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
     }
 
-    pub fn init_current_uniform_buffer_name(&mut self, name:&str) -> Result<(), Error> {
-        let location = self.get_current_uniform_buffer_location_name(name)?;
-        let block_index = self.get_current_uniform_buffer_block_index_name(name)?;
-        self.init_current_uniform_buffer_loc(block_index, location)
+    // at shader compilation time
+    pub fn init_uniform_buffer_name(&mut self, name:&str) -> Result<(), Error> {
+        let location = self.get_uniform_buffer_location_name(name)?;
+        let block_index = self.get_uniform_buffer_block_index_name(name)?;
+        self.init_uniform_buffer_loc(block_index, location)
     }
-    pub fn init_current_uniform_buffer_loc(&mut self, block_index: BlockIndex, location: BufferLocation) -> Result<(), Error> {
+    pub fn init_uniform_buffer_loc(&mut self, block_index: BlockIndex, location: BufferLocation) -> Result<(), Error> {
         let program_id = self
             .current_program_id
             .ok_or(Error::from(NativeError::MissingShaderProgram))?;
@@ -333,22 +334,17 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
         Ok(())
     }
-    
-    pub fn bind_uniform_buffer_loc(&mut self, id: Id, location:BufferLocation) {
+   
+    // At render time
+    pub fn activate_uniform_buffer_loc(&mut self, id: Id, location:BufferLocation) {
         self.bind_buffer_base(id, location, BufferTarget::UniformBuffer);
     }
 
-    pub fn bind_current_uniform_buffer_name(&mut self, id: Id, name:&str) -> Result<(), Error> {
-        let location = self.get_current_uniform_buffer_location_name(name)?;
+    pub fn activate_uniform_buffer_name(&mut self, id: Id, name:&str) -> Result<(), Error> {
+        let location = self.get_uniform_buffer_location_name(name)?;
         self.bind_buffer_base(id, location, BufferTarget::UniformBuffer);
         Ok(())
     }
-    /*
-    pub fn activate_uniform_buffer_name(&mut self, id: Id, name: &str) -> Result<(), Error> {
-        let location = self.get_uniform_buffer_location_name(&name)?;
-        self.activate_uniform_buffer_loc(id, location)
-    }
-    */
 
     ///upload buffer data
     pub fn upload_uniform_buffer<B: BufferDataImpl>(

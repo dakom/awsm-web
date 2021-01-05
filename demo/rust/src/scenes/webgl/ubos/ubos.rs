@@ -79,6 +79,12 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
                 ];
                 let program_id = webgl_renderer.compile_program(&shaders)?;
 
+                //init ubos
+
+                webgl_renderer.init_uniform_buffer_name("camera")?;
+                webgl_renderer.init_uniform_buffer_name("model")?;
+                webgl_renderer.init_uniform_buffer_name("scale")?;
+
                 let mut state_obj = state.borrow_mut();
 
                 state_obj.program_id = Some(program_id);
@@ -146,16 +152,16 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 webgl_renderer.toggle(GlToggle::DepthTest, true);
 
-                //will partially upload (but fully activate) the buffer
+                //partial upload
                 update_scale_buffer(&mut state, webgl_renderer).unwrap();
 
-                //will upload and activate buffer
+                //full upload
                 update_camera_buffer(&mut state, webgl_renderer).unwrap();
 
-                //Model just needs to be activated so that it pulls from the buffer (which was set at init time)
-                webgl_renderer
-                    .activate_uniform_buffer_name(state.model_buffer_id.unwrap(), "model")
-                    .unwrap();
+                //activate UBO's
+                webgl_renderer.activate_uniform_buffer_name(state.scale_buffer_id.unwrap(), "scale").unwrap();
+                webgl_renderer.activate_uniform_buffer_name(state.camera_buffer_id.unwrap(), "camera").unwrap();
+                webgl_renderer.activate_uniform_buffer_name(state.model_buffer_id.unwrap(), "model").unwrap();
 
                 //activate VAO's
                 webgl_renderer
@@ -201,9 +207,10 @@ fn set_initial_scale_buffer(
 fn update_scale_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> Result<(), Error> {
     let scale_y: [f32; 3] = [0.0, 3.0, 0.0];
 
-    webgl_renderer.upload_buffer_sub_to_uniform_buffer_f32_name(
-        "scale",
-        "u_scale_y",
+    let offset = webgl_renderer.get_uniform_buffer_block_offset_name("scale", "u_scale_y")?;
+
+    webgl_renderer.upload_sub_uniform_buffer_f32(
+        offset,
         state.scale_buffer_id.unwrap(),
         &scale_y[1..2],
     )
@@ -259,9 +266,7 @@ fn update_camera_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> R
 
     let camera = vec![view.as_slice(), projection.as_slice()].concat();
 
-    //will activate it too
-    webgl_renderer.upload_buffer_to_uniform_buffer_f32_name(
-        "camera",
+    webgl_renderer.upload_uniform_buffer_f32(
         state.camera_buffer_id.unwrap(),
         &camera,
         BufferUsage::DynamicDraw,
