@@ -3,6 +3,7 @@ use super::{
     TextureParameterName, TextureTarget, TextureUnit, TextureWrapMode, TextureWrapTarget,
     WebGlCommon, WebGlRenderer, WebGlSpecific,
     ProgramQuery,
+    PixelDataFormat, PixelInternalFormat,
 };
 use crate::errors::{Error, NativeError};
 use web_sys::{
@@ -53,8 +54,8 @@ impl Default for SimpleTextureOptions {
 }
 
 pub struct TextureOptions {
-    pub internal_format: PixelFormat,
-    pub data_format: PixelFormat,
+    pub internal_format: PixelInternalFormat,
+    pub data_format: PixelDataFormat,
     pub data_type: DataType,
     pub cube_face: Option<TextureCubeFace>,
 }
@@ -793,8 +794,8 @@ pub fn is_power_of_2(src: &WebGlTextureSource) -> bool {
 
 fn get_texture_options_from_simple(opts: &SimpleTextureOptions) -> TextureOptions {
     TextureOptions {
-        internal_format: opts.pixel_format,
-        data_format: opts.pixel_format,
+        internal_format: opts.pixel_format.into(),
+        data_format: opts.pixel_format.into(),
         data_type: opts.data_type,
         cube_face: opts.cube_face,
     }
@@ -1074,7 +1075,24 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
         texture_id: Id,
         sampler_index: u32,
     ) -> Result<(), Error> {
+        let texture_info = self
+            .texture_lookup
+            .get(texture_id)
+            .ok_or(Error::from(NativeError::MissingTexture))?;
 
+        let bind_target = texture_info.bind_target.ok_or(Error::from(NativeError::NoTextureTarget))?;
+        self.gl.awsm_activate_texture_sampler_index(sampler_index);
+        self.gl.awsm_bind_texture(bind_target, &texture_info.texture);
+        self.texture_sampler_lookup[sampler_index as usize] = Some(texture_id);
+        self.texture_target_lookup.insert(bind_target as u32, texture_id);
+
+        //Everything here seems to work most of the time
+        //But funky edge cases kept popping up
+        //So just disabling for now
+        //Anyway textures are often switched... the below would only
+        //Really help in megatexture type strategies
+
+        /*
         let texture_info = self
             .texture_lookup
             .get(texture_id)
@@ -1119,6 +1137,7 @@ impl<G: WebGlCommon> WebGlRenderer<G> {
             self.gl.awsm_bind_texture(bind_target, &texture_info.texture);
             self.texture_target_lookup.insert(bind_target as u32, texture_id);
         }
+        */
 
         Ok(())
     }

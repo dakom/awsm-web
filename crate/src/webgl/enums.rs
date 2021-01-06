@@ -169,9 +169,71 @@ pub enum TextureUnit {
     ActiveTexture = 0x84E0,
 }
 
+//There might be some overlap between PixelFormats
+//It hasn't been curated perfectly
+
+
+//The simple case where the same value is used for both
+//Data and internal (e.g. SimpleTextureOptions)
+//
+//Can probably be expanded
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
 pub enum PixelFormat {
+    Alpha = 0x1906,
+    Rgb = 0x1907,
+    Rgba = 0x1908,
+}
+
+impl From<PixelFormat> for PixelDataFormat {
+    fn from(value:PixelFormat) -> Self {
+        match value {
+            PixelFormat::Alpha => Self::Alpha,
+            PixelFormat::Rgb => Self::Rgb,
+            PixelFormat::Rgba => Self::Rgba,
+        }
+    }
+}
+
+impl From<PixelFormat> for PixelInternalFormat {
+    fn from(value:PixelFormat) -> Self {
+        match value {
+            PixelFormat::Alpha => Self::Alpha,
+            PixelFormat::Rgb => Self::Rgb,
+            PixelFormat::Rgba => Self::Rgba,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum PixelDataFormat {
+    //WebGL1 and 2
+    Alpha = 0x1906,
+    Rgb = 0x1907,
+    Rgba = 0x1908,
+    Luminance = 0x1909,
+    LuminanceAlpha = 0x190A,
+
+    Red = 0x1903,
+    Rg = 0x8227,
+    RedInteger = 0x8D94,
+    RgInteger = 0x8228,
+    RgbInteger = 0x8D98,
+    RgbaInteger = 0x8D99,
+
+    //When using the WEBGL_depth_texture extension
+    DepthComponent = 0x1902,
+    DepthStencil = 0x84F9,
+
+    //When using the SRGB extension
+    //SrgbExt = 0x8C40, //- same as Srgb for webgl2
+    SrgbAlphaExt = 0x8C42,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum PixelInternalFormat {
     //WebGL1 and 2
     Alpha = 0x1906,
     Rgb = 0x1907,
@@ -221,13 +283,6 @@ pub enum PixelFormat {
     Rgb16f = 0x881B,
 
 
-    //Just for when setting full options - data format
-    Red = 0x1903,
-    Rg = 0x8227,
-    RedInteger = 0x8D94,
-    RgInteger = 0x8228,
-    RgbInteger = 0x8D98,
-    RgbaInteger = 0x8D99,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
