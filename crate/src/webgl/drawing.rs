@@ -6,6 +6,7 @@ use js_sys::Array;
 
 pub trait PartialWebGlDrawing {
     fn awsm_clear(&self, bits: &[BufferMask]);
+    fn awsm_scissor(&self, x: i32, y: i32, width: u32, height: u32);
     fn awsm_draw_arrays(&self, mode: BeginMode, first: u32, count: u32);
     fn awsm_draw_elements(&self, mode: BeginMode, count: u32, data_type: DataType, offset: u32);
 }
@@ -28,6 +29,9 @@ macro_rules! impl_context {
                 self.clear(combined);
             }
 
+            fn awsm_scissor(&self, x: i32, y: i32, width: u32, height: u32) {
+                self.scissor(x, y, width as i32, height as i32);
+            }
             fn awsm_draw_arrays(&self, mode: BeginMode, first: u32, count: u32) {
                 self.draw_arrays(mode as u32, first as i32, count as i32);
             }
@@ -64,6 +68,9 @@ impl PartialWebGl2Drawing for WebGl2RenderingContext {
 impl<T: WebGlCommon> WebGlRenderer<T> {
     pub fn clear(&self, bits: &[BufferMask]) {
         self.gl.awsm_clear(&bits);
+    }
+    pub fn scissor(&self, x: i32, y: i32, width: u32, height: u32) {
+        self.gl.awsm_scissor(x, y, width, height);
     }
 
     pub fn draw_arrays(&self, mode: BeginMode, first: u32, count: u32) {

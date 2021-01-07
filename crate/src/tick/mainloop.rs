@@ -437,33 +437,33 @@ where
                         self.end_panic = true;
                         break;
                     }
-
-                    /*
-                     * Render the screen. We do this regardless of whether update() has run
-                     * during this frame because it is possible to interpolate between updates
-                     * to make the frame rate appear faster than updates are actually
-                     * happening. See `MainLoop.setDraw()` for an explanation of how to do
-                     * that.
-                     *
-                     * We draw after updating because we want the screen to reflect a state of
-                     * the application that is as up-to-date as possible. (`MainLoop.start()`
-                     * draws the very first frame in the application's initial state, before
-                     * any updates have occurred.) Some sources speculate that rendering
-                     * earlier in the requestAnimationFrame callback can get the screen painted
-                     * faster; this is mostly not true, and even when it is, it's usually just
-                     * a trade-off between rendering the current frame sooner and rendering the
-                     * next frame later.
-                     *
-                     * See `MainLoop.setDraw()` for details about draw() itself.
-                     */
-                    (self.draw)(self.frame_delta / self.opts.simulation_timestep);
-
-                    // Run any updates that are not dependent on time in the simulation. See
-                    // `MainLoop.setEnd()` for additional details on how to use this.
-                    (self.end)(self.fps, self.end_panic);
-
-                    self.end_panic = false;
                 }
+
+                /*
+                 * Render the screen. We do this regardless of whether update() has run
+                 * during this frame because it is possible to interpolate between updates
+                 * to make the frame rate appear faster than updates are actually
+                 * happening. See `MainLoop.setDraw()` for an explanation of how to do
+                 * that.
+                 *
+                 * We draw after updating because we want the screen to reflect a state of
+                 * the application that is as up-to-date as possible. (`MainLoop.start()`
+                 * draws the very first frame in the application's initial state, before
+                 * any updates have occurred.) Some sources speculate that rendering
+                 * earlier in the requestAnimationFrame callback can get the screen painted
+                 * faster; this is mostly not true, and even when it is, it's usually just
+                 * a trade-off between rendering the current frame sooner and rendering the
+                 * next frame later.
+                 *
+                 * See `MainLoop.setDraw()` for details about draw() itself.
+                 */
+                (self.draw)(self.frame_delta / self.opts.simulation_timestep);
+
+                // Run any updates that are not dependent on time in the simulation. See
+                // `MainLoop.setEnd()` for additional details on how to use this.
+                (self.end)(self.fps, self.end_panic);
+
+                self.end_panic = false;
             }
     }
 }
