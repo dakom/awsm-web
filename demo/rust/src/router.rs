@@ -81,7 +81,8 @@ pub fn start_router(window: web_sys::Window, document: web_sys::Document) -> Res
         "webgl-texture_cube" => webgl::texture_cube::start(window, document, body, webgl_version),
         "webgl-ubos" => webgl::ubos::start(window, document, body),
         "webgl-texture_3d" => webgl::texture_3d::start(window, document, body),
-        "audio-player" => audio::player::start(window, document, body),
+        "audio-player-buffer" => audio::player_buffer::start(window, document, body),
+        "audio-player-element" => audio::player_element::start(window, document, body),
         _ => unknown_route(&pathname, window, document, body),
     }
 }

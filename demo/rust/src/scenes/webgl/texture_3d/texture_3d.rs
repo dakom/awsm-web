@@ -7,7 +7,8 @@ use awsm_web::webgl::{
     BeginMode, BufferMask, DataType, Id, PixelFormat, SimpleTextureOptions, TextureMagFilter,
     TextureMinFilter, TextureOptions, TextureTarget, TextureWrapMode, TextureWrapTarget,
     WebGlTextureSource,
-    ShaderType
+    ShaderType,
+    PixelInternalFormat, PixelDataFormat
 
 };
 use gloo_events::EventListener;
@@ -108,8 +109,8 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
                         lut_texture_id,
                         TextureTarget::Texture3d,
                         &TextureOptions {
-                            internal_format: PixelFormat::Rgb32f,
-                            data_format: PixelFormat::Rgb,
+                            internal_format: PixelInternalFormat::Rgb32f,
+                            data_format: PixelDataFormat::Rgb,
                             data_type: DataType::Float,
                             cube_face: None,
                         },

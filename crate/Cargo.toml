@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.16.0"
+version = "0.17.0"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -43,6 +43,9 @@ audio = [
     "web-sys/AudioBufferSourceOptions",
     "web-sys/AudioDestinationNode",
     "web-sys/AudioBufferOptions",
+    "web-sys/MediaElementAudioSourceNode",
+    "web-sys/HtmlMediaElement",
+    "web-sys/HtmlAudioElement",
     'web-sys/Event',
 ]
 image = [

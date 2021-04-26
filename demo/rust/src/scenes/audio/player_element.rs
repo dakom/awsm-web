@@ -36,8 +36,8 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
 
     let ctx: AudioContext = AudioContext::new()?;
     let future = async move {
-        let bg_loop_buffer = fetch_url(&get_static_href("loop.mp3")).await?.audio(&ctx).await?;
-        let one_shot_buffer = fetch_url(&get_static_href("oneshot.mp3")).await?.audio(&ctx).await?;
+        let bg_loop_url = get_static_href("loop.mp3");
+        let one_shot_url = get_static_href("oneshot.mp3");
 
         container.remove_child(&loading)?;
 
@@ -78,9 +78,9 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                         true => {
                             info!("should be playing loop...");
 
-                            let player = AudioPlayer::play(
+                            let player = AudioPlayer::play_url(
                                 &ctx,
-                                &bg_loop_buffer,
+                                &bg_loop_url,
                                 Some({
                                     let state = Rc::clone(&state);
                                     let render_state = render_state.clone();
@@ -95,7 +95,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                             )
                             .unwrap();
 
-                            player.node.set_loop(true);
+                            player.set_loop(true);
 
                             bg_player = Some(player);
                         }
@@ -119,9 +119,9 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                     match state_obj.oneshot {
                         true => {
                             info!("should be playing oneshot...");
-                            let player = AudioPlayer::play_oneshot(
+                            let player = AudioPlayer::play_oneshot_url(
                                 &ctx,
-                                &one_shot_buffer,
+                                &one_shot_url,
                                 Some({
                                     let state = Rc::clone(&state);
                                     let render_state = render_state.clone();

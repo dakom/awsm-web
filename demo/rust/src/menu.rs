@@ -38,7 +38,8 @@ lazy_static! {
         m.insert("webgl-frame-buffers", Menu {label: "Frame Buffers", source: "webgl/frame_buffers/frame_buffers.rs"});
         m.insert("webgl-render-buffers-multisample", Menu {label: "Render Buffers (multisample)", source: "webgl/render_buffers_multisample/render_buffers_multisample.rs"});
         //Audio
-        m.insert("audio-player", Menu {label: "Player", source: "audio/player.rs"});
+        m.insert("audio-player-buffer", Menu {label: "Player - Buffer", source: "audio/player_buffer.rs"});
+        m.insert("audio-player-element", Menu {label: "Player - Element", source: "audio/player_element.rs"});
 
         //return
         m
@@ -107,7 +108,7 @@ pub fn build_menu(document: &Document) -> Result<web_sys::Node, JsValue> {
         Some("?webgl=2"),
     )?;
 
-    append_menu(&container, &document, "Audio", &vec!["audio-player"], None)?;
+    append_menu(&container, &document, "Audio", &vec!["audio-player-buffer", "audio-player-element"], None)?;
 
     Ok(container)
 }
