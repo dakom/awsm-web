@@ -1,5 +1,7 @@
 use crate::errors::{Error, NativeError};
-use web_sys::Window;
+use web_sys::{Url, Window};
+use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 
 pub fn get_window_size(window: &web_sys::Window) -> Result<(u32, u32), Error> {
     /*
@@ -29,4 +31,14 @@ pub fn get_window_size(window: &web_sys::Window) -> Result<(u32, u32), Error> {
 
 pub fn get_window() -> Result<Window, Error> {
     web_sys::window().ok_or(Error::Native(NativeError::Window))
+}
+
+pub fn same_origin(url: &str) -> Result<bool, JsValue> {
+    if url.starts_with("http://") || url.starts_with("https://") {
+        let location_origin = get_window()?.location().origin()?;
+        let url_origin = Url::new(url)?.origin();
+        Ok(url_origin == location_origin)
+    } else {
+        Ok(true)
+    }
 }

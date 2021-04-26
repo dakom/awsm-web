@@ -1,6 +1,7 @@
 use crate::errors::{Error};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use crate::window::same_origin;
 use web_sys::{AudioBuffer, AudioBufferSourceNode, MediaElementAudioSourceNode, HtmlAudioElement, AudioContext};
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -25,7 +26,7 @@ impl AudioPlayer {
         F: FnMut() -> () + 'static,
     {
         let elem = HtmlAudioElement::new_with_src(url)?;
-        let has_same_origin = same_origin(&self.url)?;
+        let has_same_origin = same_origin(url)?;
         if !has_same_origin {
             elem.set_cross_origin(Some(&"anonymous"));
         }
@@ -149,12 +150,3 @@ impl Drop for AudioPlayer {
     }
 }
 
-pub fn same_origin(url: &str) -> Result<bool, JsValue> {
-    if url.starts_with("http://") || url.starts_with("https://") {
-        let location_origin = get_window()?.location().origin()?;
-        let url_origin = Url::new(url)?.origin();
-        Ok(url_origin == location_origin)
-    } else {
-        Ok(true)
-    }
-}

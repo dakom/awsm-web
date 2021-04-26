@@ -2,7 +2,7 @@ use futures::channel::oneshot::{channel, Receiver, Sender};
 use std::task::{Context, Poll};
 use std::future::Future;
 use std::pin::Pin;
-use crate::window::get_window;
+use crate::window::same_origin;
 use crate::data::TypedData;
 use crate::errors::Error;
 //Don't know why awsm_web needs FutureExt but awsm_renderer doesn't...
@@ -129,16 +129,6 @@ impl Image {
             state: ImageState::Empty,
             closure_holders: None,
         }
-    }
-}
-
-pub fn same_origin(url: &str) -> Result<bool, JsValue> {
-    if url.starts_with("http://") || url.starts_with("https://") {
-        let location_origin = get_window()?.location().origin()?;
-        let url_origin = Url::new(url)?.origin();
-        Ok(url_origin == location_origin)
-    } else {
-        Ok(true)
     }
 }
 
