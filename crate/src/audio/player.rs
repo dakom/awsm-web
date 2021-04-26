@@ -25,6 +25,10 @@ impl AudioPlayer {
         F: FnMut() -> () + 'static,
     {
         let elem = HtmlAudioElement::new_with_src(url)?;
+        let has_same_origin = same_origin(&self.url)?;
+        if !has_same_origin {
+            elem.set_cross_origin(Some(&"anonymous"));
+        }
         elem.set_autoplay(true);
         let cb: Option<Closure<dyn FnMut() -> ()>> = match on_ended {
             Some(f) => {
@@ -145,39 +149,12 @@ impl Drop for AudioPlayer {
     }
 }
 
-/*
-
-pub struct AudioOneShot {
-    pub player: Rc<RefCell<Option<AudioPlayer>>>,
-}
-
-impl AudioOneShot {
-    pub fn play<F>(
-        ctx: &AudioContext,
-        buffer: &AudioBuffer,
-        on_ended: Option<F>,
-    ) -> Result<Self, Error>
-    where
-        F: FnMut() -> () + 'static,
-    {
-
-        let player = Rc::new(RefCell::new(None));
-        let on_ended = Rc::new(RefCell::new(on_ended));
-
-        let _player = AudioPlayer::play_buffer(ctx, buffer, Some({
-            let player = Rc::clone(&player);
-            move || {
-                on_ended.borrow_mut().as_mut().map(|cb| cb());
-                player.borrow_mut().take();
-            }
-        }))?;
-
-        *player.borrow_mut() = Some(_player);
-
-        Ok(Self{
-            player
-        })
+pub fn same_origin(url: &str) -> Result<bool, JsValue> {
+    if url.starts_with("http://") || url.starts_with("https://") {
+        let location_origin = get_window()?.location().origin()?;
+        let url_origin = Url::new(url)?.origin();
+        Ok(url_origin == location_origin)
+    } else {
+        Ok(true)
     }
-
 }
-*/
