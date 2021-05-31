@@ -150,13 +150,13 @@ pub async fn fetch_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &str, method:
     fetch_req(&req, &mut req_init).await
 }
 
-pub async fn fetch_upload_file_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &str, file:&File, method:&str, include_credentials: bool, pairs: &[(A, B)]) -> Result<Response, Error> {
+pub async fn fetch_upload_body_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &str, body:&JsValue, method:&str, include_credentials: bool, pairs: &[(A, B)]) -> Result<Response, Error> {
     let mut req_init = web_sys::RequestInit::new();
     req_init.method(method);
     if include_credentials {
         req_init.credentials(web_sys::RequestCredentials::Include);
     }
-    req_init.body(Some(file));
+    req_init.body(Some(body));
     
 
     let req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
@@ -169,15 +169,30 @@ pub async fn fetch_upload_file_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &
 
     fetch_req(&req, &mut req_init).await
 }
-pub async fn fetch_upload_file(url:&str, file:&File, method:&str) -> Result<Response, Error> {
+pub async fn fetch_upload_body(url:&str, body:&JsValue, method:&str) -> Result<Response, Error> {
     let mut req_init = web_sys::RequestInit::new();
     req_init.method(method);
-    req_init.body(Some(file));
+    req_init.body(Some(body));
 
     let req = web_sys::Request::new_with_str_and_init(url, &req_init)?;
 
     fetch_req(&req, &mut req_init).await
 
+}
+pub async fn fetch_upload_blob_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &str, blob:&Blob, method:&str, include_credentials: bool, pairs: &[(A, B)]) -> Result<Response, Error> {
+    fetch_upload_body_with_headers(url, blob, method, include_credentials, pairs).await
+}
+
+pub async fn fetch_upload_blob(url:&str, blob:&Blob, method:&str) -> Result<Response, Error> {
+    fetch_upload_body(url, blob, method).await
+}
+
+pub async fn fetch_upload_file_with_headers<A: AsRef<str>, B: AsRef<str>>(url: &str, file:&File, method:&str, include_credentials: bool, pairs: &[(A, B)]) -> Result<Response, Error> {
+    fetch_upload_body_with_headers(url, file, method, include_credentials, pairs).await
+}
+
+pub async fn fetch_upload_file(url:&str, file:&File, method:&str) -> Result<Response, Error> {
+    fetch_upload_body(url, file, method).await
 }
 
 #[cfg(feature = "serde_json")]
