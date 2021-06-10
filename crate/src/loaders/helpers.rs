@@ -13,21 +13,21 @@ use futures::{
 use gloo_timers::future::TimeoutFuture;
 
 /// Simple way to spawn a future and cancel it by dropping the handle
-pub fn spawn_handle<F, A>(fut: F) -> FutureHandle
+pub fn spawn_handle<F>(fut: F) -> FutureHandle
 where
-    F: Future<Output = A> + 'static
+    F: Future<Output = ()> + 'static
 {
     let (fut, handle) = abortable(fut);
 
     spawn_local(async move {
-        fut.await;
+        let _ = fut.await;
     });
 
     FutureHandle { inner: handle }
 }
 
 pub struct FutureHandle {
-    pub inner: AbortHandle 
+    inner: AbortHandle 
 }
 
 impl Drop for FutureHandle {
