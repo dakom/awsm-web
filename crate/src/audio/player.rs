@@ -81,7 +81,21 @@ impl AudioPlayer {
     //A regular audio player is effectively a one-shot since dropping will stop it
     //But it can be annoying to need to keep it around in memory until playing is finished
     //So this one-shot will drop itself when finished
-    //It can still be force-dropped by calling borrow_mut().take on the result (see example)
+    //It can still be force-dropped by calling borrow_mut().take()
+    //
+    //Generally it might be good to store one_shots in a higher-level structure like:
+    //pub struct AudioInstance {
+        //pub(super) one_shot: Rc<RefCell<Option<AudioPlayer>>>
+    //}
+    //
+    //
+    //impl Drop for AudioInstance {
+        //fn drop(&mut self) {
+            //log::info!("audio dropped!!");
+            //self.one_shot.borrow_mut().take();
+        //}
+    //}
+
     pub fn play_oneshot_buffer<F>(
         ctx: &AudioContext,
         buffer: &AudioBuffer,
