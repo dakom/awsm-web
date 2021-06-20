@@ -131,10 +131,7 @@ impl AudioMixer {
 
 
     /// Play a clip and get a Handle to hold (simple API around add_source)
-    pub fn play<F>(&self, source: AudioSource, is_loop: bool) -> Result<AudioHandle, Error> 
-    where
-        F: FnMut() -> () + 'static,
-
+    pub fn play(&self, source: AudioSource, is_loop: bool) -> Result<AudioHandle, Error> 
     {
         let clip = self.with_ctx(|ctx| {
             AudioClip::new(
