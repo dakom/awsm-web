@@ -8,7 +8,6 @@ use super::{
 use crate::errors::{Error, NativeError};
 use web_sys::WebGl2RenderingContext;
 use rustc_hash::FxHashMap;
-use std::collections::hash_map::Entry;
 pub struct UniformBufferActivation {
     pub block_index: u32,
     pub offsets: FxHashMap<String, u32>

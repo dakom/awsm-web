@@ -1,6 +1,5 @@
 use crate::errors::{Error, NativeError};
 use web_sys::{Url, Window};
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 
 pub fn get_window_size(window: &web_sys::Window) -> Result<(u32, u32), Error> {

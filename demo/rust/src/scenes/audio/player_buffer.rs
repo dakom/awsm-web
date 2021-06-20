@@ -1,5 +1,5 @@
 use crate::router::get_static_href;
-use awsm_web::audio::{AudioPlayer};
+use awsm_web::audio::{AudioMixer, AudioHandle, AudioSource, AudioClip, AudioClipOptions};
 use awsm_web::loaders::fetch::fetch_url;
 use gloo_events::EventListener;
 use log::info;
@@ -8,18 +8,24 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
-use web_sys::{AudioContext, Document, Element, HtmlElement, Window};
+use web_sys::{Document, Element, HtmlElement, Window};
 
 struct State {
     bg_loop: bool,
+    regular: bool,
     oneshot: bool,
+    stop_is_pause: bool,
+    pause_is_clip: bool,
 }
 
 impl State {
     fn new() -> Self {
         Self {
             bg_loop: false,
+            regular: false,
             oneshot: false,
+            stop_is_pause: false,
+            pause_is_clip: false
         }
     }
 }
@@ -34,28 +40,53 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
     loading.set_text_content(Some("loading audio..."));
     container.append_child(&loading)?;
 
-    let ctx: AudioContext = AudioContext::new()?;
+    let mixer = Rc::new(AudioMixer::new(None));
+
     let future = async move {
-        let bg_loop_buffer = fetch_url(&get_static_href("loop.mp3")).await?.audio(&ctx).await?;
+        let ctx = mixer.clone_audio_ctx();
+
+        //let bg_loop_buffer = fetch_url(&get_static_href("loop.mp3")).await?.audio(&ctx).await?;
+        let bg_loop_buffer = fetch_url(&get_static_href("count.mp3")).await?.audio(&ctx).await?;
         let one_shot_buffer = fetch_url(&get_static_href("oneshot.mp3")).await?.audio(&ctx).await?;
+        let regular_buffer = fetch_url(&get_static_href("oneshot.mp3")).await?.audio(&ctx).await?;
 
         container.remove_child(&loading)?;
 
         let play_loop = create_button(&document, &container, "")?;
+        let play_regular = create_button(&document, &container, "")?;
         let play_oneshot = create_button(&document, &container, "")?;
+        let stop_is_pause = create_button(&document, &container, "")?;
+        let pause_is_clip = create_button(&document, &container, "")?;
 
         let render_state = {
             let play_loop = play_loop.clone();
+            let play_regular = play_regular.clone();
             let play_oneshot = play_oneshot.clone();
+            let stop_is_pause = stop_is_pause.clone();
+            let pause_is_clip = pause_is_clip.clone();
+
             move |state: &State| {
                 match state.bg_loop {
                     true => play_loop.set_text_content(Some("stop loop")),
                     false => play_loop.set_text_content(Some("play loop")),
                 };
+                match state.regular {
+                    true => play_regular.set_text_content(Some("stop regular")),
+                    false => play_regular.set_text_content(Some("play regular")),
+                };
 
                 match state.oneshot {
                     true => play_oneshot.set_text_content(Some("stop oneshot")),
                     false => play_oneshot.set_text_content(Some("play oneshot")),
+                };
+
+                match state.stop_is_pause {
+                    true => stop_is_pause.set_text_content(Some("stop is pause")),
+                    false => stop_is_pause.set_text_content(Some("stop is drop")),
+                };
+                match state.pause_is_clip {
+                    true => pause_is_clip.set_text_content(Some("pause is clip")),
+                    false => pause_is_clip.set_text_content(Some("pause is suspend")),
                 };
             }
         };
@@ -63,13 +94,14 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
         let state = Rc::new(RefCell::new(State::new()));
         render_state(&state.borrow());
 
-        let mut bg_player: Option<AudioPlayer> = None;
-        let mut oneshot_player: Option<Rc<RefCell<Option<AudioPlayer>>>> = None;
+        let mut bg_handle: Option<AudioHandle> = None;
+        let mut regular_handle: Option<AudioHandle> = None;
+        let mut oneshot_clip: Rc<RefCell<Option<AudioClip>>> = Rc::new(RefCell::new(None));
 
         let handle_loop = {
             let state = Rc::clone(&state);
             let render_state = render_state.clone();
-            let ctx = ctx.clone();
+            let mixer = mixer.clone(); 
             move |_: &_| {
                 {
                     let mut state_obj = state.borrow_mut();
@@ -78,29 +110,106 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                         true => {
                             info!("should be playing loop...");
 
-                            let player = AudioPlayer::play_buffer(
-                                &ctx,
-                                &bg_loop_buffer,
-                                Some({
-                                    let state = Rc::clone(&state);
-                                    let render_state = render_state.clone();
-                                    move || {
-                                        info!("loop ended!");
-                                        //this won't ever actually happen
-                                        let mut state = state.borrow_mut();
-                                        state.bg_loop = false;
-                                        render_state(&state);
+                            if let Some(handle) = bg_handle.as_ref() {
+                                if state_obj.pause_is_clip {
+                                    handle.play();
+                                } else {
+                                    mixer.resume();
+                                }
+                            } else if bg_handle.is_none() {
+                                let handle = mixer.add_source( 
+                                    AudioSource::Buffer(bg_loop_buffer.clone()),
+                                    AudioClipOptions {
+                                        auto_play: true,
+                                        is_loop: true,
+                                        on_ended: Some({
+                                            let state = Rc::clone(&state);
+                                            let render_state = render_state.clone();
+                                            move || {
+                                                info!("loop ended!");
+                                                //this won't ever actually happen
+                                                let mut state = state.borrow_mut();
+                                                state.bg_loop = false;
+                                                render_state(&state);
+                                            }
+                                        })
                                     }
-                                }),
-                            )
-                            .unwrap();
+                                )
+                                .unwrap_throw();
 
-                            player.set_loop(true);
 
-                            bg_player = Some(player);
+                                bg_handle = Some(handle);
+                            }
                         }
                         false => {
-                            bg_player.take();
+                            if state_obj.stop_is_pause {
+                                if state_obj.pause_is_clip {
+                                    if let Some(handle) = bg_handle.as_ref() {
+                                        handle.pause();
+                                    }
+                                } else {
+                                    mixer.suspend();
+                                }
+                            } else {
+                                bg_handle.take();
+                            }
+                        }
+                    }
+                }
+                render_state(&state.borrow());
+            }
+        };
+        let handle_regular = {
+            let state = Rc::clone(&state);
+            let render_state = render_state.clone();
+            let mixer = mixer.clone(); 
+            move |_: &_| {
+                {
+                    let mut state_obj = state.borrow_mut();
+                    state_obj.regular = !state_obj.regular ;
+                    match state_obj.regular {
+                        true => {
+                            info!("should be playing regular...");
+
+                            if let Some(handle) = regular_handle.as_ref() {
+                                if state_obj.pause_is_clip {
+                                    handle.play();
+                                } else {
+                                    mixer.resume();
+                                }
+                            } else if regular_handle.is_none() {
+                                let handle = mixer.add_source( 
+                                    AudioSource::Buffer(regular_buffer.clone()),
+                                    AudioClipOptions {
+                                        auto_play: true,
+                                        is_loop: false,
+                                        on_ended: Some({
+                                            let state = Rc::clone(&state);
+                                            let render_state = render_state.clone();
+                                            move || {
+                                                info!("regular ended! - explicitly stop/drop!");
+                                            }
+                                        })
+                                    }
+                                )
+                                .unwrap_throw();
+
+
+                                regular_handle = Some(handle);
+                            }
+                        }
+                        false => {
+                            if state_obj.stop_is_pause {
+                                if state_obj.pause_is_clip {
+                                    if let Some(handle) = regular_handle.as_ref() {
+                                        handle.pause();
+                                    }
+                                } else {
+                                    mixer.suspend();
+                                }
+                            } else {
+                                regular_handle.take();
+                            }
                         }
                     }
                 }
@@ -111,7 +220,8 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
         let handle_oneshot = {
             let state = Rc::clone(&state);
             let render_state = render_state.clone();
-            let ctx = ctx.clone();
+            let mixer = mixer.clone();
+            let oneshot_clip = oneshot_clip.clone();
             move |_: &_| {
                 {
                     let mut state_obj = state.borrow_mut();
@@ -119,27 +229,26 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                     match state_obj.oneshot {
                         true => {
                             info!("should be playing oneshot...");
-                            let player = AudioPlayer::play_oneshot_buffer(
-                                &ctx,
-                                &one_shot_buffer,
+                            let clip = mixer.play_oneshot(
+                                AudioSource::Buffer(one_shot_buffer.clone()),
                                 Some({
-                                    let state = Rc::clone(&state);
+                                    let state = state.clone();
                                     let render_state = render_state.clone();
-                                    move || {
-                                        info!("oneshot ended!");
-                                        let mut state = state.borrow_mut();
-                                        state.oneshot = false;
-                                        render_state(&state);
-                                    }
-                                }),
+                                        move || {
+                                            info!("oneshot ended!");
+                                            let mut state = state.borrow_mut();
+                                            state.oneshot = false;
+                                            render_state(&state);
+                                        }
+                                })
                             )
-                            .unwrap();
+                            .unwrap_throw();
 
-                            oneshot_player = Some(player);
+                            *oneshot_clip.borrow_mut() = Some(clip);
                         }
                         false => {
-                            if let Some(player) = oneshot_player.take() {
-                                player.borrow_mut().take();
+                            if let Some(clip) = oneshot_clip.borrow_mut().take() {
+                                clip.force_kill_oneshot();
                             }
                         }
                     }
@@ -148,8 +257,34 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
             }
         };
 
+        let handle_stop_is_pause = {
+            let state = Rc::clone(&state);
+            let render_state = render_state.clone();
+            move |_: &_| {
+                {
+                    let mut state_obj = state.borrow_mut();
+                    state_obj.stop_is_pause = !state_obj.stop_is_pause;
+                }
+                render_state(&state.borrow());
+            }
+        };
+        let handle_pause_is_clip = {
+            let state = Rc::clone(&state);
+            let render_state = render_state.clone();
+            move |_: &_| {
+                {
+                    let mut state_obj = state.borrow_mut();
+                    state_obj.pause_is_clip = !state_obj.pause_is_clip;
+                }
+                render_state(&state.borrow());
+            }
+        };
+
         EventListener::new(&play_loop, "click", handle_loop).forget();
+        EventListener::new(&play_regular, "click", handle_regular).forget();
         EventListener::new(&play_oneshot, "click", handle_oneshot).forget();
+        EventListener::new(&stop_is_pause, "click", handle_stop_is_pause).forget();
+        EventListener::new(&pause_is_clip, "click", handle_pause_is_clip).forget();
 
         Ok(JsValue::null())
     };

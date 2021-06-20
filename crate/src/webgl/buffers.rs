@@ -3,9 +3,6 @@ use crate::errors::{Error, NativeError};
 use std::marker::PhantomData;
 use web_sys::WebGlBuffer;
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext};
-use wasm_bindgen::{prelude::*, JsCast};
-use js_sys::WebAssembly;
-use std::convert::TryInto;
 /*
  * The direct uniform uploads are written as traits on this newtype wrapper
  * in order to allow working either f32 or u8

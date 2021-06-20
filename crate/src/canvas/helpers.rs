@@ -1,4 +1,4 @@
-use web_sys::{window, ImageData, HtmlImageElement, HtmlCanvasElement, CanvasRenderingContext2d, Blob};
+use web_sys::{HtmlCanvasElement, Blob};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use futures::channel::oneshot::{channel, Receiver, Sender};
@@ -28,7 +28,7 @@ impl CanvasToBlobFuture {
 enum CanvasToBlobState {
     Empty,
     Loading {
-        receiver: Receiver<(Blob)>,
+        receiver: Receiver<Blob>,
     },
 }
 
