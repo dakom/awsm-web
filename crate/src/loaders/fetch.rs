@@ -120,7 +120,7 @@ impl Response {
 /// Generally, this is for internal use and it's recommended to use the other helper functions
 /// It's made pub to avoid needing a helper function to cover *every* scenario
 pub async fn fetch_req(req: &Request, init:&mut RequestInit) -> Result<Response, Error> {
-    let abort = Abort::new().map_err(|err| Error::from(err))?;
+    let abort = AbortController::new().map_err(|err| Error::from(err))?;
 
     init.signal(Some(&abort.signal()));
 
