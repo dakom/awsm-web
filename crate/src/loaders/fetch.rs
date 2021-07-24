@@ -5,7 +5,7 @@ use js_sys::ArrayBuffer;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{ Request, AbortController, AbortSignal,RequestInit, File, Blob};
+use web_sys::{ Request, AbortSignal,RequestInit, File, Blob};
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, de::DeserializeOwned};
@@ -15,14 +15,15 @@ use serde::{Serialize, de::DeserializeOwned};
  ** these fetches will automatically abort when dropped :D
  */
 
-struct Abort {
-    controller: AbortController,
+/// Wrapper for web_sys::AbortController which will abort() when dropped
+pub struct AbortController {
+    controller: web_sys::AbortController,
 }
 
-impl Abort {
+impl AbortController {
     fn new() -> Result<Self, JsValue> {
         Ok(Self {
-            controller: AbortController::new()?,
+            controller: web_sys::AbortController::new()?,
         })
     }
 
@@ -30,8 +31,15 @@ impl Abort {
         self.controller.signal()
     }
 }
+impl Deref for AbortController {
+    type Target = web_sys::AbortController;
 
-impl Drop for Abort {
+    fn deref(&self) -> &Self::Target {
+        &self.controller
+    }
+}
+
+impl Drop for AbortController {
     fn drop(&mut self) {
         self.controller.abort();
     }
@@ -39,7 +47,7 @@ impl Drop for Abort {
 
 pub struct Response {
     response: web_sys::Response,
-    _abort: Abort,
+    _abort: AbortController,
 }
 
 impl Deref for Response {
