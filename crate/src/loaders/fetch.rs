@@ -16,22 +16,19 @@ use serde::{Serialize, de::DeserializeOwned};
  */
 
 /// Wrapper for web_sys::AbortController which will abort() when dropped
-pub struct AbortController {
+pub struct AbortHandle {
     controller: web_sys::AbortController,
 }
 
-impl AbortController {
+impl AbortHandle {
     fn new() -> Result<Self, JsValue> {
         Ok(Self {
             controller: web_sys::AbortController::new()?,
         })
     }
-
-    fn signal(&self) -> AbortSignal {
-        self.controller.signal()
-    }
 }
-impl Deref for AbortController {
+
+impl Deref for AbortHandle {
     type Target = web_sys::AbortController;
 
     fn deref(&self) -> &Self::Target {
@@ -39,7 +36,7 @@ impl Deref for AbortController {
     }
 }
 
-impl Drop for AbortController {
+impl Drop for AbortHandle {
     fn drop(&mut self) {
         self.controller.abort();
     }
@@ -47,7 +44,7 @@ impl Drop for AbortController {
 
 pub struct Response {
     response: web_sys::Response,
-    _abort: AbortController,
+    _abort: AbortHandle,
 }
 
 impl Deref for Response {
@@ -120,7 +117,7 @@ impl Response {
 /// Generally, this is for internal use and it's recommended to use the other helper functions
 /// It's made pub to avoid needing a helper function to cover *every* scenario
 pub async fn fetch_req(req: &Request, init:&mut RequestInit) -> Result<Response, Error> {
-    let abort = AbortController::new().map_err(|err| Error::from(err))?;
+    let abort = AbortHandle::new().map_err(|err| Error::from(err))?;
 
     init.signal(Some(&abort.signal()));
 
