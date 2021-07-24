@@ -9,42 +9,17 @@ use web_sys::{ Request, AbortSignal,RequestInit, File, Blob};
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, de::DeserializeOwned};
+use super::helpers::AbortController;
 
 /** core fetch primitives. Thanks Pauan! 
  **
  ** these fetches will automatically abort when dropped :D
  */
 
-/// Wrapper for web_sys::AbortController which will abort() when dropped
-pub struct AbortHandle {
-    controller: web_sys::AbortController,
-}
-
-impl AbortHandle {
-    fn new() -> Result<Self, JsValue> {
-        Ok(Self {
-            controller: web_sys::AbortController::new()?,
-        })
-    }
-}
-
-impl Deref for AbortHandle {
-    type Target = web_sys::AbortController;
-
-    fn deref(&self) -> &Self::Target {
-        &self.controller
-    }
-}
-
-impl Drop for AbortHandle {
-    fn drop(&mut self) {
-        self.controller.abort();
-    }
-}
 
 pub struct Response {
     response: web_sys::Response,
-    _abort: AbortHandle,
+    _abort: AbortController,
 }
 
 impl Deref for Response {
@@ -117,7 +92,7 @@ impl Response {
 /// Generally, this is for internal use and it's recommended to use the other helper functions
 /// It's made pub to avoid needing a helper function to cover *every* scenario
 pub async fn fetch_req(req: &Request, init:&mut RequestInit) -> Result<Response, Error> {
-    let abort = AbortHandle::new().map_err(|err| Error::from(err))?;
+    let abort = AbortController::new().map_err(|err| Error::from(err))?;
 
     init.signal(Some(&abort.signal()));
 

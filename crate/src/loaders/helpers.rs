@@ -1,4 +1,4 @@
-// Thanks for the help Pauan!
+use std::ops::Deref;
 use wasm_bindgen_futures::spawn_local;
 use std::{
     future::Future,
@@ -6,13 +6,45 @@ use std::{
     rc::Rc,
     cell::RefCell
 };
+use wasm_bindgen::prelude::*;
 use futures::{
     future::{abortable, AbortHandle, select, Either},
     pin_mut
 };
 use gloo_timers::future::TimeoutFuture;
 
-/// Simple way to spawn a future and cancel it by dropping the handle
+/// Wrapper for web_sys::AbortController which will abort() when dropped
+/// This can be used on the JS side to create genuinely cancelable Promises
+/// If the Promise computation itself can be cancelled
+/// See example here: https://codepen.io/dakom/pen/LYyOvwV?editors=1111
+pub struct AbortController {
+    inner: web_sys::AbortController,
+}
+
+impl AbortController {
+    pub fn new() -> Result<Self, JsValue> {
+        Ok(Self {
+            inner: web_sys::AbortController::new()?,
+        })
+    }
+}
+
+impl Deref for AbortController {
+    type Target = web_sys::AbortController;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl Drop for AbortController {
+    fn drop(&mut self) {
+        self.inner.abort();
+    }
+}
+
+/// Simple way to spawn a Rust future and cancel it by dropping the handle
+/// (this will not inherently cancel a JS promise if it was created via JsFuture)
 pub fn spawn_handle<F>(fut: F) -> FutureHandle
 where
     F: Future<Output = ()> + 'static
