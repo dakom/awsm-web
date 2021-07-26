@@ -215,7 +215,7 @@ pub async fn fetch_upload_file_with_headers_abortable<A: AsRef<str>, B: AsRef<st
     fetch_upload_body_with_headers_abortable(url, file, method, include_credentials, abort_controller, pairs).await
 }
 
-pub async fn fetch_upload_file(url:&str, file:&File, method:&str, abort_controller: Option<&AbortController>) -> Result<Response, Error> {
+pub async fn fetch_upload_file(url:&str, file:&File, method:&str) -> Result<Response, Error> {
     fetch_upload_file_abortable(url, file, method, None).await
 }
 
