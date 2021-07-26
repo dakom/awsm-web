@@ -22,10 +22,10 @@ pub struct AbortController {
 }
 
 impl AbortController {
-    pub fn new() -> Result<Self, JsValue> {
-        Ok(Self {
-            inner: web_sys::AbortController::new()?,
-        })
+    pub fn new() -> Self {
+        Self {
+            inner: web_sys::AbortController::new().unwrap(),
+        }
     }
 }
 
