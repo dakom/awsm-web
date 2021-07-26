@@ -2,7 +2,7 @@
 //! They abort when dropped (just like Rust futures should!)
 //! To abort imperatively (not via dropping the future), use the _abortable variants and pass in an AbortController
 
-use crate::errors::Error;
+use crate::errors::{Error, NativeError};
 use std::ops::Deref;
 //Don't know why awsm_web needs FutureExt but awsm_renderer doesn't...
 use js_sys::ArrayBuffer;
@@ -97,6 +97,8 @@ impl Response {
 ///
 /// Generally, this is for internal use and it's recommended to use the other helper functions
 /// It's made pub to avoid needing a helper function to cover *every* scenario
+///
+/// The Error type can be checked if it was aborted by calling .is_abort()
 pub async fn fetch_req(req: &Request, abort_controller: Option<&AbortController>, init:&mut RequestInit) -> Result<Response, Error> {
     //The Response can only take ownership of a locally created abort_controller
     //But we apply it to the init arg in both cases
@@ -116,11 +118,13 @@ pub async fn fetch_req(req: &Request, abort_controller: Option<&AbortController>
         .unwrap_throw()
         .fetch_with_request_and_init(req, init);
 
-    let response = JsFuture::from(future)
-        .await?
-        .unchecked_into::<web_sys::Response>();
+    JsFuture::from(future).await
+        .map(|response| {
+            let response = response.unchecked_into::<web_sys::Response>();
+            Response { response, _abort: abort }
+        })
+        .map_err(|err| err.into())
 
-    Ok(Response { response, _abort: abort })
 }
 
 pub async fn fetch_url(url:&str) -> Result<Response, Error> {

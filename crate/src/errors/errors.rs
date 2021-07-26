@@ -9,6 +9,7 @@ pub enum Error {
 }
 
 pub enum NativeError {
+    Abort,
     Canvas2dContext,
     WebGlContext,
     WebGlProgram,
@@ -69,6 +70,26 @@ impl Error {
             Error::Native(err) => JsValue::from_str(err.to_string().as_str()),
         }
     }
+
+    pub fn is_abort(&self) -> bool {
+        match self {
+            Error::Native(err) => std::mem::discriminant(err) == std::mem::discriminant(&NativeError::Abort),
+            Error::Js(err) => {
+                match js_value_name(err) {
+                    Some(name) => name == "AbortError",
+                    _ => false
+                }
+            },
+            _ => false,
+        }
+    }
+
+}
+
+pub fn js_value_name(err:&JsValue) -> Option<String> {
+    js_sys::Reflect::get(&err, &JsValue::from_str("name"))
+        .ok()
+        .and_then(|value| value.as_string())
 }
 
 impl fmt::Debug for Error {
@@ -104,6 +125,7 @@ impl fmt::Display for Error {
 impl NativeError {
     pub fn default_str(self: &Self) -> &'static str {
         match self {
+            NativeError::Abort => "aborted",
             NativeError::Canvas2dContext => "couldn't create 2d canvas context",
             NativeError::WebGlContext => "couldn't create webgl context",
             NativeError::WebGlProgram => "couldn't create webgl program",
