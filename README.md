@@ -5,6 +5,8 @@
 [![Documentation](https://docs.rs/awsm_web/badge.svg)](https://docs.rs/awsm_web)
 [![Demo](https://img.shields.io/badge/demo-launch-yellow)](https://dakom.github.io/awsm-web)
 
+# [DEMO](https://dakom.github.io/awsm-web)
+
 ## About
 
 awsm_web is primarily used as a building block for other crates in the [awsm](https://github.com/dakom/awsm) ecosystem.
