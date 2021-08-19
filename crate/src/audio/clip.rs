@@ -115,7 +115,12 @@ impl AudioClipState {
             AudioSource::Url(url) => {
                 //uses an element internally
                 //maybe in the future use streaming api?
-                let elem = HtmlAudioElement::new_with_src(&url)?;
+
+
+                //seems a bit more stable in terms of CORS issues to set
+                //src only after setting cross_origin
+                let elem = HtmlAudioElement::new()?;
+
                 let has_same_origin = same_origin(&url)?;
                 if !has_same_origin {
                     elem.set_cross_origin(Some(&"anonymous"));
@@ -133,6 +138,8 @@ impl AudioClipState {
                 let node = ctx.create_media_element_source(&elem)?;
 
                 node.connect_with_audio_node(&destination)?;
+
+                elem.set_src(&url);
 
                 Self { 
                     destination,

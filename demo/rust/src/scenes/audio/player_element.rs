@@ -43,8 +43,6 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
     let mixer = Rc::new(AudioMixer::new(None));
 
     let future = async move {
-        let ctx = mixer.clone_audio_ctx();
-
         //let bg_loop_url = get_static_href("loop.mp3");
         let bg_loop_url = get_static_href("count.mp3");
         let one_shot_url = get_static_href("oneshot.mp3");
