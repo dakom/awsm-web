@@ -42,6 +42,8 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
 
     let mixer = Rc::new(AudioMixer::new(None));
 
+    log::info!("context available: {}", mixer.context_available());
+
     let future = async move {
         //let bg_loop_url = get_static_href("loop.mp3");
         let bg_loop_url = get_static_href("count.mp3");
@@ -112,7 +114,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                 if state_obj.pause_is_clip {
                                     handle.play();
                                 } else {
-                                    mixer.resume();
+                                    mixer.resume_then(|| {});
                                 }
                             } else if bg_handle.is_none() {
                                 let handle = mixer.add_source( 
@@ -147,7 +149,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                         handle.pause();
                                     }
                                 } else {
-                                    mixer.suspend();
+                                    mixer.suspend_then(|| {});
                                 }
                             } else {
                                 bg_handle.take();
@@ -174,7 +176,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                 if state_obj.pause_is_clip {
                                     handle.play();
                                 } else {
-                                    mixer.resume();
+                                    mixer.resume_then(|| {});
                                 }
                             } else if regular_handle.is_none() {
                                 let handle = mixer.add_source( 
@@ -204,7 +206,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                         handle.pause();
                                     }
                                 } else {
-                                    mixer.suspend();
+                                    mixer.suspend_then(|| {});
                                 }
                             } else {
                                 regular_handle.take();

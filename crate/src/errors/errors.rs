@@ -11,6 +11,7 @@ pub enum Error {
 pub enum NativeError {
     Abort,
     Canvas2dContext,
+    AudioContext,
     WebGlContext,
     WebGlProgram,
     WebGlCanvas,
@@ -128,6 +129,7 @@ impl NativeError {
             NativeError::Abort => "aborted",
             NativeError::Canvas2dContext => "couldn't create 2d canvas context",
             NativeError::WebGlContext => "couldn't create webgl context",
+            NativeError::AudioContext => "couldn't create audio context",
             NativeError::WebGlProgram => "couldn't create webgl program",
             NativeError::WebGlCanvas => "couldn't get canvas from webgl context",
             NativeError::WebGlVersion1 => "expected webgl version 1",

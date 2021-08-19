@@ -114,7 +114,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                 if state_obj.pause_is_clip {
                                     handle.play();
                                 } else {
-                                    mixer.resume();
+                                    mixer.resume_then(|| {});
                                 }
                             } else if bg_handle.is_none() {
                                 let handle = mixer.add_source( 
@@ -148,7 +148,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                         handle.pause();
                                     }
                                 } else {
-                                    mixer.suspend();
+                                    mixer.suspend_then(|| {});
                                 }
                             } else {
                                 bg_handle.take();
@@ -175,7 +175,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                 if state_obj.pause_is_clip {
                                     handle.play();
                                 } else {
-                                    mixer.resume();
+                                    mixer.resume_then(|| {});
                                 }
                             } else if regular_handle.is_none() {
                                 let handle = mixer.add_source( 
@@ -205,7 +205,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                         handle.pause();
                                     }
                                 } else {
-                                    mixer.suspend();
+                                    mixer.suspend_then(|| {});
                                 }
                             } else {
                                 regular_handle.take();

@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.24.2"
+version = "0.25.0"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -36,6 +36,7 @@ dom= [
 audio = [
     # audio
     "web-sys/AudioContext",
+    "web-sys/AudioContextState",
     "web-sys/AudioBuffer",
     "web-sys/AudioNode",
     "web-sys/AudioContextOptions",

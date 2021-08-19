@@ -1,5 +1,5 @@
-use web_sys::{GainNode, AudioContext};
-use crate::errors::Error;
+use web_sys::{GainNode, AudioContext, AudioContextState};
+use crate::errors::{Error, NativeError};
 use std::{
     rc::Rc,
     cell::RefCell,
@@ -12,13 +12,18 @@ use wasm_bindgen::JsCast;
 use super::clip::*;
 
 pub struct AudioMixer {
-    //All operations need to go through with_ctx
+    //All operations need to go through try_with_ctx or with_ctx_unchecked
     //So that we can lazy-load it
     ctx: RefCell<Option<Context>>,
     //in the context of a mixer we want to be able to pass around
     //simple handle/ids instead of the clips directly
     //so a lookup is maintained and handles are given out
     clip_lookup: ClipLookup,
+
+    /// Treats a suspended AudioContext as invalid, closes it
+    /// and creates a new AudioContext as needed
+    /// this is set to true by default (i.e. when creating with new())
+    pub close_suspended: bool 
 
 }
 
@@ -45,6 +50,7 @@ impl AudioMixer {
         Self {
             ctx: RefCell::new(ctx.map(|audio| Context::new(audio).unwrap_throw())),
             clip_lookup: Rc::new(RefCell::new(BeachMap::new())),
+            close_suspended: true,
         }
     }
 
@@ -63,48 +69,95 @@ impl AudioMixer {
     }
 
     /// Set the gain/volume
-    pub fn set_gain(&self, value: f32) {
-        self.with_ctx(|ctx| {
+    pub fn try_set_gain(&self, value: f32) -> Result<(), Error> {
+        self.try_with_ctx(|ctx| {
             ctx.gain.gain().set_value_at_time(value, ctx.audio.current_time());
         })
     }
-
-    /// Helper in case the AudioContext is needed on the outside
-    pub fn clone_audio_ctx(&self) -> AudioContext {
-        self.with_ctx(|ctx| ctx.audio.clone())
+    pub fn set_gain(&self, value: f32) {
+        self.try_set_gain(value).unwrap();
     }
 
-    /// Just used for testing mostly
-    pub fn suspend(&self) {
-        self.with_ctx(|ctx| {
+    /// Helper in case the AudioContext is needed on the outside
+    pub fn try_clone_audio_ctx(&self) -> Result<AudioContext, Error> {
+        self.try_with_ctx(|ctx| ctx.audio.clone())
+    }
+    pub fn clone_audio_ctx(&self) -> AudioContext {
+        self.try_clone_audio_ctx().unwrap()
+    }
+
+    /// Mostly just used for testing.
+    pub fn suspend_then(&self, f: impl FnOnce() + 'static) {
+        self.try_with_ctx(move |ctx| {
             let promise = ctx.audio.suspend().unwrap_throw();
             spawn_local(async move {
                 let _ = JsFuture::from(promise).await;
+                f();
             });
         });
     }
 
-    /// Just used for testing mostly
-    pub fn resume(&self) {
-        self.with_ctx(|ctx| {
+    /// Mostly just used for testing.
+    pub fn resume_then(&self, f: impl FnOnce() + 'static) {
+        self.try_with_ctx(move |ctx| {
             let promise = ctx.audio.resume().unwrap_throw();
             spawn_local(async move {
                 let _ = JsFuture::from(promise).await;
+                f();
             });
         });
     }
 
+    pub fn context_available(&self) -> bool {
+        self.try_with_ctx(|_| true).unwrap_or(false)
+    }
+
     //Lazy-creates the AudioContext and GainNode just in time
-    pub fn with_ctx<A>(&self, f: impl FnOnce(&Context) -> A) -> A {
-        let mut ctx = self.ctx.borrow_mut();
-        if let Some(ctx) = ctx.as_ref() {
-            f(ctx)
-        } else {
-            let new_ctx = Context::new(AudioContext::new().unwrap_throw()).unwrap_throw();
-            let ret = f(&new_ctx);
-            *ctx = Some(new_ctx);
-            ret
+    pub fn with_ctx_unchecked<A>(&self, f: impl FnOnce(&Context) -> A) -> A {
+        self.try_with_ctx(f).unwrap()
+    }
+
+    pub fn try_with_ctx<A>(&self, f: impl FnOnce(&Context) -> A) -> Result<A, Error> {
+        let mut lock = self.ctx.borrow_mut();
+
+        if lock.is_none() {
+            *lock = Some(Context::new(AudioContext::new().unwrap_throw()).unwrap_throw());
         }
+
+        let ctx = lock.as_ref().unwrap();
+
+        match ctx.audio.state() {
+            AudioContextState::Suspended => {
+                if self.close_suspended {
+                    ctx.audio.close();
+                    
+                    //try again..
+                    let audio_ctx = AudioContext::new().unwrap_throw();
+                    match audio_ctx.state() {
+                        AudioContextState::Running => {
+                            let ctx = Context::new(audio_ctx).unwrap_throw();
+                            let ret = f(&ctx);
+                            *lock = Some(ctx);
+                            Ok(ret)
+                        },
+                        _ => {
+                            *lock = None;
+                            Err(Error::Native(NativeError::AudioContext))
+                        }
+                    }
+                } else {
+                    Ok(f(&ctx))
+                }
+            },
+            AudioContextState::Running => {
+                Ok(f(&ctx))
+            },
+            _ => {
+                *lock = None;
+                Err(Error::Native(NativeError::AudioContext))
+            }
+        }
+        
     }
 
     /// Oneshots are AudioClips because they drop themselves
@@ -115,7 +168,7 @@ impl AudioMixer {
         F: FnMut() -> () + 'static,
 
     {
-        self.with_ctx(|ctx| {
+        self.try_with_ctx(|ctx| {
             AudioClip::new_oneshot(
                 &ctx.audio, 
                 source, 
@@ -126,6 +179,7 @@ impl AudioMixer {
                     on_ended, 
                 })
         })
+        .and_then(|x| x)
 
     }
 
@@ -133,7 +187,7 @@ impl AudioMixer {
     /// Play a clip and get a Handle to hold (simple API around add_source)
     pub fn play(&self, source: AudioSource, is_loop: bool) -> Result<AudioHandle, Error> 
     {
-        let clip = self.with_ctx(|ctx| {
+        let clip = self.try_with_ctx(|ctx| {
             AudioClip::new(
                 &ctx.audio, 
                 source, 
@@ -143,7 +197,8 @@ impl AudioMixer {
                     is_loop,
                     on_ended: None::<fn()>, 
                 })
-        })?;
+        })
+        .and_then(|x| x)?;
 
         self.add_clip(clip)
     }
@@ -154,9 +209,10 @@ impl AudioMixer {
         F: FnMut() -> () + 'static,
 
     {
-        let clip = self.with_ctx(|ctx| {
+        let clip = self.try_with_ctx(|ctx| {
             AudioClip::new(&ctx.audio, source, ctx.gain.clone().unchecked_into(), options) 
-        })?;
+        })
+        .and_then(|x| x)?;
 
         self.add_clip(clip)
     }
