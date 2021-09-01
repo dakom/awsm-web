@@ -230,9 +230,9 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                     match state_obj.oneshot {
                         true => {
                             info!("should be playing oneshot...");
-                            let clip = mixer.play_oneshot(
+                            let clip = mixer.play_oneshot_on_ended(
                                 AudioSource::Url(one_shot_url.clone()),
-                                Some({
+                                {
                                     let state = state.clone();
                                     let render_state = render_state.clone();
                                         move || {
@@ -241,7 +241,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                                             state.oneshot = false;
                                             render_state(&state);
                                         }
-                                })
+                                }
                             )
                             .unwrap_throw();
 

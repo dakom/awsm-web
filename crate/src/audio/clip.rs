@@ -49,14 +49,14 @@ enum AudioSourceNode {
 }
 
 impl AudioClip {
-    pub fn new<F>(ctx: &AudioContext, source: AudioSource, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Self, Error>  
+    pub fn new<F, A: Into<AudioSource>>(ctx: &AudioContext, source: A, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Self, Error>  
     where
         F: FnMut() -> () + 'static,
     {
         Ok(Self::Regular(AudioClipState::new(ctx, source, destination, options)?))
     }
 
-    pub fn new_oneshot<F>(ctx: &AudioContext, source: AudioSource, destionation: AudioNode, options: AudioClipOptions<F>) -> Result<Self, Error>  
+    pub fn new_oneshot<F, A: Into<AudioSource>>(ctx: &AudioContext, source: A, destionation: AudioNode, options: AudioClipOptions<F>) -> Result<Self, Error>  
     where
         F: FnMut() -> () + 'static,
     {
@@ -106,12 +106,12 @@ impl AudioClip {
 
 impl AudioClipState {
 
-    pub fn new<F>(ctx: &AudioContext, source: AudioSource, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Self, Error> 
+    pub fn new<F, A: Into<AudioSource>>(ctx: &AudioContext, source: A, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Self, Error> 
     where
         F: FnMut() -> () + 'static,
     {
 
-        let _self = match source {
+        let _self = match source.into() {
             AudioSource::Url(url) => {
                 //uses an element internally
                 //maybe in the future use streaming api?
@@ -206,7 +206,7 @@ impl AudioClipState {
     //But it can be annoying to need to keep it around in memory until playing is finished
     //So this one-shot will drop itself when finished
     //(the state is imperatively dropped via the clip's Drop impl too)
-    pub fn new_oneshot<F>(ctx: &AudioContext, source: AudioSource, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Rc<RefCell<Option<Self>>>, Error>
+    pub fn new_oneshot<F, A: Into<AudioSource>>(ctx: &AudioContext, source: A, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Rc<RefCell<Option<Self>>>, Error>
     where
         F: FnMut() -> () + 'static,
     {

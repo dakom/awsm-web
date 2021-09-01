@@ -160,7 +160,7 @@ impl AudioMixer {
     /// Oneshots are AudioClips because they drop themselves
     /// They're intended solely to be kicked off and not being held anywhere
     /// However, if necessary, they can still be killed imperatively 
-    pub fn play_oneshot<F>(&self, source: AudioSource, on_ended: Option<F>) -> Result<AudioClip, Error> 
+    pub fn play_oneshot<F, A: Into<AudioSource>>(&self, source: A) -> Result<AudioClip, Error> 
     where
         F: FnMut() -> () + 'static,
 
@@ -173,7 +173,27 @@ impl AudioMixer {
                 AudioClipOptions {
                     auto_play: true,
                     is_loop: false,
-                    on_ended, 
+                    on_ended: None::<fn()>, 
+                })
+        })
+        .and_then(|x| x)
+
+    }
+
+    pub fn play_oneshot_on_ended<F, A>(&self, source: A, on_ended: F) -> Result<AudioClip, Error> 
+    where
+        F: FnMut() -> () + 'static,
+        A: Into<AudioSource>
+    {
+        self.try_with_ctx(|ctx| {
+            AudioClip::new_oneshot(
+                &ctx.audio, 
+                source, 
+                ctx.gain.clone().unchecked_into(),
+                AudioClipOptions {
+                    auto_play: true,
+                    is_loop: false,
+                    on_ended: Some(on_ended), 
                 })
         })
         .and_then(|x| x)
@@ -182,7 +202,7 @@ impl AudioMixer {
 
 
     /// Play a clip and get a Handle to hold (simple API around add_source)
-    pub fn play(&self, source: AudioSource, is_loop: bool) -> Result<AudioHandle, Error> 
+    pub fn play<A: Into<AudioSource>>(&self, source: A, is_loop: bool) -> Result<AudioHandle, Error> 
     {
         let clip = self.try_with_ctx(|ctx| {
             AudioClip::new(
@@ -199,9 +219,30 @@ impl AudioMixer {
 
         self.add_clip(clip)
     }
+    /// Play a clip and get a Handle to hold, with on_ended handler (simple API around add_source)
+    pub fn play_on_ended<F, A>(&self, source: A, is_loop: bool, on_ended: F) -> Result<AudioHandle, Error>
+    where
+        F: FnMut() -> () + 'static, 
+        A: Into<AudioSource>
+    {
+        let clip = self.try_with_ctx(|ctx| {
+            AudioClip::new(
+                &ctx.audio, 
+                source, 
+                ctx.gain.clone().unchecked_into(),
+                AudioClipOptions {
+                    auto_play: true,
+                    is_loop,
+                    on_ended: Some(on_ended), 
+                })
+        })
+        .and_then(|x| x)?;
+
+        self.add_clip(clip)
+    }
 
     /// Add a source with various options and get a Handle to hold
-    pub fn add_source<F>(&self, source: AudioSource, options: AudioClipOptions<F>) -> Result<AudioHandle, Error> 
+    pub fn add_source<F, A: Into<AudioSource>>(&self, source: A, options: AudioClipOptions<F>) -> Result<AudioHandle, Error> 
     where
         F: FnMut() -> () + 'static,
 
