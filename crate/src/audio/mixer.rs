@@ -1,16 +1,17 @@
 use web_sys::{GainNode, AudioContext, AudioContextState};
 use crate::errors::{Error, NativeError};
-use std::sync::{Arc, Mutex, RwLock};
 use beach_map::{BeachMap, DefaultVersion, ID};
 use wasm_bindgen_futures::{spawn_local, JsFuture};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use super::clip::*;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 pub struct AudioMixer {
     //All operations need to go through try_with_ctx or with_ctx_unchecked
     //So that we can lazy-load it
-    ctx: Mutex<Option<Context>>,
+    ctx: Rc<RefCell<Option<Context>>>,
     //in the context of a mixer we want to be able to pass around
     //simple handle/ids instead of the clips directly
     //so a lookup is maintained and handles are given out
@@ -30,7 +31,7 @@ pub struct AudioHandle {
 
 pub type Id = ID<DefaultVersion>;
 
-type ClipLookup = Arc<RwLock<BeachMap<DefaultVersion, AudioClip>>>;
+type ClipLookup = Rc<RefCell<BeachMap<DefaultVersion, AudioClip>>>;
 
 pub struct Context {
     pub audio: AudioContext,
@@ -44,22 +45,22 @@ impl AudioMixer {
     pub fn new(ctx: Option<AudioContext>) -> Self {
 
         Self {
-            ctx: Mutex::new(ctx.map(|audio| Context::new(audio).unwrap_throw())),
-            clip_lookup: Arc::new(RwLock::new(BeachMap::new())),
+            ctx: Rc::new(RefCell::new(ctx.map(|audio| Context::new(audio).unwrap_throw()))),
+            clip_lookup: Rc::new(RefCell::new(BeachMap::new())),
             close_suspended: true,
         }
     }
 
     /// Pause all the clips (properly, not via suspend)
     pub fn pause_all(&self) {
-        for clip in self.clip_lookup.read().unwrap_throw().iter() {
+        for clip in self.clip_lookup.borrow().iter() {
             clip.pause();
         }
     }
 
     /// Play all the clips (properly, not via resume)
     pub fn play_all(&self) {
-        for clip in self.clip_lookup.read().unwrap_throw().iter() {
+        for clip in self.clip_lookup.borrow().iter() {
             clip.play();
         }
     }
@@ -114,7 +115,7 @@ impl AudioMixer {
     }
 
     pub fn try_with_ctx<A>(&self, f: impl FnOnce(&Context) -> A) -> Result<A, Error> {
-        let mut lock = self.ctx.lock().unwrap_throw();
+        let mut lock = self.ctx.borrow_mut();
 
         if lock.is_none() {
             *lock = Some(Context::new(AudioContext::new().unwrap_throw()).unwrap_throw());
@@ -214,7 +215,7 @@ impl AudioMixer {
     }
 
     fn add_clip(&self, clip: AudioClip) -> Result<AudioHandle, Error> {
-        let id = self.clip_lookup.write().unwrap_throw().insert(clip);
+        let id = self.clip_lookup.borrow_mut().insert(clip);
         let handle = AudioHandle {
             id,
             clip_lookup: self.clip_lookup.clone()
@@ -250,7 +251,7 @@ impl AudioHandle {
     }
 
     fn with_clip<A>(&self, f: impl FnOnce(&AudioClip) -> A) -> Option<A> {
-        if let Some(clip) = self.clip_lookup.read().unwrap_throw().get(self.id) {
+        if let Some(clip) = self.clip_lookup.borrow().get(self.id) {
             Some(f(clip))
         } else {
             None
@@ -260,7 +261,7 @@ impl AudioHandle {
 
 impl Drop for AudioHandle {
     fn drop(&mut self) {
-        if let Some(clip) = self.clip_lookup.write().unwrap_throw().remove(self.id) {
+        if let Some(clip) = self.clip_lookup.borrow_mut().remove(self.id) {
             //AudioHandle shouldn't be used to make a one-shot
             //but kill it just in case
             clip.force_kill_oneshot();
