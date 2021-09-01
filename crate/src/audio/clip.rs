@@ -3,13 +3,11 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use crate::window::same_origin;
 use web_sys::{AudioBuffer, AudioBufferSourceNode, AudioNode, MediaElementAudioSourceNode, HtmlAudioElement, AudioContext};
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::cell::Cell;
+use std::sync::{Arc, Mutex, RwLock, atomic::{AtomicU64, Ordering}};
 
 pub enum AudioClip {
     Regular(AudioClipState),
-    OneShot(Rc<RefCell<Option<AudioClipState>>>)
+    OneShot(Arc<RwLock<Option<AudioClipState>>>)
 }
 
 
@@ -32,18 +30,19 @@ where
 
 pub struct AudioClipState {
     destination: AudioNode,
-    start_offset: Cell<f64>,
-    start_time: Cell<f64>,
     ctx: AudioContext,
     is_loop: bool,
     source_node: AudioSourceNode, 
-    on_ended: Option<OnEndedCallback>
+    on_ended: Option<OnEndedCallback>,
+    _start_offset: AtomicU64,
+    _start_time: AtomicU64, 
 }
+
 
 type OnEndedCallback = Closure<dyn FnMut() -> ()>;
 
 enum AudioSourceNode {
-    Buffer(AudioBuffer, RefCell<Option<AudioBufferSourceNode>>),
+    Buffer(AudioBuffer, RwLock<Option<AudioBufferSourceNode>>),
     Element(String, HtmlAudioElement, MediaElementAudioSourceNode),
     //AudioWorkletNode for streaming?
 }
@@ -71,7 +70,7 @@ impl AudioClip {
     pub fn force_kill_oneshot(&self) {
         match self {
             Self::OneShot(state) => {
-                state.borrow_mut().take();
+                state.write().unwrap_throw().take();
             },
             _ => {}
         }
@@ -93,7 +92,7 @@ impl AudioClip {
         match &self {
             AudioClip::Regular(state) => Some(f(state)),
             AudioClip::OneShot(clip) => {
-                if let Some(audio) = clip.borrow().as_ref() {
+                if let Some(audio) = clip.read().unwrap_throw().as_ref() {
                     Some(f(audio))
                 } else {
                     None
@@ -143,8 +142,8 @@ impl AudioClipState {
 
                 Self { 
                     destination,
-                    start_offset: Cell::new(0.0),
-                    start_time: Cell::new(if options.auto_play { ctx.current_time() } else { 0.0 }),
+                    _start_offset: AtomicU64::new(0),
+                    _start_time: AtomicU64::new(if options.auto_play { ctx.current_time().to_bits() } else { 0 }),
                     ctx: ctx.clone(),
                     is_loop: options.is_loop,
                     on_ended,
@@ -157,14 +156,15 @@ impl AudioClipState {
 
                 let _self = Self { 
                     destination,
-                    start_offset: Cell::new(0.0),
-                    start_time: Cell::new(0.0),
+                    _start_offset: AtomicU64::new(0),
+                    //need this too? _start_time: AtomicU64::new(if options.auto_play { ctx.current_time().to_bits() } else { 0 }),
+                    _start_time: AtomicU64::new(0),
                     ctx: ctx.clone(),
                     is_loop: options.is_loop,
                     on_ended,
                     source_node: AudioSourceNode::Buffer(
                         buffer, 
-                        RefCell::new(None),
+                        RwLock::new(None),
                     ), 
                 };
 
@@ -181,16 +181,32 @@ impl AudioClipState {
         Ok(_self)
     }
 
+    fn get_start_offset(&self) -> f64 {
+        let value:u64 = self._start_offset.load(Ordering::SeqCst);
+
+        0.0
+    }
+
+    fn get_start_time(&self) -> f64 {
+        0.0
+    }
+
+    fn set_start_offset(&self, value: f64) {
+    }
+
+    fn set_start_time(&self, value: f64) {
+    }
+
     //A regular audio clip is effectively a one-shot since dropping will stop it
     //But it can be annoying to need to keep it around in memory until playing is finished
     //So this one-shot will drop itself when finished
     //(the state is imperatively dropped via the clip's Drop impl too)
-    pub fn new_oneshot<F>(ctx: &AudioContext, source: AudioSource, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Rc<RefCell<Option<Self>>>, Error>
+    pub fn new_oneshot<F>(ctx: &AudioContext, source: AudioSource, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Arc<RwLock<Option<Self>>>, Error>
     where
         F: FnMut() -> () + 'static,
     {
-        let state = Rc::new(RefCell::new(None));
-        let on_ended = Rc::new(RefCell::new(options.on_ended));
+        let state = Arc::new(RwLock::new(None));
+        let on_ended = Arc::new(RwLock::new(options.on_ended));
 
         let _state = Self::new(
             ctx, 
@@ -200,16 +216,16 @@ impl AudioClipState {
                 auto_play: options.auto_play,
                 is_loop: options.is_loop,
                 on_ended: Some({
-                    let state = Rc::clone(&state);
+                    let state = Arc::clone(&state);
                     move || {
-                        on_ended.borrow_mut().as_mut().map(|cb| cb());
-                        state.borrow_mut().take();
+                        on_ended.write().unwrap_throw().as_mut().map(|cb| cb());
+                        state.write().unwrap_throw().take();
                     }
                 })
             }
         )?;
 
-        *state.borrow_mut() = Some(_state);
+        *state.write().unwrap_throw() = Some(_state);
 
         Ok(state)
 
@@ -218,13 +234,13 @@ impl AudioClipState {
 
     // https://books.google.co.il/books?id=eSPyRuL8b7UC&pg=PA14&lpg=PA14&dq=WebAudioApi+pause+source&source=bl&ots=ZezP65-Qtk&sig=ACfU3U1Kx9N2vBtXbxt1ysq6RLTkfuwvBA&hl=en&sa=X&ved=2ahUKEwj5oYyf9qDxAhWH-aQKHQ8tBGQQ6AEwCXoECBcQAw#v=onepage&q=WebAudioApi%20pause%20source&f=false
     pub fn pause(&self) -> Result<(), Error> {
-        let diff = self.ctx.current_time() - self.start_time.get();
-        let start_offset = self.start_offset.get() + diff;
-        self.start_offset.replace(start_offset);
+        let diff = self.ctx.current_time() - self.get_start_time();
+        let start_offset = self.get_start_offset() + diff;
+        self.set_start_offset(start_offset);
 
         match &self.source_node {
             AudioSourceNode::Buffer(buffer, node_ref) => {
-                if let Some(node) = node_ref.borrow_mut().take() {
+                if let Some(node) = node_ref.write().unwrap_throw().take() {
                     node.stop()?;
                 }
             }
@@ -239,12 +255,12 @@ impl AudioClipState {
     }
 
     pub fn play(&self) -> Result<(), Error> {
-        self.start_time.replace(self.ctx.current_time());
-        let start_offset = self.start_offset.get();
+        self.set_start_time(self.ctx.current_time());
+        let start_offset = self.get_start_offset();
 
         match &self.source_node {
             AudioSourceNode::Buffer(buffer, node_ref) => {
-                node_ref.borrow_mut().take();
+                node_ref.write().unwrap_throw().take();
 
                 let ctx = &self.ctx;
                 let node = ctx.create_buffer_source()?;
@@ -268,7 +284,7 @@ impl AudioClipState {
                     node.start()?;
                 }
                 
-                *node_ref.borrow_mut() = Some(node);
+                *node_ref.write().unwrap_throw() = Some(node);
             }
                
             AudioSourceNode::Element(url, element, node) => {
@@ -291,7 +307,7 @@ impl Drop for AudioClipState {
     fn drop(&mut self) {
         match &self.source_node {
             AudioSourceNode::Buffer(buffer, node_ref) => {
-                if let Some(node) = node_ref.borrow_mut().as_mut() {
+                if let Some(node) = node_ref.write().unwrap_throw().as_mut() {
                     node.disconnect();
                     node.stop().unwrap_throw();
                     node.set_onended(None);
