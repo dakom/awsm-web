@@ -160,10 +160,7 @@ impl AudioMixer {
     /// Oneshots are AudioClips because they drop themselves
     /// They're intended solely to be kicked off and not being held anywhere
     /// However, if necessary, they can still be killed imperatively 
-    pub fn play_oneshot<F, A: Into<AudioSource>>(&self, source: A) -> Result<AudioClip, Error> 
-    where
-        F: FnMut() -> () + 'static,
-
+    pub fn play_oneshot<A: Into<AudioSource>>(&self, source: A) -> Result<AudioClip, Error> 
     {
         self.try_with_ctx(|ctx| {
             AudioClip::new_oneshot(
