@@ -18,9 +18,9 @@ pub mod loaders;
 pub mod tick;
 #[cfg(feature = "webgl")]
 pub mod webgl;
-
+#[cfg(feature = "workers")]
+pub mod workers;
 #[cfg(feature = "window")]
 pub mod window;
-
 #[cfg(all(feature = "window", feature="workers"))]
 pub mod global;
