@@ -1,3 +1,3 @@
-mod window;
+mod workers;
 
 pub use self::workers::*;
