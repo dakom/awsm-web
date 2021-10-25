@@ -5,7 +5,7 @@ use wasm_bindgen_futures::{spawn_local, JsFuture};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use super::clip::*;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 use std::cell::RefCell;
 
 pub struct AudioMixer {
@@ -24,14 +24,22 @@ pub struct AudioMixer {
 
 }
 
+#[derive(Clone)]
 pub struct AudioHandle {
     pub id: Id,
     pub(super) clip_lookup: ClipLookup,
 }
 
+#[derive(Clone)]
+pub struct WeakAudioHandle {
+    pub id: Id,
+    pub(super) clip_lookup: WeakClipLookup,
+}
+
 pub type Id = ID<DefaultVersion>;
 
 type ClipLookup = Rc<RefCell<BeachMap<DefaultVersion, AudioClip>>>;
+type WeakClipLookup = Weak<RefCell<BeachMap<DefaultVersion, AudioClip>>>;
 
 pub struct Context {
     pub audio: AudioContext,
@@ -160,9 +168,12 @@ impl AudioMixer {
     /// Oneshots are AudioClips because they drop themselves
     /// They're intended solely to be kicked off and not being held anywhere
     /// However, if necessary, they can still be killed imperatively 
-    pub fn play_oneshot<A: Into<AudioSource>>(&self, source: A) -> Result<AudioClip, Error> 
+    pub fn play_oneshot<A: Into<AudioSource>>(&self, source: A) -> Result<WeakAudioHandle, Error> 
     {
-        self.try_with_ctx(|ctx| {
+        let handle_ref:Rc<RefCell<Option<WeakAudioHandle>>> = Rc::new(RefCell::new(None));
+        let handle_ref_clone = handle_ref.clone();
+
+        let clip = self.try_with_ctx(|ctx| {
             AudioClip::new_oneshot(
                 &ctx.audio, 
                 source, 
@@ -170,19 +181,32 @@ impl AudioMixer {
                 AudioClipOptions {
                     auto_play: true,
                     is_loop: false,
-                    on_ended: None::<fn()>, 
+                    on_ended: Some(move || {
+                        let mut handle = handle_ref_clone.borrow_mut().take().unwrap();
+                        handle.kill();
+                    }), 
                 })
         })
-        .and_then(|x| x)
+        .and_then(|x| x)?;
+
+        let handle = self.add_weak_clip(clip)?;
+
+        *handle_ref.borrow_mut() = Some(handle.clone());
+
+        Ok(handle)
+
 
     }
 
-    pub fn play_oneshot_on_ended<F, A>(&self, source: A, on_ended: F) -> Result<AudioClip, Error> 
+    pub fn play_oneshot_on_ended<F, A>(&self, source: A, mut on_ended: F) -> Result<WeakAudioHandle, Error> 
     where
         F: FnMut() -> () + 'static,
         A: Into<AudioSource>
     {
-        self.try_with_ctx(|ctx| {
+        let handle_ref:Rc<RefCell<Option<WeakAudioHandle>>> = Rc::new(RefCell::new(None));
+        let handle_ref_clone = handle_ref.clone();
+
+        let clip = self.try_with_ctx(|ctx| {
             AudioClip::new_oneshot(
                 &ctx.audio, 
                 source, 
@@ -190,11 +214,20 @@ impl AudioMixer {
                 AudioClipOptions {
                     auto_play: true,
                     is_loop: false,
-                    on_ended: Some(on_ended), 
+                    on_ended: Some(move || {
+                        let mut handle = handle_ref_clone.borrow_mut().take().unwrap();
+                        handle.kill();
+                        on_ended();
+                    }), 
                 })
         })
-        .and_then(|x| x)
+        .and_then(|x| x)?;
 
+        let handle = self.add_weak_clip(clip)?;
+
+        *handle_ref.borrow_mut() = Some(handle.clone());
+
+        Ok(handle)
     }
 
 
@@ -261,6 +294,15 @@ impl AudioMixer {
 
         Ok(handle)
     }
+    fn add_weak_clip(&self, clip: AudioClip) -> Result<WeakAudioHandle, Error> {
+        let id = self.clip_lookup.borrow_mut().insert(clip);
+        let handle = WeakAudioHandle {
+            id,
+            clip_lookup: Rc::downgrade(&self.clip_lookup)
+        };
+
+        Ok(handle)
+    }
 }
 
 impl Context {
@@ -303,6 +345,19 @@ impl Drop for AudioHandle {
             //AudioHandle shouldn't be used to make a one-shot
             //but kill it just in case
             clip.force_kill_oneshot();
+        }
+    }
+}
+
+//WeakAudioHandle is just meant for oneshots
+//so the only thing it needs to be able to do is kill imperatively  
+
+impl WeakAudioHandle {
+    pub fn kill(&mut self) {
+        if let Some(clip_lookup) = self.clip_lookup.upgrade() {
+            if let Some(clip) = clip_lookup.borrow_mut().remove(self.id) {
+                clip.force_kill_oneshot();
+            }
         }
     }
 }

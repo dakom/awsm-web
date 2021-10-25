@@ -1,5 +1,5 @@
 use crate::router::get_static_href;
-use awsm_web::audio::{AudioMixer, AudioHandle, AudioSource, AudioClip, AudioClipOptions};
+use awsm_web::audio::{AudioMixer, AudioHandle, AudioSource, WeakAudioHandle, AudioClip, AudioClipOptions};
 use awsm_web::loaders::fetch::fetch_url;
 use gloo_events::EventListener;
 use log::info;
@@ -96,7 +96,7 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
 
         let mut bg_handle: Option<AudioHandle> = None;
         let mut regular_handle: Option<AudioHandle> = None;
-        let mut oneshot_clip: Rc<RefCell<Option<AudioClip>>> = Rc::new(RefCell::new(None));
+        let mut oneshot_clip: Rc<RefCell<Option<WeakAudioHandle>>> = Rc::new(RefCell::new(None));
 
         let handle_loop = {
             let state = Rc::clone(&state);
@@ -248,11 +248,8 @@ pub fn start(_window: Window, document: Document, body: HtmlElement) -> Result<(
                             *oneshot_clip.borrow_mut() = Some(clip);
                         }
                         false => {
-                            if let Some(clip) = oneshot_clip.borrow_mut().take() {
-                                //Need to do this
-                                //in most real-world scenarios, if we wanted to hold a handle
-                                //we'd do that... oneshot is really just for kicking off
-                                clip.force_kill_oneshot(); 
+                            if let Some(mut handle) = oneshot_clip.borrow_mut().take() {
+                                handle.kill();
                             }
                         }
                     }

@@ -48,6 +48,11 @@ enum AudioSourceNode {
     //AudioWorkletNode for streaming?
 }
 
+impl Drop for AudioClip {
+    fn drop(&mut self) {
+        log::info!("clip dropped!");
+    }
+}
 impl AudioClip {
     pub fn new<F, A: Into<AudioSource>>(ctx: &AudioContext, source: A, destination: AudioNode, options: AudioClipOptions<F>) -> Result<Self, Error>  
     where
