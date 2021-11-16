@@ -16,12 +16,6 @@ pub struct AudioMixer {
     //simple handle/ids instead of the clips directly
     //so a lookup is maintained and handles are given out
     clip_lookup: ClipLookup,
-
-    /// Treats a suspended AudioContext as invalid, closes it
-    /// and creates a new AudioContext as needed
-    /// this is set to true by default (i.e. when creating with new())
-    pub close_suspended: bool 
-
 }
 
 #[derive(Clone)]
@@ -55,7 +49,6 @@ impl AudioMixer {
         Self {
             ctx: Rc::new(RefCell::new(ctx.map(|audio| Context::new(audio).unwrap_throw()))),
             clip_lookup: Rc::new(RefCell::new(BeachMap::new())),
-            close_suspended: true,
         }
     }
 
@@ -128,42 +121,77 @@ impl AudioMixer {
         if lock.is_none() {
             *lock = Some(Context::new(AudioContext::new().unwrap_throw()).unwrap_throw());
         }
-
+        
         let ctx = lock.as_ref().unwrap_throw();
 
         match ctx.audio.state() {
             AudioContextState::Suspended => {
-                if self.close_suspended {
-                    ctx.audio.close();
-                    
-                    //try again..
-                    let audio_ctx = AudioContext::new().unwrap_throw();
-                    match audio_ctx.state() {
-                        AudioContextState::Running => {
-                            let ctx = Context::new(audio_ctx).unwrap_throw();
-                            let ret = f(&ctx);
-                            *lock = Some(ctx);
-                            Ok(ret)
-                        },
-                        _ => {
-                            *lock = None;
-                            Err(Error::Native(NativeError::AudioContext))
-                        }
-                    }
-                } else {
-                    Ok(f(&ctx))
-                }
+                let promise = ctx.audio.resume().unwrap_throw();
+                Ok(f(&ctx))
+                // can't do something like this... there is no block_on
+                // so just call resume and hope for the best...
+                // otherwise the entire API would need to be async everywhere
+                // spawn_local(async move {
+                //     let _ = JsFuture::from(promise).await;
+                //     Ok(f(&ctx))
+                // });
+
             },
+
             AudioContextState::Running => {
                 Ok(f(&ctx))
             },
+
             _ => {
+                log::info!("audio context will be freed!");
                 *lock = None;
                 Err(Error::Native(NativeError::AudioContext))
             }
         }
-        
     }
+    // pub fn try_with_ctx<A>(&self, f: impl FnOnce(&Context) -> A) -> Result<A, Error> {
+    //     let mut lock = self.ctx.borrow_mut();
+
+    //     if lock.is_none() {
+    //         *lock = Some(Context::new(AudioContext::new().unwrap_throw()).unwrap_throw());
+    //     }
+
+    //     let ctx = lock.as_ref().unwrap_throw();
+
+    //     match ctx.audio.state() {
+    //         AudioContextState::Suspended => {
+    //             if self.close_suspended {
+    //                 ctx.audio.close();
+                    
+    //                 //try again..
+    //                 let audio_ctx = AudioContext::new().unwrap_throw();
+    //                 match audio_ctx.state() {
+    //                     AudioContextState::Running => {
+    //                         let ctx = Context::new(audio_ctx).unwrap_throw();
+    //                         let ret = f(&ctx);
+    //                         *lock = Some(ctx);
+    //                         Ok(ret)
+    //                     },
+    //                     _ => {
+    //                         log::info!("could not start context!! {:?}", audio_ctx.state());
+    //                         *lock = None;
+    //                         Err(Error::Native(NativeError::AudioContext))
+    //                     }
+    //                 }
+    //             } else {
+    //                 Ok(f(&ctx))
+    //             }
+    //         },
+    //         AudioContextState::Running => {
+    //             Ok(f(&ctx))
+    //         },
+    //         _ => {
+    //             *lock = None;
+    //             Err(Error::Native(NativeError::AudioContext))
+    //         }
+    //     }
+        
+    // }
 
     /// Oneshots are AudioClips because they drop themselves
     /// They're intended solely to be kicked off and not being held anywhere
