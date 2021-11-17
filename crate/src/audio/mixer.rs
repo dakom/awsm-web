@@ -107,7 +107,12 @@ impl AudioMixer {
     }
 
     pub fn context_available(&self) -> bool {
-        self.try_with_ctx(|_| true).unwrap_or(false)
+        self.try_with_ctx(|ctx| {
+            match ctx.audio.state() {
+                AudioContextState::Running => true,
+                _ => false
+            }
+        }).unwrap_or(false)
     }
 
     //Lazy-creates the AudioContext and GainNode just in time
@@ -116,35 +121,29 @@ impl AudioMixer {
     }
 
     pub fn try_with_ctx<A>(&self, f: impl FnOnce(&Context) -> A) -> Result<A, Error> {
-        let mut lock = self.ctx.borrow_mut();
-
-        if lock.is_none() {
-            *lock = Some(Context::new(AudioContext::new().unwrap_throw()).unwrap_throw());
+        if self.ctx.borrow().is_none() {
+            *self.ctx.borrow_mut() = Some(Context::new(AudioContext::new().unwrap_throw()).unwrap_throw());
         }
-        
-        let ctx = lock.as_ref().unwrap_throw();
+      
+        let state = self.ctx.borrow().as_ref().unwrap_throw().audio.state().clone();
 
-        match ctx.audio.state() {
+        match state {
             AudioContextState::Suspended => {
-                let promise = ctx.audio.resume().unwrap_throw();
-                Ok(f(&ctx))
-                // can't do something like this... there is no block_on
-                // so just call resume and hope for the best...
-                // otherwise the entire API would need to be async everywhere
-                // spawn_local(async move {
-                //     let _ = JsFuture::from(promise).await;
-                //     Ok(f(&ctx))
-                // });
-
+                let promise = self.ctx.borrow().as_ref().unwrap_throw().audio.resume().unwrap_throw();
+                // would be really great if we could block_on :(
+                spawn_local(async move {
+                    let _ = JsFuture::from(promise).await;
+                });
+                Ok(f(&self.ctx.borrow().as_ref().unwrap_throw()))
             },
 
             AudioContextState::Running => {
-                Ok(f(&ctx))
+                Ok(f(&self.ctx.borrow().as_ref().unwrap_throw()))
             },
 
             _ => {
                 log::info!("audio context will be freed!");
-                *lock = None;
+                *self.ctx.borrow_mut() = None; 
                 Err(Error::Native(NativeError::AudioContext))
             }
         }

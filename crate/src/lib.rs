@@ -1,3 +1,4 @@
+#![allow(warnings)]
 //these aren't worth putting behind features
 pub mod errors;
 
