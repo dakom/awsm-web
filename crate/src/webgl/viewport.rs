@@ -43,7 +43,7 @@ impl_context! {
 }
 
 impl<T: WebGlCommon> WebGlRenderer<T> {
-    pub fn resize(&mut self, strategy: ResizeStrategy) {
+    pub fn resize(&mut self, strategy: ResizeStrategy) -> bool {
         if self.last_resize_strategy != Some(strategy) {
             let gl = &mut self.gl;
             let canvas = &mut self.canvas;
@@ -80,6 +80,10 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
             } 
 
             self.last_resize_strategy = Some(strategy);
+
+            true
+        } else {
+            false
         }
     }
 
