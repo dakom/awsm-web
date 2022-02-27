@@ -85,7 +85,7 @@ jobs:
       run: ls -la 
 
     - name: build for release 
-      run: cargo make build build-production
+      run: cargo make build-production
       working-directory: ./demo
 
     - name: copy index to 404 for gh_pages routing 

@@ -13,7 +13,7 @@ pub trait UnwrapExt<T>: Sized {
 }
 
 cfg_if! {
-    if #[cfg(feature = "debug_log")] {
+    if #[cfg(feature = "unwrap_verbose")] {
         impl<T> UnwrapExt<T> for Option<T> {
             fn expect_ext(self, message: &str) -> T {
                 self.expect(message)
