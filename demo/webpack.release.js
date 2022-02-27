@@ -18,6 +18,7 @@ module.exports = {
     output: {
         path: path.join(process.cwd(), 'dist'),
         filename: '[name].js',
+        publicPath: "/awsm-web/"
     },
     plugins: [
         new ForkTsCheckerWebpackPlugin({
@@ -28,7 +29,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             hash: true,
             inject: true,
-            template: 'typescript/index.html',
+            template: 'typescript/index-prod.html',
             minify: {
                 removeComments: true,
                 collapseWhitespace: true,

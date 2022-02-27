@@ -5,12 +5,6 @@ skip_core_tasks = true
 ## Main Entries ##
 ##################
 
-[tasks.build]
-run_task = [
-    {name = "build-development", condition = { profiles = [ "development"] } },
-    {name = "build-production", condition = { profiles = [ "production"] } },
-]
-
 ##See: https://github.com/sagiegurari/cargo-make/issues/355
 [tasks.serve]
 script = ['''
@@ -50,12 +44,12 @@ run_task = [{name = [
 
 [tasks.build-development-rust]
 command = "cargo"
-args = ["make", "build", "--profile", "development"]
+args = ["make", "build-development"]
 cwd = "rust"
 
 [tasks.build-development-rust-nowarnings]
 command = "cargo"
-args = ["make", "build", "--profile", "development-nowarnings"]
+args = ["make", "build-development-nowarnings"]
 cwd = "rust"
 
 [tasks.build-development-webpack]
@@ -92,7 +86,7 @@ run_task = [{name = [
 
 [tasks.build-production-rust]
 command = "cargo"
-args = ["make", "build", "--profile", "production"]
+args = ["make", "build-production"]
 cwd = "rust"
 
 

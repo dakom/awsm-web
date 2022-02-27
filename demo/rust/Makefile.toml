@@ -5,12 +5,6 @@ skip_core_tasks = true
 ## Main Entries ##
 ##################
 
-[tasks.build]
-run_task = [
-    {name = "build-development", condition = { profiles = [ "development"] } },
-    {name = "build-production", condition = { profiles = [ "production"] } },
-]
-
 [tasks.watch]
 command = "watchexec"
 args = ["-w", "./src", "-w", "../../crate", "makers", "build-development"]

@@ -19,7 +19,7 @@
             //this allows using --target web via bindgen, and avoiding the need to go through webpack
             //the callback will get the full wasm module - and can then interpret it by the imported typescript
             //it will be available to the webpack code since the webpack js is set to "defer"
-            import init,* as wasm from './wasm/demo/pkg/my_demo.js';
+            import init,* as wasm from '/awsm-web/wasm/demo/pkg/my_demo.js';
             export function load_wasm(cb) {
                 init().then(() => cb(wasm));
             }

@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.32.1"
+version = "0.32.2"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -173,6 +173,7 @@ serde-wasm-bindgen = { version = "0.4.2", optional = true }
 futures = { version = "0.3.21", optional = true }
 gloo-timers = { version = "0.2.3", features = ["futures"], optional = true }
 discard = { version = "1.0.4", optional = true }
+cfg-if = "1.0"
 
 
 [package.metadata.docs.rs]

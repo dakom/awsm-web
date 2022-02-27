@@ -25,7 +25,7 @@ module.exports = {
         new ForkTsCheckerNotifierWebpackPlugin({ title: 'TypeScript', excludeWarnings: false }),
         new HtmlWebpackPlugin({
             inject: true,
-            template: 'typescript/index.html'
+            template: 'typescript/index-dev.html'
         }),
         new ScriptExtHtmlWebpackPlugin({
             defaultAttribute: 'defer'
