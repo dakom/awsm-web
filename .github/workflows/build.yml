@@ -60,6 +60,11 @@ jobs:
       with:
         path: ${{github.workspace}}/binaryen
 
+    - name: quick hack
+      run: cp ${{github.workspace}}/binaryen/bin/* ./demo/rust/
+    - name: quick hack
+      run: cp ${{github.workspace}}/binaryen/lib/* ./demo/rust/
+
     - name: install node
       uses: actions/setup-node@v1
 
