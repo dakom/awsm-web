@@ -2,6 +2,7 @@
 //these aren't worth putting behind features
 pub mod errors;
 pub mod prelude;
+pub mod env;
 pub(crate) mod unwrap; // exported through prelude
 
 //each of these can be enabled/disabled as needed
