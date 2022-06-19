@@ -284,3 +284,6 @@ impl From<Borrow<str>> for Error
     }
 }
 */
+
+impl std::error::Error for Error { }
+
