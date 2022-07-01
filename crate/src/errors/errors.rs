@@ -4,7 +4,6 @@ use wasm_bindgen::prelude::JsValue;
 pub enum Error {
     Empty,
     String(String),
-    Js(JsValue),
     Native(NativeError),
 }
 
@@ -67,7 +66,6 @@ impl Error {
         match self {
             Error::Empty => JsValue::null(),
             Error::String(s) => JsValue::from_str(&s[..]),
-            Error::Js(jval) => jval.clone(),
             Error::Native(err) => JsValue::from_str(err.to_string().as_str()),
         }
     }
@@ -75,12 +73,6 @@ impl Error {
     pub fn is_abort(&self) -> bool {
         match self {
             Error::Native(err) => std::mem::discriminant(err) == std::mem::discriminant(&NativeError::Abort),
-            Error::Js(err) => {
-                match js_value_name(err) {
-                    Some(name) => name == "AbortError",
-                    _ => false
-                }
-            },
             _ => false,
         }
     }
@@ -246,13 +238,25 @@ impl From<NativeError> for Error {
 
 impl From<JsValue> for Error {
     fn from(err: JsValue) -> Self {
-        Error::Js(err)
+        let is_abort = match js_value_name(&err) {
+            Some(name) => name == "AbortError",
+            _ => false
+        };
+
+        if is_abort {
+            Self::Native(NativeError::Abort)
+        } else {
+            match err.as_string() {
+                Some(s) => Self::String(s),
+                None => Self::Empty
+            }
+        }
     }
 }
 
 impl From<js_sys::Error> for Error {
     fn from(err: js_sys::Error) -> Self {
-        Error::Js(JsValue::from(err))
+        JsValue::from(err).into()
     }
 }
 
