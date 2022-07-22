@@ -115,5 +115,20 @@ impl_renderer! {
             let id = self.vao_lookup.insert(vao);
             Ok(id)
         }
+
+        pub fn delete_vertex_array(&self, vao_id: Id) -> Result<(), Error> {
+
+            if Some(vao_id) == self.current_vao_id.get() {
+                self.release_vertex_array()?;
+            }
+
+            if let Some(vao) = self.vao_lookup.get(vao_id) {
+                self.gl.delete_vertex_array(Some(vao));
+                Ok(())
+            } else {
+                Err(Error::from(NativeError::VertexArrayMissing))
+            }
+
+        }
     }
 }
