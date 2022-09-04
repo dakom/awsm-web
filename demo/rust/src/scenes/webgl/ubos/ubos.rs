@@ -81,13 +81,15 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 //init ubos
 
-                webgl_renderer.init_uniform_buffer_name("camera")?;
-                webgl_renderer.init_uniform_buffer_name("model")?;
-                webgl_renderer.init_uniform_buffer_name("scale")?;
+                webgl_renderer.init_uniform_buffer_name(program_id, "camera")?;
+                webgl_renderer.init_uniform_buffer_name(program_id, "model")?;
+                webgl_renderer.init_uniform_buffer_name(program_id, "scale")?;
+                webgl_renderer.cache_uniform_buffer_block_field_offset_name(program_id, "scale", "u_scale_y", 2)?;
 
                 let mut state_obj = state.borrow_mut();
 
                 state_obj.program_id = Some(program_id);
+                webgl_renderer.activate_program(program_id).unwrap();
 
                 let vao_id = webgl_renderer.create_vertex_array()?;
 
@@ -99,8 +101,6 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 let model_buffer_id = webgl_renderer.create_buffer()?;
                 state_obj.model_buffer_id = Some(model_buffer_id);
-
-                set_model_buffer(&mut state_obj, &mut webgl_renderer)?;
 
                 let scale_buffer_id = webgl_renderer.create_buffer()?;
                 state_obj.scale_buffer_id = Some(scale_buffer_id);
@@ -143,7 +143,7 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
             move |_time, webgl_renderer| {
                 let mut state = state.borrow_mut();
 
-                if state.ticks > 3 {
+                if state.ticks > 0 {
                     return;
                 }
                 webgl_renderer
@@ -152,15 +152,16 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 webgl_renderer.toggle(GlToggle::DepthTest, true);
 
-                //partial upload
-                update_scale_buffer(&mut state, webgl_renderer).unwrap();
 
                 //full upload
                 update_camera_buffer(&mut state, webgl_renderer).unwrap();
-
-                //activate UBO's
-                webgl_renderer.activate_uniform_buffer_name(state.scale_buffer_id.unwrap(), "scale").unwrap();
                 webgl_renderer.activate_uniform_buffer_name(state.camera_buffer_id.unwrap(), "camera").unwrap();
+
+                //partial upload
+                update_scale_buffer(&mut state, webgl_renderer).unwrap();
+                webgl_renderer.activate_uniform_buffer_name(state.scale_buffer_id.unwrap(), "scale").unwrap();
+                //full upload
+                update_model_buffer(&mut state, webgl_renderer).unwrap();
                 webgl_renderer.activate_uniform_buffer_name(state.model_buffer_id.unwrap(), "model").unwrap();
 
                 //activate VAO's
@@ -191,9 +192,8 @@ fn set_initial_scale_buffer(
     webgl_renderer: &WebGl2Renderer,
 ) -> Result<(), Error> {
     //Upload them to the GPU as a UBO
-    let scale: [f32; 3] = [1.0; 3];
+    let scale: [f32; 4] = [1.0; 4];
 
-    //Just set it in a buffer, will be used at render time
     webgl_renderer.upload_buffer(
         scale_buffer_id,
         BufferData::new(
@@ -205,18 +205,18 @@ fn set_initial_scale_buffer(
 }
 
 fn update_scale_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> Result<(), Error> {
-    let scale_y: [f32; 3] = [0.0, 3.0, 0.0];
+    let scale: [f32; 3] = [0.0, 3.0, 0.0];
 
-    let offset = webgl_renderer.get_uniform_buffer_block_offset_name("scale", "u_scale_y")?;
+    let offset = webgl_renderer.get_uniform_buffer_block_field_offset_name(state.program_id.unwrap(), "scale", "u_scale_y")?;
 
     webgl_renderer.upload_sub_uniform_buffer_f32(
         offset,
         state.scale_buffer_id.unwrap(),
-        &scale_y[1..2],
+        &scale[1..2],
     )
 }
 
-fn set_model_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> Result<(), Error> {
+fn update_model_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> Result<(), Error> {
     let State {
         pos,
         volume,
@@ -229,7 +229,6 @@ fn set_model_buffer(state: &State, webgl_renderer: &mut WebGl2Renderer) -> Resul
         volume.depth as f32,
     ));
 
-    info!("{}", scaling_mat);
 
     let model_mat =
         Matrix4::new_translation(&Vector3::new(pos.x as f32, pos.y as f32, pos.z as f32));

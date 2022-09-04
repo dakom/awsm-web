@@ -15,6 +15,7 @@ pub struct UniformBufferActivation {
 
 pub type UniformIndex = u32;
 pub type BlockOffset = u32;
+pub type FieldOffset = u32;
 pub type BlockIndex = u32;
 pub type BufferLocation = u32;
 impl WebGlRenderer<WebGl2RenderingContext> {
@@ -228,11 +229,11 @@ impl WebGlRenderer<WebGl2RenderingContext> {
 
     }
 
-    pub fn cache_uniform_buffer_block_offset_name(&mut self, program_id: Id, uniform_name:&str, block_name:&str) -> Result<(BlockOffset, bool), Error> {
+    pub fn cache_uniform_buffer_block_field_offset_name(&mut self, program_id: Id, block_name:&str, field_name:&str, field_offset: FieldOffset) -> Result<(BlockOffset, bool), Error> {
 
 
-        let (location, _) = self.cache_uniform_buffer_location(program_id, uniform_name)?;
-        let (block_index, _) = self.cache_uniform_buffer_block_index(program_id, uniform_name)?;
+        let (location, _) = self.cache_uniform_buffer_location(program_id, block_name)?;
+        let (block_index, _) = self.cache_uniform_buffer_block_index(program_id, block_name)?;
 
         let offset:Option<u32> = {
             self
@@ -241,9 +242,9 @@ impl WebGlRenderer<WebGl2RenderingContext> {
                 .ok_or(Error::from(NativeError::MissingShaderProgram))?
                 .uniform_buffer_lookup_activation
                 .get(&location)
-                .ok_or(Error::from(NativeError::UniformBufferMissing(Some(uniform_name.to_string()))))?
+                .ok_or(Error::from(NativeError::UniformBufferMissing(Some(block_name.to_string()))))?
                 .offsets
-                .get(block_name)
+                .get(field_name)
                 .map(|offset| *offset)
         };
 
@@ -252,12 +253,22 @@ impl WebGlRenderer<WebGl2RenderingContext> {
             //log::info!("skipping uniform buffer cache for [{}] (already exists)", &name);
             Ok((offset, true))
         } else {
-            let index = self.get_uniform_index_name(program_id, block_name)?;
+            // this was an interesting idea but does not work
+            // when the ubo has an instance binding name:
+            //
+            //
+            // let index = self.get_uniform_index_name(program_id, block_name)?;
+            // let offset = self.get_uniform_buffer_offset(program_id, field_offset)
+                //.map_err(|_| {
+                    //Error::from(NativeError::UniformBufferOffsetMissing(Some((block_name.to_string(), field_name.to_string()))))
+                //})?;
+            //
+            // so instead, the caller *must* pass in the field offset
+            //
+            // which isn't so bad since it's only calculated by looking at the
+            // ubo data itself, not surrounding program offsets
+            // and this function caches it merely for by-name lookups
 
-            let offset = self.get_uniform_buffer_offset(program_id, index)
-                .map_err(|_| {
-                    Error::from(NativeError::UniformBufferOffsetMissing(Some((uniform_name.to_string(), block_name.to_string()))))
-                })?;
 
             let offsets = &mut self
                 .program_lookup
@@ -265,15 +276,19 @@ impl WebGlRenderer<WebGl2RenderingContext> {
                 .ok_or(Error::from(NativeError::MissingShaderProgram))?
                 .uniform_buffer_lookup_activation
                 .get_mut(&location)
-                .ok_or(Error::from(NativeError::UniformBufferMissing(Some(uniform_name.to_string()))))?
+                .ok_or(Error::from(NativeError::UniformBufferMissing(Some(format!("block: {}, field: {}",block_name, field_name)))))?
                 .offsets;
 
-            offsets.insert(block_name.to_string(), offset);
+            // not 100% sure it's block_index + field_offset
+            // but it works in the ubo scene test
+            // and scale is listed after the others, so... probably right?
+            let offset = block_index + field_offset;
+            offsets.insert(field_name.to_string(), offset);
 
-            #[cfg(feature = "debug_log")]
+            //#[cfg(feature = "debug_log")]
             log::info!(
-                "caching UBO offset, uniform: {}, block: {}, offset: {} ",
-                uniform_name, block_name, offset 
+                "caching UBO offset, block: {}, field: {}, final offset: {} ",
+                block_name, field_name, offset
             );
 
             Ok((offset, false))
@@ -282,48 +297,71 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         }
     }
 
-    pub fn get_uniform_buffer_location_name(&mut self, name: &str) -> Result<BufferLocation, Error> {
-        let program_id = self
-            .current_program_id
-            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
-
+    pub fn get_uniform_buffer_location_name(&mut self, program_id: Id, name: &str) -> Result<BufferLocation, Error> {
         self.cache_uniform_buffer_location(program_id, name)
             .map(|(location, _cached)| location)
     }
-    pub fn get_uniform_buffer_block_index_name(&mut self, name: &str) -> Result<BlockIndex, Error> {
-        let program_id = self
-            .current_program_id
-            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
-
+    pub fn get_uniform_buffer_block_index_name(&mut self, program_id: Id, name: &str) -> Result<BlockIndex, Error> {
         self.cache_uniform_buffer_block_index(program_id, name)
             .map(|(index, _cached)| index)
     }
 
-    pub fn get_uniform_buffer_block_offset_name(
+    pub fn get_uniform_buffer_block_field_offset_name(
         &mut self,
-        uniform_name: &str,
+        program_id: Id,
         block_name: &str,
+        field_name: &str,
     ) -> Result<BlockOffset, Error> {
+        let (location, _) = self.cache_uniform_buffer_location(program_id, block_name)?;
+        let (block_index, _) = self.cache_uniform_buffer_block_index(program_id, block_name)?;
 
-        let program_id = self
-            .current_program_id
-            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+        let offset:Option<u32> = {
+            self
+                .program_lookup
+                .get(program_id)
+                .ok_or(Error::from(NativeError::MissingShaderProgram))?
+                .uniform_buffer_lookup_activation
+                .get(&location)
+                .ok_or(Error::from(NativeError::UniformBufferMissing(Some(block_name.to_string()))))?
+                .offsets
+                .get(field_name)
+                .map(|offset| *offset)
+        };
 
-        self.cache_uniform_buffer_block_offset_name(program_id, uniform_name, block_name)
-            .map(|(offset, _cached)| offset)
+        if let Some(offset) = offset {
+            //#[cfg(feature = "debug_log")]
+            //log::info!("skipping uniform buffer cache for [{}] (already exists)", &name);
+            Ok(offset)
+        } else {
+            Err(Error::from(NativeError::UniformBufferMissing(Some(format!("when getting ubo by field name, must call cache_uniform_buffer_block_field_offset_name() first. block: {}, field: {}",block_name, field_name)))))
+        }
+
+    }
+
+    pub fn get_uniform_buffer_block_field_offset(
+        &mut self,
+        program_id: Id,
+        block_name: &str,
+        field_offset: FieldOffset,
+    ) -> Result<BlockOffset, Error> {
+        let (location, _) = self.cache_uniform_buffer_location(program_id, block_name)?;
+        let (block_index, _) = self.cache_uniform_buffer_block_index(program_id, block_name)?;
+        let offset = self.get_uniform_buffer_offset(program_id, field_offset)
+            .map_err(|_| {
+                Error::from(NativeError::UniformBufferOffsetMissing(Some((block_name.to_string(), format!("field_offset: {}", field_offset.to_string())))))
+            })?;
+
+        Ok(offset)
 
     }
 
     // at shader compilation time
-    pub fn init_uniform_buffer_name(&mut self, name:&str) -> Result<(), Error> {
-        let location = self.get_uniform_buffer_location_name(name)?;
-        let block_index = self.get_uniform_buffer_block_index_name(name)?;
-        self.init_uniform_buffer_loc(block_index, location)
+    pub fn init_uniform_buffer_name(&mut self, program_id: Id, name:&str) -> Result<(), Error> {
+        let location = self.get_uniform_buffer_location_name(program_id, name)?;
+        let block_index = self.get_uniform_buffer_block_index_name(program_id, name)?;
+        self.init_uniform_buffer_loc(program_id, block_index, location)
     }
-    pub fn init_uniform_buffer_loc(&mut self, block_index: BlockIndex, location: BufferLocation) -> Result<(), Error> {
-        let program_id = self
-            .current_program_id
-            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+    pub fn init_uniform_buffer_loc(&mut self, program_id: Id, block_index: BlockIndex, location: BufferLocation) -> Result<(), Error> {
         let program_info = self
             .program_lookup
             .get(program_id)
@@ -340,7 +378,11 @@ impl WebGlRenderer<WebGl2RenderingContext> {
     }
 
     pub fn activate_uniform_buffer_name(&mut self, id: Id, name:&str) -> Result<(), Error> {
-        let location = self.get_uniform_buffer_location_name(name)?;
+        let program_id = self
+            .current_program_id
+            .ok_or(Error::from(NativeError::MissingShaderProgram))?;
+
+        let location = self.get_uniform_buffer_location_name(program_id, name)?;
         self.bind_buffer_base(id, location, BufferTarget::UniformBuffer);
         Ok(())
     }
