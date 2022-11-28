@@ -293,7 +293,7 @@ pub fn blit<T: WebGlCommon> (renderer:&mut WebGlRenderer<T>, camera_mat: &Matrix
 
         //enable texture
         renderer
-            .activate_texture_for_sampler_name(texture_id, "u_sampler")
+            .activate_texture_sampler_name(texture_id, "u_sampler")
             .unwrap();
 
         //draw!

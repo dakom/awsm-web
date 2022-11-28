@@ -161,10 +161,10 @@ pub fn start(
 
                 //enable textures
                 webgl_renderer
-                    .activate_texture_for_sampler_name(texture1_id.unwrap(), "u_sampler_smiley")
+                    .activate_texture_sampler_name(texture1_id.unwrap(), "u_sampler_smiley")
                     .unwrap();
                 webgl_renderer
-                    .activate_texture_for_sampler_name(texture2_id.unwrap(), "u_sampler_bridge")
+                    .activate_texture_sampler_name(texture2_id.unwrap(), "u_sampler_bridge")
                     .unwrap();
 
                 //Build our matrices (must cast to f32)

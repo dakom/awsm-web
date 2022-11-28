@@ -58,8 +58,6 @@ pub struct WebGlRenderer<T: WebGlCommon> {
     pub(super) buffer_lookup: BeachMap<DefaultVersion, WebGlBuffer>,
 
     pub(super) texture_lookup: BeachMap<DefaultVersion, TextureInfo>,
-    pub(super) texture_sampler_lookup: Vec<Option<Id>>,
-    pub(super) texture_target_lookup: FxHashMap<u32, Id>, //FrameBufferTarget or TextureTarget
 
     pub(super) extension_lookup: FxHashMap<String, js_sys::Object>,
 
@@ -96,11 +94,6 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
         let max_texture_units: usize =
             gl.awsm_get_parameter_usize(GlQuery::MaxTextureImageUnits)?;
 
-        //Can't use the vec! macro since TextureSamplerInfo isn't Clone
-        let mut texture_sampler_lookup = Vec::with_capacity(max_texture_units);
-        for _ in 0..max_texture_units {
-            texture_sampler_lookup.push(None);
-        }
 
         //The webgl docs don't talk about a default value...
         //seems to be 0 for all - but just in case... it's... set by browser? _shrug_
@@ -135,8 +128,6 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
             buffer_lookup: BeachMap::default(),
 
             texture_lookup: BeachMap::default(),
-            texture_sampler_lookup,
-            texture_target_lookup: FxHashMap::default(),
 
             extension_lookup: FxHashMap::default(),
 

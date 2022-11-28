@@ -179,7 +179,7 @@ pub fn start(
 
                     //enable texture
                     webgl_renderer
-                        .activate_texture_for_sampler_name(target_texture_id, "u_sampler")
+                        .activate_texture_sampler_name(target_texture_id, "u_sampler")
                         .unwrap();
 
                     //Build our matrices (must cast to f32)

@@ -205,10 +205,10 @@ pub fn start(window: Window, document: Document, body: HtmlElement) -> Result<()
 
                 //enable texture
                 webgl_renderer
-                    .activate_texture_for_sampler_name(diffuse_texture_id.unwrap(), "u_diffuse_sampler")
+                    .activate_texture_sampler_name(diffuse_texture_id.unwrap(), "u_diffuse_sampler")
                     .unwrap();
                 webgl_renderer
-                    .activate_texture_for_sampler_name(lut_texture_id.unwrap(), "u_lut_sampler")
+                    .activate_texture_sampler_name(lut_texture_id.unwrap(), "u_lut_sampler")
                     .unwrap();
 
                 //Build our matrices (must cast to f32)

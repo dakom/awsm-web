@@ -224,7 +224,6 @@ impl<T: WebGlCommon> WebGlRenderer<T> {
             self.bind_framebuffer(framebuffer_id, target)?;
             self.gl.awsm_framebuffer_texture_2d(target, attachment, texture_target, texture);
         }
-        self.texture_target_lookup.insert(texture_target as u32, texture_id);
         Ok(())
     }
 
