@@ -28,3 +28,5 @@ pub mod workers;
 pub mod window;
 #[cfg(all(feature = "window", feature="workers"))]
 pub mod global;
+#[cfg(feature = "stream")]
+pub mod stream;
