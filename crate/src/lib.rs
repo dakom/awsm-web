@@ -30,3 +30,5 @@ pub mod window;
 pub mod global;
 #[cfg(feature = "stream")]
 pub mod stream;
+#[cfg(feature = "file")]
+pub mod file;

@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.39.0"
+version = "0.40.0"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -18,7 +18,7 @@ lto = true
 opt-level = 's'
 
 [features]
-all = ["data", "dom", "audio", "image", "video", "canvas", "input", "loaders", "tick", "window", "workers", "webgl", "serde_iso", "stream"]
+all = ["data", "dom", "audio", "image", "video", "canvas", "input", "loaders", "tick", "window", "workers", "webgl", "serde_iso", "stream", "file"]
 default = ["stream"]
 data = []
 stream = [
@@ -154,6 +154,14 @@ webgl = [
     "serde-wasm-bindgen",
     "beach_map",
     "rustc-hash",
+]
+
+file = [
+    "web-sys/File",
+    "web-sys/Blob",
+    "web-sys/BlobPropertyBag",
+    "web-sys/Url",
+    "web-sys/HtmlAnchorElement",
 ]
 
 # more verbose logging of internal methods
