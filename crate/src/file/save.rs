@@ -1,10 +1,10 @@
 use js_sys::Uint8Array;
 use wasm_bindgen::{prelude::*, JsCast};
 
-pub fn save_file(data: Vec<u8>, filename: &str, mime_type: Option<&str>) -> Result<(), JsValue> {
+pub fn save_file(data: &[u8], filename: &str, mime_type: Option<&str>) -> Result<(), JsValue> {
     // cannot use .view() because the WASM memory changes under our feet
     let content = Uint8Array::new_with_length(data.len() as u32);
-    content.copy_from(&data);
+    content.copy_from(data);
     
     let blob_parts = js_sys::Array::new();
     blob_parts.push(&content);
