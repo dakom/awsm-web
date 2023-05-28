@@ -19,7 +19,7 @@ opt-level = 's'
 
 [features]
 all = ["data", "dom", "audio", "image", "video", "canvas", "input", "loaders", "tick", "window", "workers", "webgl", "serde_iso", "stream", "file"]
-default = ["stream", "file"]
+default = []
 data = []
 stream = [
     "futures"
