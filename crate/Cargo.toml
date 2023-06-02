@@ -1,7 +1,7 @@
 [package]
 name = "awsm_web"
 edition = "2018"
-version = "0.42.0"
+version = "0.43.0"
 authors = ["David Komer <david.komer@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
@@ -19,7 +19,7 @@ opt-level = 's'
 
 [features]
 all = ["data", "dom", "audio", "image", "video", "canvas", "input", "loaders", "tick", "window", "workers", "webgl", "serde_iso", "stream", "file"]
-default = []
+default = ["file"]
 data = []
 stream = [
     "futures"
@@ -157,6 +157,10 @@ webgl = [
 ]
 
 file = [
+    # internal
+    "data",
+
+    # web-sys 
     "web-sys/Window",
     "web-sys/Document",
     "web-sys/File",
@@ -164,6 +168,11 @@ file = [
     "web-sys/BlobPropertyBag",
     "web-sys/Url",
     "web-sys/HtmlAnchorElement",
+    "web-sys/HtmlInputElement",
+    "web-sys/FileList",
+
+    # third-party
+    "wasm-bindgen-futures",
 ]
 
 # more verbose logging of internal methods
