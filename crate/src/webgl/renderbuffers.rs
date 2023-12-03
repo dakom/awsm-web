@@ -1,4 +1,4 @@
-use super::{Id, WebGlCommon, WebGlRenderer, RenderBufferFormat, PartialWebGlQueries, GlQuery};
+use super::{Id, WebGlCommon, WebGlRenderer, RenderBufferFormat, PartialWebGlGetParameter, GlParameter};
 use crate::errors::{Error, NativeError};
 use web_sys::{WebGl2RenderingContext, WebGlRenderingContext, WebGlRenderbuffer};
 
@@ -144,7 +144,7 @@ impl WebGlRenderer<WebGl2RenderingContext> {
         Ok(())
     }
     pub fn assign_renderbuffer_storage_multisample_max(&self, renderbuffer_id: Id, format: RenderBufferFormat, width:u32, height: u32) -> Result<(), Error> {
-        let max_samples: usize = self.gl.awsm_get_parameter_usize(GlQuery::MaxSamples)?;
+        let max_samples: usize = self.gl.awsm_get_parameter_usize(GlParameter::MaxSamples)?;
         self.assign_renderbuffer_storage_multisample(renderbuffer_id, max_samples as u32, format, width, height)
     }
 

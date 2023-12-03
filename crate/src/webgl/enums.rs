@@ -310,7 +310,7 @@ pub enum GlToggle {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
-pub enum GlQuery {
+pub enum GlParameter {
     FragmentShader = 0x8B30,
     VertexShader = 0x8B31,
     MaxVertexAttribs = 0x8869,
@@ -727,4 +727,25 @@ impl TryFrom<u32> for FrameBufferStatus {
             Err("bad value for FrameBufferStatus")
         }
     }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum GlQueryResult {
+    Available = 0x8867,    
+    Value = 0x8866, //QUERY_RESULT
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum GlQueryKind {
+    AnySamplesPassed = 0x8C2F,
+    AnySamplesPassedConservative = 0x8D6A,
+    TransformFeedbackPrimitivesWritten = 0x8C88
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[repr(u32)]
+pub enum GlQueryName {
+    Current = 0x8865
 }

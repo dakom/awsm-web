@@ -381,13 +381,13 @@ mod tests {
 
     #[test]
     fn test_get_uniform_names() {
-        assert_eq!(get_uniform_names("hello", 2), ["hello"]);
-        assert_eq!(get_uniform_names("hello[0]", 4), ["hello", "hello[0]", "hello[1]", "hello[2]", "hello[3]"]);
+        assert_eq!(parse_uniform_names("hello", 2), ["hello"]);
+        assert_eq!(parse_uniform_names("hello[0]", 4), ["hello", "hello[0]", "hello[1]", "hello[2]", "hello[3]"]);
     }
 
     #[test]
     #[should_panic]
     fn test_invalid_uniform_names() {
-        assert_eq!(get_uniform_names("hello[4]", 4), ["hello", "hello[0]", "hello[1]", "hello[2]", "hello[3]"]);
+        assert_eq!(parse_uniform_names("hello[4]", 4), ["hello", "hello[0]", "hello[1]", "hello[2]", "hello[3]"]);
     }
 }

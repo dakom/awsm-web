@@ -11,7 +11,7 @@ use super::enums::WebGlVersion;
 use super::extensions::PartialWebGlExtensions;
 use super::funcs::PartialWebGlFuncs;
 use super::misc::PartialWebGlMisc;
-use super::query::PartialWebGlQueries;
+use super::query::PartialWebGlGetParameter;
 use super::shader::PartialWebGlShaders;
 use super::textures::PartialWebGlTextures;
 use super::toggles::PartialWebGlToggle;
@@ -63,7 +63,7 @@ pub trait WebGlCommon:
     PartialWebGlVersion
     + PartialWebGlCanvas
     + PartialWebGlAttribute
-    + PartialWebGlQueries
+    + PartialWebGlGetParameter
     + PartialWebGlBuffer
     + PartialWebGlDrawing
     + PartialWebGlExtensions

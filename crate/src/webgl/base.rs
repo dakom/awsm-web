@@ -1,7 +1,7 @@
 use super::funcs::FuncSettings;
 use super::misc::MiscSettings;
 use super::toggles::ToggleFlags;
-use super::{ BufferTarget, FrameBufferTarget, GlQuery, Id, ProgramInfo, TextureInfo, WebGlCommon, WebGlVersion, BufferLocation, AttributeLocation};
+use super::{ BufferTarget, FrameBufferTarget, GlParameter, Id, ProgramInfo, TextureInfo, WebGlCommon, WebGlVersion, BufferLocation, AttributeLocation};
 use super::viewport::ResizeStrategy;
 use crate::errors::{Error, NativeError};
 use beach_map::{BeachMap, DefaultVersion};
@@ -92,12 +92,12 @@ impl<T: WebGlCommon + 'static> WebGlRenderer<T> {
         let canvas = gl.awsm_get_canvas()?;
 
         let max_texture_units: usize =
-            gl.awsm_get_parameter_usize(GlQuery::MaxTextureImageUnits)?;
+            gl.awsm_get_parameter_usize(GlParameter::MaxTextureImageUnits)?;
 
 
         //The webgl docs don't talk about a default value...
         //seems to be 0 for all - but just in case... it's... set by browser? _shrug_
-        let blend_color: Vec<f32> = gl.awsm_get_parameter_vf32(GlQuery::BlendColor)?;
+        let blend_color: Vec<f32> = gl.awsm_get_parameter_vf32(GlParameter::BlendColor)?;
 
         let version = gl.awsm_get_version();
         Ok(Self {
