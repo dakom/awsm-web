@@ -1,10 +1,8 @@
-use std::ops::Deref;
+use std::{ops::Deref, sync::{Arc, Mutex}};
 use wasm_bindgen_futures::spawn_local;
 use std::{
     future::Future,
     sync::atomic::{AtomicUsize, Ordering},
-    rc::Rc,
-    cell::RefCell
 };
 use wasm_bindgen::prelude::*;
 use futures::{
@@ -99,7 +97,7 @@ pub async fn future_until<F, A>(ms: u32, f: F) -> Option<A>
 ///
 /// Hold onto the AsyncLoader somewhere and call load(async move {...}) or cancel()
 pub struct AsyncLoader {
-    loading: Rc<RefCell<Option<AsyncState>>>,
+    loading: Arc<Mutex<Option<AsyncState>>>,
 }
 impl Drop for AsyncLoader {
     fn drop(&mut self) {
@@ -124,7 +122,7 @@ impl AsyncState {
 impl AsyncLoader {
     pub fn new() -> Self {
         Self {
-            loading: Rc::new(RefCell::new(None)),
+            loading: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -132,14 +130,12 @@ impl AsyncLoader {
         self.replace(None);
     }
 
-    fn replace(&self, value: Option<AsyncState>) {
-        let mut loading = self.loading.borrow_mut();
+    fn replace(&self, state: Option<AsyncState>) {
+        let mut loading = self.loading.lock().unwrap();
 
-        if let Some(state) = loading.as_mut() {
-            state.handle.abort();
+        if let Some(old_state) = std::mem::replace(&mut *loading, state) {
+            old_state.handle.abort();
         }
-
-        *loading = value;
     }
 
     pub fn load<F>(&self, fut: F) where F: Future<Output = ()> + 'static {
@@ -155,7 +151,7 @@ impl AsyncLoader {
         spawn_local(async move {
             match fut.await {
                 Ok(()) => {
-                    let mut loading = loading.borrow_mut();
+                    let mut loading = loading.lock().unwrap();
 
                     if let Some(current_id) = loading.as_ref().map(|x| x.id) {
                         // If it hasn't been overwritten with a new state...
@@ -173,7 +169,7 @@ impl AsyncLoader {
     }
 
     pub fn is_loading(&self) -> bool {
-        self.loading.borrow().is_some()
+        self.loading.lock().unwrap().is_some()
     }
 }
 
